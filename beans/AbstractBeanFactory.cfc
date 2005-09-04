@@ -31,12 +31,12 @@
 		<cfthrow type="Method.NotImplemented">
 	</cffunction>
 	
-	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
+	<cffunction name="getType" access="public" returntype="string" output="false">
 		<cfargument name="beanName" type="string" required="true" />
 		<cfthrow type="Method.NotImplemented">
 	</cffunction>
 	
-	<cffunction name="getType" access="public" returntype="boolean" output="false">
+	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
 		<cfargument name="beanName" type="string" required="true" />
 		<cfthrow type="Method.NotImplemented">
 	</cffunction>
