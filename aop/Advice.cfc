@@ -1,5 +1,5 @@
 <!---
-	 $Id: FactoryBean.cfc,v 1.2 2005/09/13 17:01:53 scottc Exp $
+	 $Id: Advice.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -25,25 +25,28 @@
 	POSSIBILITY OF SUCH DAMAGE.
 ---> 
  
-<cfcomponent name="FactoryBean" 
-			displayname="FactoryBean" 
-			hint="Interface (Abstract Class) for all FactoryBean implimentations" 
+<cfcomponent name="Advice" 
+			displayname="Advice" 
+			hint="Abstract Base Class for all Advice implimentations" 
 			output="false">
 			
+	<cfset variables.adviceType = '' />
+	
 	<cffunction name="init" access="private" returntype="void" output="false">
 		<cfthrow message="Abstract CFC. Cannot be initialized" />
 	</cffunction>
 	
-	<cffunction name="getObject" access="public" returntype="any" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="setType" access="public" returntype="void" output="false">
+		<cfargument name="adviceType" type="string" required="true" />
+		<cfset variables.adviceType = arguments.adviceType />
 	</cffunction>
 	
-	<cffunction name="getObjectType" access="public" returntype="string" output="false">
-		<cfthrow type="Method.NotImplemented">
-	</cffunction>
-	
-	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="getType" access="public" returntype="string" output="false">
+		<cfif not(ListFindNoCase('before,around,afterReturning',variables.adviceType))>
+			<cfthrow type="coldspring.aop.MalformedAviceException" message="Advice Type is not correctly set, please extend the correct cfc for the advice type you are trying to implement!" />
+		<cfelse>
+			<cfreturn variables.adviceType />
+		</cfif>
 	</cffunction>
 	
 </cfcomponent>

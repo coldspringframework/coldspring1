@@ -1,5 +1,5 @@
 <!---
-	 $Id: FactoryBean.cfc,v 1.2 2005/09/13 17:01:53 scottc Exp $
+	 $Id: AdviceChain.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -25,25 +25,50 @@
 	POSSIBILITY OF SUCH DAMAGE.
 ---> 
  
-<cfcomponent name="FactoryBean" 
-			displayname="FactoryBean" 
-			hint="Interface (Abstract Class) for all FactoryBean implimentations" 
+<cfcomponent name="AdviceChain" 
+			displayname="AdviceChain" 
+			hint="Base Class for all Advice Chains" 
 			output="false">
 			
-	<cffunction name="init" access="private" returntype="void" output="false">
-		<cfthrow message="Abstract CFC. Cannot be initialized" />
+	<cffunction name="init" access="public" returntype="coldspring.aop.AdviceChain" output="false">
+		<cfset variables.beforeAdvice = ArrayNew(1) />
+		<cfset variables.afterAdvice = ArrayNew(1) />
+		<cfset variables.aroundAdvice = ArrayNew(1) />
+		<cfreturn this />
 	</cffunction>
 	
-	<cffunction name="getObject" access="public" returntype="any" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="addAdvice" access="public" returntype="void" output="false">
+		<cfargument name="advice" type="coldspring.aop.Advice" required="true" />
+		<cfswitch expression="#advice.getType()#">
+			<cfcase value="before">
+				<cfset ArrayAppend(variables.beforeAdvice, arguments.advice) />
+			</cfcase>
+			<cfcase value="afterReturning">
+				<cfset ArrayAppend(variables.afterAdvice, arguments.advice) />
+			</cfcase>
+			<cfcase value="around">
+				<cfif ArrayLen(variables.aroundAdvice) GT 0>
+					<cfthrow type="coldspring.aop.MalformedAviceException" message="There can only be one around advice declared for each method!" />
+				<cfelse>
+					<cfset ArrayAppend(variables.aroundAdvice, arguments.advice) />
+				</cfif>
+			</cfcase>
+		</cfswitch>
 	</cffunction>
 	
-	<cffunction name="getObjectType" access="public" returntype="string" output="false">
-		<cfthrow type="Method.NotImplemented">
-	</cffunction>
-	
-	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="getAdvice" access="public" returntype="Array" output="false">
+		<cfargument name="adviceType" type="string" required="true" />
+		<cfswitch expression="#arguments.adviceType#">
+			<cfcase value="before">
+				<cfreturn variables.beforeAdvice />
+			</cfcase>
+			<cfcase value="afterReturning">
+				<cfreturn variables.afterAdvice />
+			</cfcase>
+			<cfcase value="around">
+				<cfreturn variables.aroundAdvice />
+			</cfcase>
+		</cfswitch>
 	</cffunction>
 	
 </cfcomponent>

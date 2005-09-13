@@ -1,5 +1,5 @@
 <!---
-	 $Id: FactoryBean.cfc,v 1.2 2005/09/13 17:01:53 scottc Exp $
+	 $Id: Pointcut.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -25,25 +25,13 @@
 	POSSIBILITY OF SUCH DAMAGE.
 ---> 
  
-<cfcomponent name="FactoryBean" 
-			displayname="FactoryBean" 
-			hint="Interface (Abstract Class) for all FactoryBean implimentations" 
+<cfcomponent name="Pointcut" 
+			displayname="Pointcut" 
+			hint="Interface (Abstract Class) for all Pointcut implimentations" 
 			output="false">
 			
 	<cffunction name="init" access="private" returntype="void" output="false">
 		<cfthrow message="Abstract CFC. Cannot be initialized" />
-	</cffunction>
-	
-	<cffunction name="getObject" access="public" returntype="any" output="false">
-		<cfthrow type="Method.NotImplemented">
-	</cffunction>
-	
-	<cffunction name="getObjectType" access="public" returntype="string" output="false">
-		<cfthrow type="Method.NotImplemented">
-	</cffunction>
-	
-	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
-		<cfthrow type="Method.NotImplemented">
 	</cffunction>
 	
 </cfcomponent>

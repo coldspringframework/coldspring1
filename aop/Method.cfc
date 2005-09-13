@@ -1,5 +1,5 @@
 <!---
-	 $Id: FactoryBean.cfc,v 1.2 2005/09/13 17:01:53 scottc Exp $
+	 $Id: Method.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -25,25 +25,36 @@
 	POSSIBILITY OF SUCH DAMAGE.
 ---> 
  
-<cfcomponent name="FactoryBean" 
-			displayname="FactoryBean" 
-			hint="Interface (Abstract Class) for all FactoryBean implimentations" 
+<cfcomponent name="Methood" 
+			displayname="Methood" 
+			hint="Base Class for Methods" 
 			output="false">
 			
-	<cffunction name="init" access="private" returntype="void" output="false">
-		<cfthrow message="Abstract CFC. Cannot be initialized" />
+	<cffunction name="init" access="public" returntype="coldspring.aop.Method" output="false">
+		<cfargument name="target" type="any" required="true" />
+		<cfargument name="method" type="string" required="true" />
+		<cfargument name="args" type="struct" required="true" />
+		
+		<cfset variables.target = arguments.target />
+		<cfset variables.method = arguments.method />
+		<cfset variables.args = arguments.args />
+		
+		<cfreturn this />
 	</cffunction>
 	
-	<cffunction name="getObject" access="public" returntype="any" output="false">
-		<cfthrow type="Method.NotImplemented">
-	</cffunction>
-	
-	<cffunction name="getObjectType" access="public" returntype="string" output="false">
-		<cfthrow type="Method.NotImplemented">
-	</cffunction>
-	
-	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="proceed" access="public" returntype="any" output="false" 
+				hint="Executes captured method on target object">
+				
+		<cfset var rtn = 0 />
+		<cfinvoke component="#variables.target#"
+				  method="#variables.method#" 
+				  argumentcollection="#variables.args#" 
+				  returnvariable="rtn">
+		</cfinvoke>	
+		<cfif isDefined('rtn')>
+			<cfreturn rtn />
+		</cfif>
+		
 	</cffunction>
 	
 </cfcomponent>

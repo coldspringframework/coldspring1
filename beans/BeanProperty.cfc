@@ -1,5 +1,5 @@
 <!---
-	 $Id: BeanProperty.cfc,v 1.2 2005/09/13 02:30:26 scottc Exp $
+	 $Id: BeanProperty.cfc,v 1.3 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 ---> 
 
@@ -51,12 +51,39 @@
 				<cfset addParentDefinitionDependency(beanUID) />
 			</cfcase>
 			
+			<cfcase value="list">
+				<cfset setValue(parseEntries(child.xmlChildren,'list')) />
+			</cfcase>
+			
 			<cfcase value="value">
 				<cfset setValue(child.xmlText) />
 			</cfcase>
 			
 		</cfswitch>
 			
+	</cffunction>
+	
+	<cffunction name="parseEntries" access="private" returntype="any" output="false">
+		<cfargument name="mapEntries" type="array" required="true" />
+		<cfargument name="returnType" type="string" required="true" />
+		<cfset var rtn = 0 />
+		<cfset var ix = 0/>
+		<cfset var entry = 0/>
+		<cfset var entryChild = 0/>
+		
+		<!--- only lists are implemented so far --->
+		<cfif returnType IS 'list'>
+			<cfset rtn = ArrayNew(1) />
+			<cfloop from="1" to="#ArrayLen(mapEntries)#" index="ix">
+				<cfset entry = arguments.mapEntries[ix]/>
+				<!--- nothing but value types in the list are supported --->
+				<cfif entry.xmlName IS 'value'>
+					<cfset ArrayAppend(rtn, entry.xmlText) />
+				</cfif>
+			</cfloop>
+			<cfreturn ArrayToList(rtn) />
+		</cfif>
+		
 	</cffunction>
 	
 	<cffunction name="addParentDefinitionDependency" access="private" returntype="void" output="false">

@@ -1,5 +1,5 @@
 <!---
-	 $Id: BeanDefinition.cfc,v 1.2 2005/09/13 02:30:27 scottc Exp $
+	 $Id: BeanDefinition.cfc,v 1.3 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 ---> 
 
@@ -9,6 +9,7 @@
 	<cfset variables.instanceData.Properties = StructNew() />
 	<cfset variables.instanceData.Singleton = true />
 	<cfset variables.instanceData.Constructed = false />
+	<cfset variables.instanceData.Factory = false />
 	<cfset variables.instanceData.Dependencies = '' />
 	
 	<cffunction name="init" returntype="coldspring.beans.BeanDefinition" output="false">
@@ -144,9 +145,9 @@
 	
 	<cffunction name="getInstance" access="public" output="false" returntype="any" hint="I retrieve the Instance from this instance's data">
 		<cfif isFactory()>
-			<cfreturn getFactory().getBeanFromSingletonCache(getBeanID()).getObject() >
+			<cfreturn getBeanFactory().getBeanFromSingletonCache(getBeanID()).getObject() >
 		<cfelse>
-			<cfreturn getFactory().getBeanFromSingletonCache(getBeanID()) >
+			<cfreturn getBeanFactory().getBeanFromSingletonCache(getBeanID()) >
 		</cfif>
 	</cffunction>
 	

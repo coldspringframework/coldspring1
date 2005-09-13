@@ -1,5 +1,5 @@
 <!---
-	 $Id: DefaultXmlBeanFactory.cfc,v 1.2 2005/09/13 02:30:26 scottc Exp $
+	 $Id: DefaultXmlBeanFactory.cfc,v 1.3 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 ---> 
 
@@ -158,6 +158,7 @@
 		<cfset var propDefs = 0 />
 		<cfset var prop = 0/>
 		<cfset var md = '' />
+		<cfset var functionIndex = '' />
 		
 		<!--- put them all in an array, and while we're at it, make sure they're in the singleton cache, or the localbean cache --->
 		<cfloop from="1" to="#ListLen(dependentBeanNames)#" index="beanDefIx">
@@ -184,9 +185,18 @@
 				<cfset propDefs = beanDef.getProperties()/>
 				<cfset md = getMetaData(beanInstance)/>
 				
+				<!--- we need to call init method if it exists --->
+				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
+					<cfif md.functions[functionIndex].name eq "init">
+						<cfset beanInstance.init() />
+						<cfbreak />
+					</cfif>
+				</cfloop>
+				
 				<!--- if this is a bean that extends the factory bean, set is factory --->
 				<cfif ArrayLen(StructFindValue(md,"coldspring.beans.factory.FactoryBean","ALL"))>
 					<cfset beanDef.setIsFactory(true) />
+					<cfset beanInstance.setBeanFactory(this) />
 				</cfif>
 				<!---
 				do we need to make sure that value is in the extends key??
@@ -195,7 +205,7 @@
 				<!--- now do dependency injection via setters --->		
 				<cfloop collection="#propDefs#"	item="prop">
 					<cfswitch expression="#propDefs[prop].getType()#">
-						<cfcase value="value">
+						<cfcase value="value,list">
 							<cfinvoke component="#beanInstance#"
 									  method="set#propDefs[prop].getName()#">
 								<cfinvokeargument name="#propDefs[prop].getName()#"

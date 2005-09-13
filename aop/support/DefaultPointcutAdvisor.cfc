@@ -1,5 +1,5 @@
 <!---
-	 $Id: FactoryBean.cfc,v 1.2 2005/09/13 17:01:53 scottc Exp $
+	 $Id: DefaultPointcutAdvisor.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -25,25 +25,25 @@
 	POSSIBILITY OF SUCH DAMAGE.
 ---> 
  
-<cfcomponent name="FactoryBean" 
-			displayname="FactoryBean" 
-			hint="Interface (Abstract Class) for all FactoryBean implimentations" 
+<cfcomponent name="DefaultPointcutAdvisor" 
+			displayname="DefaultPointcutAdvisor" 
+			extends="coldspring.aop.support.AbstractPointcutAdvisor" 
+			hint="Abstract Base Class for Pointcut Advisor implimentations" 
 			output="false">
 			
-	<cffunction name="init" access="private" returntype="void" output="false">
-		<cfthrow message="Abstract CFC. Cannot be initialized" />
+	<cfset variables.pointcut = 0 />
+			
+	<cffunction name="init" access="public" returntype="coldspring.aop.DefaultPointcutAdvisor" output="false">
+		<cfreturn this />
 	</cffunction>
 	
-	<cffunction name="getObject" access="public" returntype="any" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="setPointcut" access="public" returntype="void" output="false">
+		<cfargument name="pointcut" type="coldspring.aop.Pointcut" required="true" />
+		<cfset variables.pointcut = arguments.pointcut />
 	</cffunction>
 	
-	<cffunction name="getObjectType" access="public" returntype="string" output="false">
-		<cfthrow type="Method.NotImplemented">
-	</cffunction>
-	
-	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="getPointcut" access="public" returntype="coldspring.aop.Pointcut" output="false">
+		<cfreturn variables.pointcut />
 	</cffunction>
 	
 </cfcomponent>

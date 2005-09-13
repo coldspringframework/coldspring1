@@ -1,5 +1,5 @@
 <!---
-	 $Id: FactoryBean.cfc,v 1.2 2005/09/13 17:01:53 scottc Exp $
+	 $Id: AbstractPointcutAdvisor.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -25,25 +25,35 @@
 	POSSIBILITY OF SUCH DAMAGE.
 ---> 
  
-<cfcomponent name="FactoryBean" 
-			displayname="FactoryBean" 
-			hint="Interface (Abstract Class) for all FactoryBean implimentations" 
+<cfcomponent name="AbstractPointcutAdvisor" 
+			displayname="AbstractPointcutAdvisor" 
+			extends="coldspring.aop.Advisor"
+			hint="Abstract Base Class for Pointcut Advisor implimentations" 
 			output="false">
+			
+	<cfset variables.order = 999 />
+	<cfset variables.advice = 0 />
 			
 	<cffunction name="init" access="private" returntype="void" output="false">
 		<cfthrow message="Abstract CFC. Cannot be initialized" />
 	</cffunction>
 	
-	<cffunction name="getObject" access="public" returntype="any" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="setOrder" access="public" returntype="void" output="false">
+		<cfargument name="order" type="numeric" required="true" />
+		<cfset variables.order = arguments.order />
 	</cffunction>
 	
-	<cffunction name="getObjectType" access="public" returntype="string" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="getOrder" access="public" returntype="numeric" output="false">
+		<cfreturn variables.order />
 	</cffunction>
 	
-	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
-		<cfthrow type="Method.NotImplemented">
+	<cffunction name="setAdvice" access="public" returntype="void" output="false">
+		<cfargument name="advice" type="coldspring.aop.Advice" required="true" />
+		<cfset variables.advice = arguments.advice />
+	</cffunction>
+	
+	<cffunction name="getAdvice" access="public" returntype="coldspring.aop.Advice" output="false">
+		<cfreturn variables.advice />
 	</cffunction>
 	
 </cfcomponent>
