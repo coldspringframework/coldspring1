@@ -1,3 +1,7 @@
+<!---
+	 $Id: DefaultXmlBeanFactory.cfc,v 1.2 2005/09/13 02:30:26 scottc Exp $
+	 $log$
+---> 
 
 <cfcomponent name="DefaultXmlBeanFactory" 
 			displayname="DefaultXmlBeanFactory" 
@@ -43,7 +47,7 @@
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
 			<cfset beans = arguments.XmlBeanDefinitions.beans.bean>
 		<cfelse>
-			<cfthrow type="tinybeans.XmlParserException" message="Xml file contains no beans!">
+			<cfthrow type="coldspring.XmlParserException" message="Xml file contains no beans!">
 		</cfif>
 		
 		<!--- create bean definition objects for each bean in config file --->
@@ -53,7 +57,7 @@
 			<cfset beanChildren = beans[beanIx].XmlChildren />
 			
 			<cfif not (StructKeyExists(beanAttributes,'id') and StructKeyExists(beanAttributes,'class'))>
-				<cfthrow type="tinybeans.MalformedBeanException" message="Xml bean definitions must contain 'id' and 'class' attributes!">
+				<cfthrow type="coldspring.MalformedBeanException" message="Xml bean definitions must contain 'id' and 'class' attributes!">
 			</cfif>
 			<cfif StructKeyExists(beanAttributes,'singleton')>
 				<cfset isSingleton = beanAttributes.singleton />
@@ -63,35 +67,9 @@
 			
 			<!--- call function to create bean definition and add to store --->
 			<cfset createBeanDefinition(beanAttributes.id, beanAttributes.class, beanChildren, isSingleton, false) />
-			
-			<!--- construct a bean definition file for this bean ->
-			<cfif StructKeyExists(beanAttributes,'id') and StructKeyExists(beanAttributes,'class')>
-				<cfset variables.beanDefs[beanAttributes.id] = 
-					   	CreateObject('component', 'coldspring.beans.BeanDefinition').init(this) />
-			<cfelse>
-				<cfthrow type="tinybeans.MalformedBeanException" message="Xml bean definitions must contain 'id' and 'class' attributes!">
-			</cfif>
-			
-			<cfset variables.beanDefs[beanAttributes.id].setBeanID(beanAttributes.id) />
-			<cfset variables.beanDefs[beanAttributes.id].setBeanClass(beanAttributes.class) />
-			
-			<cfif StructKeyExists(beanAttributes,'singleton')>
-				<cfset variables.beanDefs[beanAttributes.id].setSingleton(beanAttributes.singleton) />
-			</cfif>
-			
-			<!- set up property readers for this beanDefinition ->
-			<cfset beanChildren = beans[beanIx].XmlChildren />
-			<cfloop from="1" to="#ArrayLen(beanChildren)#" index="beanChildIx">
-				<cfset child = beanChildren[beanChildIx] />
-				<cfif child.XmlName eq "property">
-					<cfset variables.beanDefs[beanAttributes.id].addProperty(createObject("component","coldspring.beans.BeanProperty").init(child, variables.beanDefs[beanAttributes.id]))/>
-				</cfif>
-			</cfloop> --->
-			
-			<!--- <cfdump var="#beans[beanIx]#" /> --->
+
 		</cfloop>
 		
-		<!--- <cfabort /> --->
 	</cffunction>
 	
 	<cffunction name="createBeanDefinition" access="public" returntype="void" output="false">
@@ -130,19 +108,29 @@
 		<cfreturn structKeyExists(variables.beanDefs, arguments.beanName)/>
 	</cffunction>
 	
+	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
+		<cfargument name="beanName" type="string" required="true" />
+		<cfif containsBean(arguments.beanName)>
+			<cfreturn variables.beanDefs[arguments.beanName].isSingleton() />
+		<cfelse>
+			<cfthrow type="coldspring.NoSuchBeanDefinitionException" detail="Bean definition for bean named: #arguments.beanName# could not be found."/>
+		</cfif>
+	</cffunction>
+	
 	<cffunction name="getBean" access="public" output="false" returntype="any" 
 				hint="returns an instance of the bean registered under the given name. Depending on how the bean was configured by the BeanFactory configuration, either a singleton and thus shared instance or a newly created bean will be returned. A BeansException will be thrown when either the bean could not be found (in which case it'll be a NoSuchBeanDefinitionException), or an exception occurred while instantiating and preparing the bean">
 		<cfargument name="beanName" required="true" type="string" hint="name of bean to look for"/>
 		
 		<cfif containsBean(arguments.beanName)>
 			<cfif variables.beanDefs[arguments.beanName].isSingleton()>
-				<cfif variables.beanDefs[arguments.beanName].isConstructed() and singletonCacheContainsBean(arguments.beanName)>
-					<cfreturn getBeanFromSingletonCache(arguments.beanName) >
+				<cfif variables.beanDefs[arguments.beanName].isConstructed()>
+					<!--- <cfreturn getBeanFromSingletonCache(arguments.beanName) > --->
+					<cfreturn variables.beanDefs[arguments.beanName].getInstance() />
 				<cfelse>
 					<!--- lazy-init happens here --->
 					<cfset constructBean(arguments.beanName)/>	
 				</cfif>
-				<cfreturn getBeanFromSingletonCache(arguments.beanName) >
+				<cfreturn variables.beanDefs[arguments.beanName].getInstance() />
 			<cfelse>
 				<!--- return a new instance of this bean def --->
 				<cfreturn constructBean(arguments.beanName,true)/>
@@ -196,6 +184,14 @@
 				<cfset propDefs = beanDef.getProperties()/>
 				<cfset md = getMetaData(beanInstance)/>
 				
+				<!--- if this is a bean that extends the factory bean, set is factory --->
+				<cfif ArrayLen(StructFindValue(md,"coldspring.beans.factory.FactoryBean","ALL"))>
+					<cfset beanDef.setIsFactory(true) />
+				</cfif>
+				<!---
+				do we need to make sure that value is in the extends key??
+				--->
+				
 				<!--- now do dependency injection via setters --->		
 				<cfloop collection="#propDefs#"	item="prop">
 					<cfswitch expression="#propDefs[prop].getType()#">
@@ -245,7 +241,7 @@
 	<cffunction name="getBeanDefinition" access="public" returntype="coldspring.beans.BeanDefinition" output="false">
 		<cfargument name="beanName" type="string" required="true" />
 		<cfif not StructKeyExists(variables.beanDefs, beanName)>
-			<cfthrow type="tinybeans.MissingBeanReference" message="There is no bean registered with the factory with the id #arguments.beanID#" />
+			<cfthrow type="coldspring.MissingBeanReference" message="There is no bean registered with the factory with the id #arguments.beanID#" />
 		<cfelse>
 			<cfreturn variables.beanDefs[arguments.beanName] />
 		</cfif>

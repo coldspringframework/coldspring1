@@ -1,3 +1,7 @@
+<!---
+	 $Id: BeanProperty.cfc,v 1.2 2005/09/13 02:30:26 scottc Exp $
+	 $log$
+---> 
 
 <cfcomponent>
 

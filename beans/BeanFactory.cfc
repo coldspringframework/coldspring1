@@ -1,3 +1,8 @@
+<!---
+	 $Id: BeanFactory.cfc,v 1.2 2005/09/13 02:30:27 scottc Exp $
+	 $log$
+---> 
+
 <cfcomponent name="BeanFactory" 
 			displayname="BeanFactory" 
 			hint="Interface (Abstract Class) for Bean Factory implimentations" 

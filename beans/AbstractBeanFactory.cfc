@@ -1,3 +1,8 @@
+<!---
+	 $Id: AbstractBeanFactory.cfc,v 1.3 2005/09/13 02:30:27 scottc Exp $
+	 $log$
+---> 
+ 
 <cfcomponent name="AbstractBeanFactory" 
 			displayname="BeanFactory" 
 			extends="coldspring.beans.BeanFactory"

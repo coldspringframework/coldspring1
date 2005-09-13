@@ -1,3 +1,7 @@
+<!---
+	 $Id: BeanDefinition.cfc,v 1.2 2005/09/13 02:30:27 scottc Exp $
+	 $log$
+---> 
 
 <cfcomponent name="BeanDefinition">
 
@@ -125,6 +129,25 @@
 				hint="I set the Constructed flag in this instance's data">
 		<cfargument name="Constructed" type="boolean" required="true"/>
 		<cfset variables.instanceData.Constructed = arguments.Constructed/>
+	</cffunction>
+	
+	<cffunction name="isFactory" access="public" output="false" returntype="boolean" 
+				hint="I retrieve the Factory flag from this instance's data">
+		<cfreturn variables.instanceData.Factory />
+	</cffunction>
+
+	<cffunction name="setIsFactory" access="public" output="false" returntype="void"  
+				hint="I set the Factory flag in this instance's data">
+		<cfargument name="Factory" type="boolean" required="true"/>
+		<cfset variables.instanceData.Factory = arguments.Factory/>
+	</cffunction>
+	
+	<cffunction name="getInstance" access="public" output="false" returntype="any" hint="I retrieve the Instance from this instance's data">
+		<cfif isFactory()>
+			<cfreturn getFactory().getBeanFromSingletonCache(getBeanID()).getObject() >
+		<cfelse>
+			<cfreturn getFactory().getBeanFromSingletonCache(getBeanID()) >
+		</cfif>
 	</cffunction>
 	
 </cfcomponent>
