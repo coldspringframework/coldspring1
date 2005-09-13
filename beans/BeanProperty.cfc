@@ -1,5 +1,5 @@
 <!---
-	 $Id: BeanProperty.cfc,v 1.3 2005/09/13 17:01:53 scottc Exp $
+	 $Id: BeanProperty.cfc,v 1.4 2005/09/13 17:33:13 scottc Exp $
 	 $log$
 ---> 
 
@@ -81,7 +81,7 @@
 					<cfset ArrayAppend(rtn, entry.xmlText) />
 				</cfif>
 			</cfloop>
-			<cfreturn ArrayToList(rtn) />
+			<cfreturn rtn />
 		</cfif>
 		
 	</cffunction>

@@ -1,5 +1,5 @@
 <!---
-	 $Id: ProxyFactoryBean.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
+	 $Id: ProxyFactoryBean.cfc,v 1.2 2005/09/13 17:33:13 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -33,7 +33,7 @@
 	
 	<cfset variables.singleton = true />		
 	<cfset variables.advisorChain = ArrayNew(1) />
-	<cfset variables.interceptorNames = '' />
+	<cfset variables.interceptorNames = 0 />
 	<cfset variables.aopProxyUtils = CreateObject('component','coldspring.aop.framework.aopProxyUtils').init() />
 	<cfset variables.proxyObject = 0 />
 	<cfset variables.constructed = false />
@@ -48,7 +48,7 @@
 	</cffunction>
 	
 	<cffunction name="setInterceptorNames" access="public" returntype="void" output="false">
-		<cfargument name="interceptorNames" type="string" required="true" />
+		<cfargument name="interceptorNames" type="array" required="true" />
 		<cfset variables.interceptorNames = arguments.interceptorNames />
 	</cffunction>
 	
@@ -147,9 +147,12 @@
 			
 	<cffunction name="buildAdvisorChain" access="private" returntype="void" output="false">
 		<cfset var advisor = 0 />
-		<cfloop list="#variables.interceptorNames#" index="advisor">
-			<cfset ArrayAppend(variables.advisorChain, getBeanFactory().getBean(advisor)) />
-		</cfloop>
+		<cfset var ix = 0 />
+		<cfif isArray(variables.interceptorNames)>
+			<cfloop from="1" to="#ArrayLen(variables.interceptorNames)#" index="ix">
+				<cfset ArrayAppend(variables.advisorChain, getBeanFactory().getBean(variables.interceptorNames[ix])) />
+			</cfloop>
+		</cfif>
 	</cffunction>	
 	
 </cfcomponent>

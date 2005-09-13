@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+	
+	<bean id="bfAdvOne" class="coldspringAOP.tests.aopTests.bfAdvOne" />
+	<bean id="aftAdvOne" class="coldspringAOP.tests.aopTests.aftAdvOne" />
+	
+	<bean id="beforeAdvisor" class="coldspringAOP.aop.support.NamedMethodPointcutAdvisor">
+		<property name="advice">
+			<ref bean="bfAdvOne" />
+		</property>
+		<property name="mappedNames">
+			<value>say*,*oops</value>
+		</property>
+	</bean>
+	
+	<bean id="afterAdvisor" class="coldspringAOP.aop.support.NamedMethodPointcutAdvisor">
+		<property name="advice">
+			<ref bean="aftAdvOne" />
+		</property>
+		<property name="mappedNames">
+			<value>sayHello</value>
+		</property>
+	</bean>
+
+	<bean id="myTarget" class="coldspringAOP.tests.aopTests.helloBean" />
+	
+	<bean id="myProxy" class="coldspringAOP.aop.framework.ProxyFactoryBean">
+		<property name="target">
+			<ref bean="myTarget" />
+		</property>
+		<property name="interceptorNames">
+			<list>
+				<value>beforeAdvisor</value>
+				<value>afterAdvisor</value>
+			</list>
+		</property>
+	</bean>
+	
+</beans>
