@@ -1,11 +1,12 @@
 <!---
-	 $Id: BeanDefinition.cfc,v 1.3 2005/09/13 17:01:53 scottc Exp $
+	 $Id: BeanDefinition.cfc,v 1.4 2005/09/22 00:34:17 rossd Exp $
 	 $log$
 ---> 
 
 <cfcomponent name="BeanDefinition">
 
 	<cfset variables.instanceData = StructNew() />
+	<cfset variables.instanceData.ConstructorArgs = StructNew() />
 	<cfset variables.instanceData.Properties = StructNew() />
 	<cfset variables.instanceData.Singleton = true />
 	<cfset variables.instanceData.Constructed = false />
@@ -40,6 +41,35 @@
 		<cfset variables.instanceData.BeanClass = arguments.BeanClass />
 	</cffunction>
 	
+	<!--- bean constructor-arg getters/setters --->
+	<cffunction name="getConstructorArgs" access="public" output="false" returntype="struct" 
+				hint="I retrieve the ConstructorArgs from this instance's data">
+		<cfreturn variables.instanceData.constructorArgs />
+	</cffunction>
+
+	<cffunction name="setConstructorArgs" access="public" output="false" returntype="void"  
+				hint="I set the ConstructorArgs in this instance's data">
+		<cfargument name="constructorArgs" type="struct" required="true"/>
+		<cfset variables.instanceData.constructorArgs = arguments.constructorArgs />
+	</cffunction>
+	
+	<cffunction name="addConstructorArg" access="public" output="false" returntype="void"  
+				hint="I add a property to this bean definition">
+		<cfargument name="constructorArg" type="coldspring.beans.BeanConstructorArg" required="true"/>
+		<cfset variables.instanceData.constructorArgs[arguments.constructorArg.getName()] = arguments.constructorArg />
+	</cffunction>
+	
+	<cffunction name="getConstructorArg" access="public" output="false" returntype="coldspring.beans.BeanConstructorArg">
+		<cfargument name="constructorArgName" type="string" required="true"/>
+		<cfif structKeyExists(variables.instanceData.constructorArgs,arguments.constructorArgName)>
+			<cfreturn variables.instanceData.constructorArgs[arguments.constructorArgName] />
+		<cfelse>
+			<cfthrow type="coldspring.beanDefException" 
+					 detail="constructor-arg requested does not exist for bean: #getBeanID()# "/>
+		</cfif>
+	</cffunction>
+	
+	<!--- bean property getters/setters --->
 	<cffunction name="getProperties" access="public" output="false" returntype="struct" 
 				hint="I retrieve the Properties from this instance's data">
 		<cfreturn variables.instanceData.Properties />

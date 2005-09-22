@@ -1,5 +1,5 @@
 <!---
-	 $Id: DefaultXmlBeanFactory.cfc,v 1.3 2005/09/13 17:01:53 scottc Exp $
+	 $Id: DefaultXmlBeanFactory.cfc,v 1.4 2005/09/22 00:34:17 rossd Exp $
 	 $log$
 ---> 
 
@@ -59,15 +59,24 @@
 			<cfif not (StructKeyExists(beanAttributes,'id') and StructKeyExists(beanAttributes,'class'))>
 				<cfthrow type="coldspring.MalformedBeanException" message="Xml bean definitions must contain 'id' and 'class' attributes!">
 			</cfif>
+			
+			<!--- <cfdump var="#beanAttributes#"><cfabort>			
 			<cfif StructKeyExists(beanAttributes,'singleton')>
 				<cfset isSingleton = beanAttributes.singleton />
 			<cfelse>
 				<cfset isSingleton = true />
-			</cfif>
+			</cfif> --->
 			
-			<!--- call function to create bean definition and add to store --->
-			<cfset createBeanDefinition(beanAttributes.id, beanAttributes.class, beanChildren, isSingleton, false) />
-
+			<!--- <cftry> --->
+				<!--- call function to create bean definition and add to store --->
+				<cfset createBeanDefinition(beanAttributes.id, beanAttributes.class, beanChildren, isSingleton, false) />
+			
+			<!--- 	<cfcatch>
+						<cfthrow type="coldspring.BeanDefinitionCreationException" message="Error occured creating bean: #beanAttributes.class# (#cfcatch.message#)">
+				</cfcatch>
+		
+			</cftry>
+		 --->	
 		</cfloop>
 		
 	</cffunction>
@@ -97,6 +106,9 @@
 			<cfif child.XmlName eq "property">
 				<cfset variables.beanDefs[arguments.beanID].addProperty(createObject("component","coldspring.beans.BeanProperty").init(child, variables.beanDefs[arguments.beanID]))/>
 			</cfif>
+			<cfif child.XmlName eq "constructor-arg">
+				<cfset variables.beanDefs[arguments.beanID].addConstructorArg(createObject("component","coldspring.beans.BeanConstructorArg").init(child, variables.beanDefs[arguments.beanID]))/>
+			</cfif>			
 		</cfloop>
 		
 	</cffunction>
@@ -157,6 +169,8 @@
 		<cfset var dependentBeanInstance = 0 />
 		<cfset var propDefs = 0 />
 		<cfset var prop = 0/>
+		<cfset var argDefs = 0 />
+		<cfset var arg = 0/>
 		<cfset var md = '' />
 		<cfset var functionIndex = '' />
 		
@@ -182,13 +196,37 @@
 					<cfset beanInstance = localBeanCache[beanDef.getBeanID()] />
 				</cfif>
 				
+				<cfset argDefs = beanDef.getConstructorArgs()/>
+				
 				<cfset propDefs = beanDef.getProperties()/>
+				
 				<cfset md = getMetaData(beanInstance)/>
 				
 				<!--- we need to call init method if it exists --->
 				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
 					<cfif md.functions[functionIndex].name eq "init">
-						<cfset beanInstance.init() />
+						<cfinvoke component="#beanInstance#" method="init">
+							<!--- loop over any bean constructor-args and pass them into the init() --->
+							<cfloop collection="#argDefs#" item="arg">
+								<cfswitch expression="#argDefs[arg].getType()#">
+									<cfcase value="value,list">
+										<cfinvokeargument name="#argDefs[arg].getName()#"
+												    	  value="#argDefs[arg].getValue()#"/>
+									</cfcase>
+									
+									<cfcase value="ref,bean">
+										<cfset dependentBeanDef = getBeanDefinition(argDefs[arg].getValue()) />
+										<cfif dependentBeanDef.isSingleton()>
+											<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
+										<cfelse>
+											<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+										</cfif>
+										<cfinvokeargument name="#argDefs[arg].getName()#"
+														  value="#dependentBeanInstance#"/>
+									</cfcase>													  
+								</cfswitch> 				  								
+							</cfloop>
+						</cfinvoke>
 						<cfbreak />
 					</cfif>
 				</cfloop>
@@ -251,7 +289,7 @@
 	<cffunction name="getBeanDefinition" access="public" returntype="coldspring.beans.BeanDefinition" output="false">
 		<cfargument name="beanName" type="string" required="true" />
 		<cfif not StructKeyExists(variables.beanDefs, beanName)>
-			<cfthrow type="coldspring.MissingBeanReference" message="There is no bean registered with the factory with the id #arguments.beanID#" />
+			<cfthrow type="coldspring.MissingBeanReference" message="There is no bean registered with the factory with the id #arguments.beanName#" />
 		<cfelse>
 			<cfreturn variables.beanDefs[arguments.beanName] />
 		</cfif>

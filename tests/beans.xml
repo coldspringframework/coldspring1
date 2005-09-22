@@ -4,8 +4,8 @@
 <beans>
 	
 	<bean id="beanOne"
-			class="coldspring.tests.beanOne"
-			singleton="true">
+			class="coldspring.tests.beanOne">
+		<constructor-arg name="helper"><ref bean="beanTwo" /></constructor-arg>
 		<property name="message"><value>Hello</value></property>
 		<property name="messageTwo"><value>There</value></property>
 		<property name="helper">
@@ -16,6 +16,13 @@
 	<bean id="beanTwo"
 			class="coldspring.tests.beanTwo"
 			singleton="true">
+		<constructor-arg name="helper">
+			<bean id="notused" class="coldspring.tests.beanFive">
+				<constructor-arg name="innerhelper">
+					<ref bean="beanThree" />
+				</constructor-arg>
+			</bean>
+		</constructor-arg>
 		<property name="helper">
 			<ref bean="beanOne" />
 		</property>

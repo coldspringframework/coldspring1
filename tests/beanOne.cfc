@@ -2,6 +2,8 @@
 <cfcomponent name="beanOne">
 
 	<cffunction name="init" access="public" returntype="any">
+		<cfargument name="helper" type="coldspring.tests.beanTwo" required="true" />
+		<cfset this.con_arg_helper = arguments.helper />
 		<cfreturn this />
 	</cffunction>
 	
