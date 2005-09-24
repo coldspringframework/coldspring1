@@ -1,5 +1,5 @@
 <!---
-	 $Id: DefaultXmlBeanFactory.cfc,v 1.4 2005/09/22 00:34:17 rossd Exp $
+	 $Id: DefaultXmlBeanFactory.cfc,v 1.5 2005/09/24 16:44:16 rossd Exp $
 	 $log$
 ---> 
 
@@ -107,7 +107,7 @@
 				<cfset variables.beanDefs[arguments.beanID].addProperty(createObject("component","coldspring.beans.BeanProperty").init(child, variables.beanDefs[arguments.beanID]))/>
 			</cfif>
 			<cfif child.XmlName eq "constructor-arg">
-				<cfset variables.beanDefs[arguments.beanID].addConstructorArg(createObject("component","coldspring.beans.BeanConstructorArg").init(child, variables.beanDefs[arguments.beanID]))/>
+				<cfset variables.beanDefs[arguments.beanID].addConstructorArg(createObject("component","coldspring.beans.BeanProperty").init(child, variables.beanDefs[arguments.beanID]))/>
 			</cfif>			
 		</cfloop>
 		
@@ -209,9 +209,14 @@
 							<!--- loop over any bean constructor-args and pass them into the init() --->
 							<cfloop collection="#argDefs#" item="arg">
 								<cfswitch expression="#argDefs[arg].getType()#">
-									<cfcase value="value,list">
+									<cfcase value="value">
 										<cfinvokeargument name="#argDefs[arg].getName()#"
 												    	  value="#argDefs[arg].getValue()#"/>
+									</cfcase>
+
+									<cfcase value="list,map">
+										<cfinvokeargument name="#argDefs[arg].getName()#"
+												    	  value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
 									</cfcase>
 									
 									<cfcase value="ref,bean">
@@ -223,7 +228,9 @@
 										</cfif>
 										<cfinvokeargument name="#argDefs[arg].getName()#"
 														  value="#dependentBeanInstance#"/>
-									</cfcase>													  
+									</cfcase>		
+									
+																				  
 								</cfswitch> 				  								
 							</cfloop>
 						</cfinvoke>
@@ -243,11 +250,19 @@
 				<!--- now do dependency injection via setters --->		
 				<cfloop collection="#propDefs#"	item="prop">
 					<cfswitch expression="#propDefs[prop].getType()#">
-						<cfcase value="value,list">
+						<cfcase value="value">
 							<cfinvoke component="#beanInstance#"
 									  method="set#propDefs[prop].getName()#">
 								<cfinvokeargument name="#propDefs[prop].getName()#"
 									  	value="#propDefs[prop].getValue()#"/>
+							</cfinvoke>					
+						</cfcase>
+						
+						<cfcase value="map,list">
+							<cfinvoke component="#beanInstance#"
+									  method="set#propDefs[prop].getName()#">
+								<cfinvokeargument name="#propDefs[prop].getName()#"
+									  	value="#constructComplexProperty(propDefs[prop].getValue(), propDefs[prop].getType(), localBeanCache)#"/>
 							</cfinvoke>					
 						</cfcase>
 						
@@ -344,5 +359,71 @@
 			<cfthrow message="Cache error, #beanName# already exists in cache">
 		</cfif>
 	</cffunction>
+
+
+
+	<cffunction name="constructComplexProperty" access="private" output="false" returntype="any">
+		<cfargument name="ComplexProperty" type="any" required="true"/>
+		<cfargument name="type" type="string" required="true"/>
+		<cfargument name="localBeanCache" type="struct" required="true"/>
+		<cfset var rtn = 0 />	
+		
+		<cfif arguments.type eq 'map'>
+			<!--- just return the struct because it's passed by ref --->
+			<cfset findComplexPropertyRefs(arguments.ComplexProperty,arguments.type, arguments.localBeanCache)/> 
+			<cfreturn arguments.ComplexProperty/>		
+		<cfelseif arguments.type eq 'list'>
+			<!--- tail recursion for the array (and return the result) --->			
+			<cfreturn findComplexPropertyRefs(arguments.ComplexProperty,arguments.type, arguments.localBeanCache)/> 			
+		</cfif>
+		
+		
+	</cffunction>
+	
+	<cffunction name="findComplexPropertyRefs" access="private" output="false" returntype="any">
+		<cfargument name="ComplexProperty" type="any" required="true"/>	
+		<cfargument name="type" type="string" required="true"/>
+		<cfargument name="localBeanCache" type="struct" required="true"/>
+		<cfset var entry=0/>
+		<cfset var tmp_ref=0/>
+		
+		<cfswitch expression="#arguments.type#">
+			<cfcase value="map">
+				<cfloop collection="#arguments.ComplexProperty#" item="entry">					
+					<cfif isObject(arguments.ComplexProperty[entry]) and getMetaData(arguments.ComplexProperty[entry]).name eq "coldspring.beans.BeanReference">
+						<cfset dependentBeanDef = getBeanDefinition(arguments.ComplexProperty[entry].getBeanID()) />
+						<cfif dependentBeanDef.isSingleton()>
+							<cfset arguments.ComplexProperty[entry] = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
+						<cfelse>
+							<cfset arguments.ComplexProperty[entry] = localBeanCache[dependentBeanDef.getBeanID()] />
+						</cfif>						
+					<cfelseif isStruct(arguments.ComplexProperty[entry])>
+						<cfset findComplexPropertyRefs(arguments.ComplexProperty[entry],"map",arguments.localBeanCache)/>
+					<cfelseif isArray(arguments.ComplexProperty[entry])>
+						<cfset arguments.ComplexProperty[entry] = findComplexPropertyRefs(arguments.ComplexProperty[entry],"list",arguments.localBeanCache)/>						
+					</cfif>	
+				</cfloop>	
+			</cfcase>
+			<cfcase value="list">
+				<cfloop from="1" to="#arraylen(arguments.ComplexProperty)#" index="entry">
+					<cfif isObject(arguments.ComplexProperty[entry]) and getMetaData(arguments.ComplexProperty[entry]).name eq "coldspring.beans.BeanReference">
+						<cfset dependentBeanDef = getBeanDefinition(arguments.ComplexProperty[entry].getBeanID()) />
+						<cfif dependentBeanDef.isSingleton()>
+							<cfset arguments.ComplexProperty[entry] = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
+						<cfelse>
+							<cfset arguments.ComplexProperty[entry] = localBeanCache[dependentBeanDef.getBeanID()] />
+						</cfif>						
+					<cfelseif isStruct(arguments.ComplexProperty[entry])>
+						<cfset findComplexPropertyRefs(arguments.ComplexProperty[entry],"map",arguments.localBeanCache)/>
+					<cfelseif isArray(arguments.ComplexProperty[entry])>
+						<cfset arguments.ComplexProperty[entry] = findComplexPropertyRefs(arguments.ComplexProperty[entry],"list",arguments.localBeanCache)/>
+					</cfif>	
+				</cfloop>			
+				<cfreturn arguments.ComplexProperty />
+			</cfcase>
+		</cfswitch>
+		
+	</cffunction>
+
 
 </cfcomponent>

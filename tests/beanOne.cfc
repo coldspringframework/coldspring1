@@ -2,8 +2,8 @@
 <cfcomponent name="beanOne">
 
 	<cffunction name="init" access="public" returntype="any">
-		<cfargument name="helper" type="coldspring.tests.beanTwo" required="true" />
-		<cfset this.con_arg_helper = arguments.helper />
+		<cfargument name="helperStruct" type="struct" required="true" />
+		<cfset this.con_arg_helperStruct = arguments.helperStruct />
 		<cfreturn this />
 	</cffunction>
 	
@@ -19,11 +19,6 @@
 	<cffunction name="setMessageTwo" access="public">
 		<cfargument name="messageTwo" type="string" required="true" />
 		<cfset this.messageTwo = arguments.messageTwo />
-	</cffunction>
-	
-	<cffunction name="setHelper" access="public">
-		<cfargument name="helper" type="coldspring.tests.beanThree" required="true" />
-		<cfset this.helper = arguments.helper />
 	</cffunction>
 	
 </cfcomponent>

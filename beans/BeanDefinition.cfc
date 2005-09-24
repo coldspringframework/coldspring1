@@ -1,5 +1,5 @@
 <!---
-	 $Id: BeanDefinition.cfc,v 1.4 2005/09/22 00:34:17 rossd Exp $
+	 $Id: BeanDefinition.cfc,v 1.5 2005/09/24 16:44:16 rossd Exp $
 	 $log$
 ---> 
 
@@ -55,11 +55,11 @@
 	
 	<cffunction name="addConstructorArg" access="public" output="false" returntype="void"  
 				hint="I add a property to this bean definition">
-		<cfargument name="constructorArg" type="coldspring.beans.BeanConstructorArg" required="true"/>
+		<cfargument name="constructorArg" type="coldspring.beans.BeanProperty" required="true"/>
 		<cfset variables.instanceData.constructorArgs[arguments.constructorArg.getName()] = arguments.constructorArg />
 	</cffunction>
 	
-	<cffunction name="getConstructorArg" access="public" output="false" returntype="coldspring.beans.BeanConstructorArg">
+	<cffunction name="getConstructorArg" access="public" output="false" returntype="coldspring.beans.BeanProperty">
 		<cfargument name="constructorArgName" type="string" required="true"/>
 		<cfif structKeyExists(variables.instanceData.constructorArgs,arguments.constructorArgName)>
 			<cfreturn variables.instanceData.constructorArgs[arguments.constructorArgName] />

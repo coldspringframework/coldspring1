@@ -1,6 +1,5 @@
 <!---
-	 $Id: BeanProperty.cfc,v 1.4 2005/09/13 17:33:13 scottc Exp $
-	 $log$
+	 $Id: BeanProperty.cfc,v 1.5 2005/09/24 16:44:16 rossd Exp $
 ---> 
 
 <cfcomponent>
@@ -32,6 +31,15 @@
 		<cfset child = arguments.propertyDef.XmlChildren[1] />
 		<cfset setType(child.XmlName) />
 			
+		<cfset parseChildNode(child)/>
+			
+	</cffunction>
+
+	<cffunction name="parseChildNode" access="private" returntype="void" output="false">
+		<cfargument name="childNode" type="any" required="true" />
+		
+		<cfset var child = arguments.childNode />
+	
 		<!--- this needs to implements maps and lists, but I'm only going to do bean refs and values for now --->
 		<cfswitch expression="#child.xmlName#">
 			
@@ -42,7 +50,7 @@
 			
 			<cfcase value="bean">
 				<cfif not (StructKeyExists(child.XmlAttributes,'class'))>
-					<cfthrow type="tinybeans.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute!">
+					<cfthrow type="coldspring.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute!">
 				</cfif>
 				<!--- create uid for new Bean, store as value for lookup --->
 				<cfset beanUID = CreateUUID() />
@@ -51,8 +59,8 @@
 				<cfset addParentDefinitionDependency(beanUID) />
 			</cfcase>
 			
-			<cfcase value="list">
-				<cfset setValue(parseEntries(child.xmlChildren,'list')) />
+			<cfcase value="list,map">
+				<cfset setValue(parseEntries(child.xmlChildren,child.xmlName)) />
 			</cfcase>
 			
 			<cfcase value="value">
@@ -60,8 +68,8 @@
 			</cfcase>
 			
 		</cfswitch>
-			
 	</cffunction>
+
 	
 	<cffunction name="parseEntries" access="private" returntype="any" output="false">
 		<cfargument name="mapEntries" type="array" required="true" />
@@ -70,22 +78,75 @@
 		<cfset var ix = 0/>
 		<cfset var entry = 0/>
 		<cfset var entryChild = 0/>
-		
-		<!--- only lists are implemented so far --->
-		<cfif returnType IS 'list'>
-			<cfset rtn = ArrayNew(1) />
-			<cfloop from="1" to="#ArrayLen(mapEntries)#" index="ix">
-				<cfset entry = arguments.mapEntries[ix]/>
-				<!--- nothing but value types in the list are supported --->
-				<cfif entry.xmlName IS 'value'>
-					<cfset ArrayAppend(rtn, entry.xmlText) />
-				</cfif>
-			</cfloop>
-			<cfreturn rtn />
+		<cfset var entryKey = 0/>
+		<cfset var entryBeanID = 0/>
+	
+		<cfif returnType eq 'map'>
+			<cfset rtn = structNew() />
+		<cfelseif returnType eq 'list'>
+			<cfset rtn = arrayNew(1) />
+		<cfelse>
+			<cfthrow type="coldspring.UnsupportedPropertyChild" message="Coldspring only supports map and list as complex types">
 		</cfif>
+			
+		<cfloop from="1" to="#ArrayLen(mapEntries)#" index="ix">
+			
+			<cfset entry = arguments.mapEntries[ix]/>
+		
+			<cfif returnType eq 'map'>
+				<cfif not structkeyexists(entry.xmlAttributes,'key')>
+					<cfthrow type="coldspring.MalformedMapException" message="Map entries must have an attribute named 'key'">
+				</cfif>			
+				<cfif arraylen(entry.xmlChildren) neq 1>
+					<cfthrow type="coldspring.MalformedMapException" message="Map entries must have one child">
+				</cfif>
+				<cfset entryChild = entry.xmlChildren[1]/>
+				<cfset entryKey = entry.xmlAttributes.key />
+			<cfelseif returnType eq 'list'>
+				<cfset arrayAppend(rtn,"") />
+				<cfset entryChild = entry/>
+				<cfset entryKey = arrayLen(rtn) />
+			</cfif>
+			
+			<cfswitch expression="#entryChild.xmlName#">
+				
+				<cfcase value="value">
+					<cfset rtn[entryKey] = entryChild.xmlText />
+				</cfcase>
+				
+				<cfcase value="ref">
+					<cfset entryBeanID = entryChild.xmlAttributes.bean />
+					<cfset rtn[entryKey] = createObject("component",
+																		"coldspring.beans.BeanReference").init(
+																				entryBeanID
+																				)/>
+					<cfset addParentDefinitionDependency(entryBeanID) />
+				</cfcase>
+				
+				<cfcase value="bean">
+					<cfif not (StructKeyExists(entryChild.XmlAttributes,'class'))>
+						<cfthrow type="coldspring.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute!">
+					</cfif>
+					<!--- create uid for new Bean, store as value for lookup --->
+					<cfset entryBeanID = CreateUUID() />
+					<cfset rtn[entryKey] = createObject("component",
+																		"coldspring.beans.BeanReference").init(
+																				entryBeanID
+																				)/>
+					<cfset createInnerBeanDefinition(entryBeanID, entryChild.XmlAttributes.class, entryChild.XmlChildren) />
+					<cfset addParentDefinitionDependency(entryBeanID) />
+				</cfcase>					
+				
+				<cfcase value="map,list">
+					<cfset rtn[entryKey] = parseEntries(entryChild.xmlChildren,entryChild.xmlName) />											
+				</cfcase>
+			</cfswitch>
+		</cfloop>
+		<cfreturn rtn />
+	
 		
 	</cffunction>
-	
+
 	<cffunction name="addParentDefinitionDependency" access="private" returntype="void" output="false">
 		<cfargument name="refName" type="string" required="true"/>
 		<cfset getParentBeanDefinition().addDependency(arguments.refName) />
@@ -134,5 +195,11 @@
 		<cfargument name="Value" type="any" required="true"/>
 		<cfset variables.instanceData.Value = arguments.Value/>
 	</cffunction>
+	
+	
+	
+	
+	
+	
 	
 </cfcomponent>

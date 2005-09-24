@@ -33,7 +33,7 @@
 					<li>
 					Constructor-Arg Name: #beanConstructorArgs[arg].getName()#<br/>
 					Constructor-Arg Type: #beanConstructorArgs[arg].getType()#<br/>
-					Constructor-Arg Value: #beanConstructorArgs[arg].getValue()#<br/>
+					Constructor-Arg Value: <cfdump var="#beanConstructorArgs[arg].getValue()#"><br/>
 					</li>
 				</cfloop>
 				</ul>
@@ -44,7 +44,7 @@
 					<li>
 					PropertyName: #beanProperties[property].getName()#<br/>
 					PropertyType: #beanProperties[property].getType()#<br/>
-					PropertyValue: #beanProperties[property].getValue()#<br/>
+					PropertyValue: <cfdump var="#beanProperties[property].getValue()#"><br/>
 					</li>
 				</cfloop>
 				</ul>
@@ -66,7 +66,11 @@
 			<cfset testBean = beanFactory.getBean('beanTwo') />
 			#testBean.sayHiWithInnerBean()#
 
+<br /><br />
+			<cfset testBean = beanFactory.getBean('beanOne') />
+			<cfdump var="#testBean#">
 
+  
 			<!--- <cfdump var="#testBean#" /> --->
 	
 		</cfoutput>
