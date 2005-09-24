@@ -1,5 +1,5 @@
 <!---
-	 $Id: BeanDefinition.cfc,v 1.6 2005/09/24 18:50:43 rossd Exp $
+	 $Id: BeanDefinition.cfc,v 1.7 2005/09/24 22:13:17 rossd Exp $
 	 $log$
 ---> 
 
@@ -114,9 +114,13 @@
 		<cfset var functionIndex = '' />
 		<cfset var argIndex = '' />
 		<cfset var setterName = '' />
+		<cfset var setterNameToCall = '' />				
 		<cfset var setterType = '' />
 		<cfset var temp_xml = '' />
 		<cfset var beanInstance = 0/>
+		<cfset var beanName = 0/>
+		<cfset var autoArg = 0/>
+		<cfset var tempProps = arraynew(1)/>		
 		
 		<!--- this is where the bean is actually created if it hasn't been --->
 		<cfif not autoWireChecked()>
@@ -125,6 +129,8 @@
 			<cfset md = getMetaData(beanInstance) />		
 			<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
 				<!--- look for init (constructor) --->
+				<!--- todo:
+							respect how we are told to autowire (byName|byType) --->
 				<cfif md.functions[functionIndex].name eq "init" and arraylen(md.functions[functionIndex].parameters)>
 					<!--- loop over args --->
 					<cfloop from="1" to="#arraylen(md.functions[functionIndex].parameters)#" index="argIndex">
@@ -152,21 +158,56 @@
 					</cfloop>
 				<cfelseif left(md.functions[functionIndex].name,3) eq "set" and arraylen(md.functions[functionIndex].parameters) eq 1>
 					<!--- look for setters (same as above for constructor-args) --->
-					<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)/>
-					<cfset setterType = md.functions[functionIndex].parameters[1].type/>				
-					<cfif not structKeyExists(variables.instanceData.properties, setterName)
-							and getBeanFactory().containsBean(setterName)
-							and getBeanFactory().getBeanDefinition(setterName).getBeanClass() eq setterType>
+					<!--- todo:
+							respect how we are told to autowire (byName|byType) --->
 							
-							<cfset temp_xml = xmlnew()/>
+					<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)/>
+					<cfset setterNameToCall = setterName/>
+					<cfset setterType = md.functions[functionIndex].parameters[1].type/>	
+					<cfset beanByType = getBeanFactory().findBeanNameByType(setterType)/>	
+						
+						<!--- this should be refactored
+								basically if you register a bean with a name that matches the type we found here
+								currently we are autowiring in that situation --->
+						<cfif getBeanFactory().containsBean(setterType)>
+							<cfset setterName = setterType/>							
+						</cfif>
+						
+				
+					
+					<cfif not structKeyExists(variables.instanceData.properties, setterName)
+							and (
+									(
+									 getBeanFactory().containsBean(setterName)
+									 )
+								or
+									(
+									len(beanByType)
+									)
+								)>
+							
+							
+							
+							<cfset temp_xml = xmlnew()/>							
 							<cfset temp_xml.xmlRoot = XmlElemNew(temp_xml,"property")/>
-							<cfset temp_xml.xmlRoot.xmlAttributes['name'] = setterName />
+							<cfset temp_xml.xmlRoot.xmlAttributes['name'] = setterNameToCall />
 							<cfset temp_xml.xmlRoot.xmlChildren[1] = XmlElemNew(temp_xml,"ref")/>
-							<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = setterName />
-								
+																								
+							<!--- we are making sure the injection will happen if autowired by type
+									by overiding the properties name to what the setter wants
+									clean this up in the future --->
+							<cfif len(beanByType) and not getBeanFactory().containsBean(setterName)>								
+								<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = beanByType />					
+							<cfelse>
+								<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = setterName />	
+							</cfif>
+							
+							
 							<cfset addProperty(createObject("component","coldspring.beans.BeanProperty").init(
-																							temp_xml.xmlRoot,this
-																								)) />						
+																						temp_xml.xmlRoot,this
+																						) ) >
+							
+												
 					</cfif>				
 				</cfif>
 			</cfloop>			
@@ -260,6 +301,20 @@
 		<cfargument name="Factory" type="boolean" required="true"/>
 		<cfset variables.instanceData.Factory = arguments.Factory/>
 	</cffunction>
+		
+	<cffunction name="setInitMethod" access="public" output="false" returntype="void" hint="I set the InitMethod in this instance">
+		<cfargument name="InitMethod" type="string" required="true" />
+		<cfset variables.instanceData.initMethod = arguments.InitMethod />
+	</cffunction>
+
+	<cffunction name="getInitMethod" access="public" output="false" returntype="string" hint="I retrieve the InitMethod from this instance">
+		<cfreturn variables.instanceData.initMethod/>
+	</cffunction>
+	
+	<cffunction name="hasInitMethod" access="public" output="false" returntype="boolean" hint="I retrieve whether this bean def contains an init-method attibute, meaning a method that will be called after bean construction and dep. injection (confusiong because 'init()' is the constructor in CF)">
+		<cfreturn structKeyExists(variables.instanceData,"initMethod")/>
+	</cffunction>
+	
 	
 	<cffunction name="getInstance" access="public" output="false" returntype="any" hint="I retrieve the Instance from this instance's data">
 		<cfif isFactory()>

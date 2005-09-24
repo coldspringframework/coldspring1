@@ -1,5 +1,5 @@
 <!---
-	 $Id: DefaultXmlBeanFactory.cfc,v 1.7 2005/09/24 19:55:04 rossd Exp $
+	 $Id: DefaultXmlBeanFactory.cfc,v 1.8 2005/09/24 22:13:18 rossd Exp $
 ---> 
 
 <cfcomponent name="DefaultXmlBeanFactory" 
@@ -83,6 +83,7 @@
 		<cfset var beans = 0 />
 		<cfset var beanDef = 0 />
 		<cfset var beanIx = 0 />
+		<cfset var initMethod = "" />
 		<cfset var beanAttributes = 0 />
 		<cfset var beanChildren = 0 />
 		<cfset var isSingleton = true />
@@ -115,7 +116,12 @@
 			
 			<!--- <cftry> --->
 				<!--- call function to create bean definition and add to store --->
-				<cfset createBeanDefinition(beanAttributes.id, beanAttributes.class, beanChildren, isSingleton, false) />
+				<cfif StructKeyExists(beanAttributes,'init-method') and len(beanAttributes['init-method'])>
+					<cfset initMethod = beanAttributes['init-method'] />
+				<cfelse>
+					<cfset initMethod = ""/>
+				</cfif>
+				<cfset createBeanDefinition(beanAttributes.id, beanAttributes.class, beanChildren, isSingleton, false, initMethod) />
 			
 			<!--- 	<cfcatch>
 						<cfthrow type="coldspring.BeanDefinitionCreationException" message="Error occured creating bean: #beanAttributes.class# (#cfcatch.message#)">
@@ -135,6 +141,7 @@
 		<cfargument name="children" type="any" required="true" />
 		<cfargument name="isSingleton" type="boolean" required="true" />
 		<cfargument name="isInnerBean" type="boolean" required="true" />
+		<cfargument name="initMethod" type="string" default="" required="false" />
 		
 		<cfset var childIx = 0 />
 		<cfset var child = '' />
@@ -147,6 +154,11 @@
 		<cfset variables.beanDefs[arguments.beanID].setBeanClass(arguments.beanClass) />
 		<cfset variables.beanDefs[arguments.beanID].setSingleton(arguments.isSingleton) />
 		<cfset variables.beanDefs[arguments.beanID].setInnerBean(arguments.isInnerBean) />
+		
+		<cfif len(arguments.initMethod)>
+			
+			<cfset variables.beanDefs[arguments.beanID].setInitMethod(arguments.initMethod) />		
+		</cfif>
 		
 		<!--- set up property readers for this beanDefinition --->
 		<cfloop from="1" to="#ArrayLen(arguments.children)#" index="childIx">
@@ -167,6 +179,20 @@
 		<cfargument name="beanName" required="true" type="string" hint="name of bean to look for"/>
 		<cfreturn structKeyExists(variables.beanDefs, arguments.beanName)/>
 	</cffunction>
+	
+	<!--- this exists for autowiring by type... could be cleaned up --->
+	<cffunction name="findBeanNameByType" access="public" output="false" returntype="string"
+				hint="finds the first bean matching the specified type in the bean factory, otherwise returns ''">
+		<cfargument name="typeName" required="true" type="string" hint="type of bean to look for"/>
+		<cfset var bean = 0/>
+		<cfloop collection="#variables.beanDefs#" item="bean">
+			<cfif variables.beanDefs[bean].getBeanClass() eq arguments.typeName
+					and not variables.beanDefs[bean].isInnerBean()>
+				<cfreturn bean />
+			</cfif>
+		</cfloop>
+		<cfreturn ""/>
+	</cffunction>	
 	
 	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
 		<cfargument name="beanName" type="string" required="true" />
@@ -237,10 +263,12 @@
 			</cfif>
 		</cfloop>
 		
+		
+	
 		<!--- now resolve all dependencies  --->
-		<cfloop from="1" to="#ArrayLen(dependentBeanDefs)#" index="beanDefIx">
+		<cfloop from="#ArrayLen(dependentBeanDefs)#" to="1" index="beanDefIx" step="-1">
 			<cfset beanDef = dependentBeanDefs[beanDefIx] />
-			
+		
 			<cfif not beanDef.isConstructed()>
 				<cfif beanDef.isSingleton()>
 					<cfset beanInstance = getBeanFromSingletonCache(beanDef.getBeanID())>
@@ -291,7 +319,7 @@
 								</cfswitch> 				  								
 							</cfloop>
 						</cfinvoke>
-						<cfbreak />
+						<!--- <cfbreak /> --->
 					</cfif>
 				</cfloop>
 				
@@ -304,6 +332,9 @@
 				do we need to make sure that value is in the extends key??
 				--->
 				
+			
+		
+		
 				<!--- now do dependency injection via setters --->		
 				<cfloop collection="#propDefs#"	item="prop">
 					<cfswitch expression="#propDefs[prop].getType()#">
@@ -324,29 +355,45 @@
 						</cfcase>
 						
 						<cfcase value="ref,bean">
+							
+					
 							<cfset dependentBeanDef = getBeanDefinition(propDefs[prop].getValue()) />
 							<cfif dependentBeanDef.isSingleton()>
 								<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
 							<cfelse>
 								<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
 							</cfif>
+							
+							
 							<cfinvoke component="#beanInstance#"
 									  method="set#propDefs[prop].getName()#">
 								<cfinvokeargument name="#propDefs[prop].getName()#"
 												  value="#dependentBeanInstance#"/>
 							</cfinvoke>
+							
 						</cfcase>		
 					</cfswitch>
 				
 				</cfloop>
-				
+			
+			
+				<!--- now call an init-method if it's defined --->
+				<cfif beanDef.hasInitMethod()>
+									
+					<cfinvoke component="#beanInstance#"
+							  method="#beanDef.getInitMethod()#"/>
+				</cfif>
+					
 				<cfif beanDef.isSingleton()>
 					<cfset beanDef.setIsConstructed(true)/>
 				</cfif>
+				
 			</cfif>
 			
+
 		</cfloop>
-		
+			
+
 		<!--- if we're supposed to return the new object, do it --->
 		<cfif arguments.returnInstance>
 			<cfif dependentBeanDefs[1].isSingleton()>
