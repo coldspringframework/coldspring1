@@ -1,5 +1,5 @@
 <!---
-	 $Id: BeanProperty.cfc,v 1.5 2005/09/24 16:44:16 rossd Exp $
+	 $Id: BeanProperty.cfc,v 1.6 2005/09/24 19:55:04 rossd Exp $
 ---> 
 
 <cfcomponent>
@@ -64,12 +64,26 @@
 			</cfcase>
 			
 			<cfcase value="value">
-				<cfset setValue(child.xmlText) />
+				<cfset setValue(parseValue(child.xmlText)) />
 			</cfcase>
 			
 		</cfswitch>
 	</cffunction>
-
+	
+	<cffunction name="parseValue" access="private" returntype="string" output="false">
+		<cfargument name="rawValue" type="string" required="true" />
+		
+		<cfset var beanFactoryDefaultProperties = getParentBeanDefinition().getBeanFactory().getDefaultProperties() />
+		<!--- resolve anything that looks like it should get replaced with a beanFactory default property --->
+		<cfif left(rawValue,2) eq "${" and right(rawValue,1) eq "}">
+			<!--- look for this property value in the bean factory (using isDefined/evaluate incase of "." in property name--->
+			<cfif isDefined("beanFactoryDefaultProperties.#mid(rawValue,3,len(rawValue)-3)#")>
+				<cfreturn evaluate("beanFactoryDefaultProperties.#mid(rawValue,3,len(rawValue)-3)#")/>
+			</cfif>		
+		</cfif>
+		<cfreturn rawValue />
+	</cffunction>
+	
 	
 	<cffunction name="parseEntries" access="private" returntype="any" output="false">
 		<cfargument name="mapEntries" type="array" required="true" />
@@ -111,7 +125,7 @@
 			<cfswitch expression="#entryChild.xmlName#">
 				
 				<cfcase value="value">
-					<cfset rtn[entryKey] = entryChild.xmlText />
+					<cfset rtn[entryKey] = parseValue(entryChild.xmlText) />
 				</cfcase>
 				
 				<cfcase value="ref">

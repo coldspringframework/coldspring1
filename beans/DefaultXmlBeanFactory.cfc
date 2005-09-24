@@ -1,5 +1,5 @@
 <!---
-	 $Id: DefaultXmlBeanFactory.cfc,v 1.6 2005/09/24 18:50:43 rossd Exp $
+	 $Id: DefaultXmlBeanFactory.cfc,v 1.7 2005/09/24 19:55:04 rossd Exp $
 ---> 
 
 <cfcomponent name="DefaultXmlBeanFactory" 
@@ -12,23 +12,69 @@
 	<cfset variables.beanDefs = structnew()/>
 	
 	<cffunction name="init" access="public" returntype="coldspring.beans.DefaultXmlBeanFactory" output="false">
+		<cfargument name="defaultAttributes" type="struct" required="false" default="#structnew()#" hint="default behaviors for undefined bean attributes"/>
+		<cfargument name="defaultProperties" type="struct" required="false" default="#structnew()#" hint="any default properties"/>
+		
+		<!--- set defaults passed into constructor --->
+		<cfset setDefaultAttributes(arguments.defaultAttributes)/>
+		<cfset setDefaultProperties(arguments.defaultProperties)/>
+		
 		<cfreturn this />
 	</cffunction>
 	
 	<cffunction name="loadBeans" access="public" returntype="void" output="false">
 		<cfargument name="beanDefinitionFileName" type="string" required="true" />
-		<!--- add args for method of resource loading --->
 		
+		<cfset loadBeansFromXmlFile(arguments.beanDefinitionFileName)/>
+		
+	</cffunction>
+		
+	<cffunction name="loadBeansFromXmlFile" returntype="void" access="public" hint="loads bean definitions into the bean factory from an xml file location">
+		<cfargument name="beanDefinitionFile" type="string" required="true" hint="I am the location of the bean definition xml file"/>
+		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
+	
 		<cfset var cffile = 0/>
 		<cfset var rawBeanDefXML = ""/>
 		
 		<cffile action="read" 
-					file="#arguments.beanDefinitionFileName#"	 
-					variable="rawBeanDefXML"/>
-					
+				file="#arguments.beanDefinitionFile#"	 
+				variable="rawBeanDefXML"/>
+				
 		<cfset loadBeanDefinitions(xmlParse(rawBeanDefXML))/>
 		
+		<cfif arguments.ConstructNonLazyBeans>
+			<cfset initNonLazyBeans()/>
+		</cfif>
+			
 	</cffunction>
+				
+	<cffunction name="loadBeansFromXmlRaw" returntype="void" access="public" hint="loads bean definitions into the bean factory from supplied raw xml">
+		<cfargument name="beanDefinitionXml" type="string" required="true" hint="I am raw unparsed xml bean defs"/>
+		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
+	
+		<cfset loadBeanDefinitions(xmlParse(arguments.beanDefinitionXml))/>
+		
+		<cfif arguments.ConstructNonLazyBeans>
+			<cfset initNonLazyBeans()/>
+		</cfif>
+			
+	</cffunction>
+
+	<cffunction name="loadBeansFromXmlObj" returntype="void" access="public" hint="loads bean definitions into the bean factory from supplied cf xml object">
+		<cfargument name="beanDefinitionXmlObj" type="any" required="true" hint="I am parsed xml bean defs"/>
+		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
+	
+		<cfset loadBeanDefinitions(arguments.beanDefinitionXmlObj)/>
+		
+		<cfif arguments.ConstructNonLazyBeans>
+			<cfset initNonLazyBeans()/>
+		</cfif>
+			
+	</cffunction>
+	
+	
+	
+	
 	
 	<cffunction name="loadBeanDefinitions" access="public" returntype="void">
 		<cfargument name="XmlBeanDefinitions" type="string" required="true" 
@@ -155,6 +201,10 @@
 		
 	</cffunction>
 	
+	
+	<cffunction name="initNonLazyBeans" access="public" output="false" returntype="void">
+	</cffunction>	
+	
 	<cffunction name="constructBean" access="private" returntype="any">
 		<cfargument name="beanName" type="string" required="true"/>
 		<cfargument name="returnInstance" type="boolean" required="false" default="false" 
@@ -222,14 +272,19 @@
 									</cfcase>
 									
 									<cfcase value="ref,bean">
+										<!--- 
+										we thought we could support circular references with constructor args...
+											turns out that's not the case --->
+										<!--- 
 										<cfset dependentBeanDef = getBeanDefinition(argDefs[arg].getValue()) />
 										<cfif dependentBeanDef.isSingleton()>
 											<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
 										<cfelse>
 											<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
-										</cfif>
+										</cfif> 
+										--->
 										<cfinvokeargument name="#argDefs[arg].getName()#"
-														  value="#dependentBeanInstance#"/>
+														  value="#getBean(argDefs[arg].getValue())#"/> <!--- value="#dependentBeanInstance#"  --->
 									</cfcase>		
 									
 																				  
@@ -425,6 +480,51 @@
 			</cfcase>
 		</cfswitch>
 		
+	</cffunction>
+	
+	
+	<cffunction name="getDefaultProperties" access="public" output="false" returntype="struct">
+		<cfreturn variables.DefaultProperties/>
+	</cffunction>
+
+	<cffunction name="setDefaultProperties" access="public" output="false" returntype="void">
+		<cfargument name="DefaultProperties" type="struct" required="true"/>
+		<cfset variables.DefaultProperties = arguments.DefaultProperties/>
+	</cffunction>
+	
+	<cffunction name="getDefaultAttributes" access="public" output="false" returntype="struct">
+		<cfreturn variables.DefaultAttributes/>
+	</cffunction>
+
+	<cffunction name="setDefaultAttributes" access="public" output="false" returntype="void">
+		<cfargument name="DefaultAttributes" type="struct" required="true"/>
+		<cfset variables.DefaultAttributes = arguments.DefaultAttributes/>
+	</cffunction>	
+	
+
+	<cffunction name="getDefaultValue" access="private">
+		<cfargument name="attributeName" required="true" type="string"/>
+		<cfargument name="attributeValue" required="true" type="any"/>
+		
+		<cfif arguments.attributeValue eq "default">
+			<cfif structKeyExists(variables.defaultAttributes, arguments.attributeName)>
+				<cfreturn variables.defaultAttributes[arguments.attributeName]/>		
+			<cfelse>
+				<cfswitch expression="#arguments.attributeName#">
+					<cfcase value="autowire">
+						<cfreturn "byName"/>
+					</cfcase>
+					<cfcase value="singleton">
+						<cfreturn true/>
+					</cfcase>					
+					<cfdefaultcase>
+						<cfreturn false/>					
+					</cfdefaultcase>
+				</cfswitch>
+			</cfif>			
+		<cfelse>
+			<cfreturn arguments.attributeValue/>		
+		</cfif>				
 	</cffunction>
 
 
