@@ -1,9 +1,8 @@
 
-<cfcomponent name="beanSeven">
+<cfcomponent name="beanNine">
 
-	<cffunction name="init" access="public" returntype="coldspring.tests.beanSeven">		
-		<cfargument name="beanEight" type="coldspring.tests.beanEight" required="true" />
-		<cfset this.myBean8 = arguments.beanEight />
+	<cffunction name="init" access="public" returntype="coldspring.tests.beanNine">
+
 		<cfreturn this />
 	</cffunction>
 	
@@ -28,5 +27,10 @@
 	<cffunction name="getMoreStuff" access="public" returntype="struct">
 		<cfreturn this.MoreStuff />
 	</cffunction>
+		
+	<cffunction name="setBeanOne" access="public">
+		<cfargument name="BeanOne" type="coldspring.tests.BeanOne" required="true" />
+		<cfset this.BeanOne = arguments.BeanOne />
+	</cffunction>		
 		
 </cfcomponent>

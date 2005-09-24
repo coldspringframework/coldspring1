@@ -67,7 +67,7 @@
 			#testBean.sayHiWithInnerBean()#
 
 <br /><br />
-			<cfset testBean = beanFactory.getBean('beanOne') />
+			<cfset testBean = beanFactory.getBean('beanNine') />
 			<cfdump var="#testBean#">
 
   

@@ -1,12 +1,11 @@
 <!---
-	 $Id: DefaultXmlBeanFactory.cfc,v 1.5 2005/09/24 16:44:16 rossd Exp $
-	 $log$
+	 $Id: DefaultXmlBeanFactory.cfc,v 1.6 2005/09/24 18:50:43 rossd Exp $
 ---> 
 
 <cfcomponent name="DefaultXmlBeanFactory" 
 			displayname="DefaultXmlBeanFactory" 
 			extends="coldspring.beans.AbstractBeanFactory"
-			hint="Abstract Base Class for Bean Factory implimentations" 
+			hint="XML Bean Factory implimentation" 
 			output="false">
 			
 	<!--- local struct to hold bean definitions --->
@@ -36,6 +35,7 @@
 					hint="I am a parsed Xml file of bean definitions"/>
 					
 		<cfset var beans = 0 />
+		<cfset var beanDef = 0 />
 		<cfset var beanIx = 0 />
 		<cfset var beanAttributes = 0 />
 		<cfset var beanChildren = 0 />
@@ -78,6 +78,8 @@
 			</cftry>
 		 --->	
 		</cfloop>
+		
+		
 		
 	</cffunction>
 	
@@ -179,13 +181,13 @@
 			<cfset beanDef = getBeanDefinition(ListGetAt(dependentBeanNames,beanDefIx)) />
 			<cfset ArrayAppend(dependentBeanDefs,beanDef) />
 			<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
-				<cfset addBeanToSingletonCache(beanDef.getBeanID(), CreateObject('component', beanDef.getBeanClass())) />
+				<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) /> <!--- CreateObject('component', beanDef.getBeanClass())) /> --->
 			<cfelse>
-				<cfset localBeanCache[beanDef.getBeanID()] = CreateObject('component', beanDef.getBeanClass()) />
+				<cfset localBeanCache[beanDef.getBeanID()] = beanDef.getBeanInstance() /> <!--- CreateObject('component', beanDef.getBeanClass()) /> --->
 			</cfif>
 		</cfloop>
 		
-		<!--- now resolve all dependencies (seriously simplified here. Just dealing with values and references, only setter injection) --->
+		<!--- now resolve all dependencies  --->
 		<cfloop from="1" to="#ArrayLen(dependentBeanDefs)#" index="beanDefIx">
 			<cfset beanDef = dependentBeanDefs[beanDefIx] />
 			

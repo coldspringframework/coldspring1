@@ -23,7 +23,6 @@
 						<property name="evenMoreStuff">
 							<list>
 								<value>asdasdads</value>
-								<ref bean="beanEight" />
 								<value>asdasdads</value>
 								<map>
 									<entry key="qweqwe"><value>adasd</value></entry>									
@@ -73,5 +72,8 @@
 		
 	<bean id="beanEight"
 		class="coldspring.tests.beanEight"/>
+		
+	<bean id="beanNine"
+		class="coldspring.tests.beanNine"/>		
 	
 </beans>

@@ -1,5 +1,5 @@
 <!---
-	 $Id: BeanDefinition.cfc,v 1.5 2005/09/24 16:44:16 rossd Exp $
+	 $Id: BeanDefinition.cfc,v 1.6 2005/09/24 18:50:43 rossd Exp $
 	 $log$
 ---> 
 
@@ -107,8 +107,70 @@
 	
 	<cffunction name="getDependencies" access="public" output="false" returntype="string">
 		<cfargument name="dependencyList" type="string" required="true" />
+		
 		<cfset var myDependencies = '' />
 		<cfset var refName = '' />
+		<cfset var md = '' />
+		<cfset var functionIndex = '' />
+		<cfset var argIndex = '' />
+		<cfset var setterName = '' />
+		<cfset var setterType = '' />
+		<cfset var temp_xml = '' />
+		<cfset var beanInstance = 0/>
+		
+		<!--- this is where the bean is actually created if it hasn't been --->
+		<cfif not autoWireChecked()>
+			<cfset  beanInstance = getBeanInstance() />
+			<!--- look for autowirable collaborators --->
+			<cfset md = getMetaData(beanInstance) />		
+			<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
+				<!--- look for init (constructor) --->
+				<cfif md.functions[functionIndex].name eq "init" and arraylen(md.functions[functionIndex].parameters)>
+					<!--- loop over args --->
+					<cfloop from="1" to="#arraylen(md.functions[functionIndex].parameters)#" index="argIndex">
+						<cfset autoArg = md.functions[functionIndex].parameters[argIndex]/>
+						<!--- is this arg not explicitly defined?
+								and the bean facotry knows it by name
+								and if so, *that* bean's class matches this type of arg 
+								then it's a dependency --->
+						<cfif not structKeyExists(variables.instanceData.constructorArgs, autoArg.name)
+							and getBeanFactory().containsBean(autoArg.name)
+							and getBeanFactory().getBeanDefinition(autoArg.name).getBeanClass() eq autoArg.type>
+							
+							<!--- we are going to add the constructor arg as if it had been defined in the xml --->
+							<cfset temp_xml = xmlnew()/>
+							<cfset temp_xml.xmlRoot = XmlElemNew(temp_xml,"constructor-arg")/>
+							<cfset temp_xml.xmlRoot.xmlAttributes['name'] = autoArg.name />
+							<cfset temp_xml.xmlRoot.xmlChildren[1] = XmlElemNew(temp_xml,"ref")/>
+							<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = autoArg.name />
+								
+							<cfset addConstructorArg(createObject("component","coldspring.beans.BeanProperty").init(
+																							temp_xml.xmlRoot,this
+																								)) />						
+							
+						</cfif>
+					</cfloop>
+				<cfelseif left(md.functions[functionIndex].name,3) eq "set" and arraylen(md.functions[functionIndex].parameters) eq 1>
+					<!--- look for setters (same as above for constructor-args) --->
+					<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)/>
+					<cfset setterType = md.functions[functionIndex].parameters[1].type/>				
+					<cfif not structKeyExists(variables.instanceData.properties, setterName)
+							and getBeanFactory().containsBean(setterName)
+							and getBeanFactory().getBeanDefinition(setterName).getBeanClass() eq setterType>
+							
+							<cfset temp_xml = xmlnew()/>
+							<cfset temp_xml.xmlRoot = XmlElemNew(temp_xml,"property")/>
+							<cfset temp_xml.xmlRoot.xmlAttributes['name'] = setterName />
+							<cfset temp_xml.xmlRoot.xmlChildren[1] = XmlElemNew(temp_xml,"ref")/>
+							<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = setterName />
+								
+							<cfset addProperty(createObject("component","coldspring.beans.BeanProperty").init(
+																							temp_xml.xmlRoot,this
+																								)) />						
+					</cfif>				
+				</cfif>
+			</cfloop>			
+		</cfif>		
 		<cfloop list="#variables.instanceData.Dependencies#" index="refName">
 			<cfif ListFindNoCase(arguments.dependencyList, refName) LT 1>
 				<cfset arguments.dependencyList = ListAppend(arguments.dependencyList,refName) />
@@ -116,6 +178,32 @@
 			</cfif>
 		</cfloop>
 		<cfreturn arguments.dependencyList />
+		
+	</cffunction>
+	
+	<cffunction name="getBeanInstance" access="public" output="false" returntype="struct" 
+				hint="I retrieve the the actual bean instance (a new one if this is a prototype bean) from this bean definition">
+
+		<!--- create this if it doesn't exist --->
+		<cfif not structkeyexists(variables,"beanInstance")>
+			<cfset variables.beanInstance = createObject("component", getBeanClass()) />
+		</cfif>
+
+		<cfif isSingleton()>
+			<cfreturn variables.beanInstance />
+		<cfelse>
+			<cfreturn createObject("component", getBeanClass())/>
+		</cfif>
+		
+	</cffunction>
+	
+	<cffunction name="autoWireChecked" access="public" output="false" returntype="boolean">
+		<cfif not structKeyExists(variables.instanceData,"autoWireChecked")>
+			<cfset variables.instanceData.autoWireChecked = true />
+			<cfreturn false/>
+		<cfelse>
+			<cfreturn true/>		
+		</cfif>
 	</cffunction>
 	
 	<cffunction name="getBeanFactory" access="public" output="false" returntype="struct" 
