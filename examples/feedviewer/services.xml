@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+
+ 
+<!--
+	$Id: services.xml,v 1.1 2005/09/24 22:12:49 rossd Exp $
+	$Source: D:/CVSREPO/coldspring/coldspring/examples/feedviewer/services.xml,v $
+	$State: Exp $
+	$Log: services.xml,v $
+	Revision 1.1  2005/09/24 22:12:49  rossd
+	first commit of sample app and m2 plugin
+	
+	Revision 1.1  2005/02/13 22:22:44  rossd
+	swapped in xml-storage components as default
+	
+	Revision 1.5  2005/02/11 17:56:55  rossd
+	eliminated rdbms vendor-specific services, replaced with generic sql services
+	added datasourceSettings bean containing vendor information
+	
+	Revision 1.4  2005/02/09 14:40:09  rossd
+	*** empty log message ***
+	
+	Revision 1.3  2005/02/09 04:26:41  rossd
+	*** empty log message ***
+	
+	Revision 1.2  2005/02/08 21:31:18  rossd
+	*** empty log message ***
+	
+	Revision 1.1  2005/02/07 21:57:40  rossd
+	initial checkin of feedviewer sample app
+	
+
+    Copyright (c) 2005 David Ross
+    
+    This spring-beans configuration file will tell coldspring how to instantiate, configure, 
+    and resolve dependencies among the various application services for the "feedviewer" 
+    example application.
+    
+    
+-->
+<beans>
+    
+    <!--first, we'll set up some basic services that will be used across a wide variety of other components -->
+    <!-- how bout' a logging service? -->
+    <bean id="loggingService"
+        class="coldspring.examples.feedviewer.model.logging.cfloglogger">
+        <property name="logLevel"><value>debug</value></property>
+    </bean>
+
+    <!-- this is a simple datasource settings bean, configured to be used by xml storage components  -->
+    <bean id="datasourceSettings"
+        class="coldspring.examples.feedviewer.model.datasource.datasourceSettings">
+        <property name="type"><value>xml</value></property>
+        <property name="xmlStoragePath"><value>${xmlstoragepath}</value></property>
+    </bean>
+
+    <!-- you would use this definition if you were going to use rdbms storage: -->
+    <!--
+    <bean id="datasourceSettings"
+         class="coldspring.examples.feedviewer.model.datasource.datasourceSettings">
+        <property name="type"><value>rdbms</value></property>
+        <property name="datasourceName"><value>${dsn}</value></property>
+        <property name="vendor"><value>${dsvendor}</value></property>        
+    </bean>
+    -->
+
+
+    <!-- now we'll define some more app-specific "services" -->
+    <!-- a category service, which needs a categoryDAO and a categoryGateway -->
+    <bean id="categoryService" 
+        class="coldspring.examples.feedviewer.model.category.categoryService">
+        <!-- these properties refer to other beans that are (or will be) defined -->
+        <property name="categoryDAO">
+            <ref bean="categoryDAO"/>
+        </property>    
+        <property name="categoryGateway">
+            <ref bean="categoryGateway"/>
+        </property>         
+    </bean>
+    
+    <!-- the needed categoryDAO... you would change the class here to swap implementations
+        for instance we're pointed at the xmlCategoryDAO class, however we would need
+        to point at the sqlCategoryDAO to use a relational database    
+    -->
+    <bean id="categoryDAO"
+        class="coldspring.examples.feedviewer.model.category.xmlCategoryDAO">
+        <!-- we'll explicitly pass in the datasource settings defined above -->
+        <constructor-arg name="datasourceSettings">
+            <ref bean="datasourceSettings"/>
+        </constructor-arg>
+        <!-- and set the logger -->
+        <property name="logger">
+            <ref bean="loggingService"/>
+        </property>
+    </bean>
+
+    <!-- a data gateway for categories, same idea as the DAO -->
+    <bean id="categoryGateway"
+        class="coldspring.examples.feedviewer.model.category.xmlCategoryGateway">
+        <!-- notice that I left out the constructor-arg and property tags here...
+             even though this categoryGateway has the same requirements as the categoryDAO,
+             coldspring will "autowire" them together" -->
+    </bean>
+
+    <!-- a channel service, which needs a channelDAO and a channelGateway -->
+    <bean id="channelService" 
+        class="coldspring.examples.feedviewer.model.channel.channelService">
+        <!-- this time I am going to explicitly define a channelDAO and channelGateway inside of
+                the channelService definition. -->
+        <property name="channelGateway">
+            <bean id="channelGateway"
+                class="coldspring.examples.feedviewer.model.channel.xmlChannelGateway">
+                <!-- I could define the datasource settings constructor-arg right here
+                    but I've chosen to let the autowiring do it for me-->
+                <property name="logger">
+                    <ref bean="loggingService"/>
+                </property>
+            </bean>
+        </property>         
+        <property name="channelDAO">
+            <bean id="channelDAO"
+                class="coldspring.examples.feedviewer.model.channel.xmlChannelDAO">
+                <property name="logger">
+                    <ref bean="loggingService"/>
+                </property>
+            </bean>
+        </property> 
+    </bean>
+    
+    <!-- a entry service, which needs a entryDAO and a entryGateway -->
+    <bean id="entryService" 
+        class="coldspring.examples.feedviewer.model.entry.entryService">
+        <!-- again, I am going to explicitly define a entryDAO and entryGateway inside of
+                the entryService definition.       -->  
+        <property name="entryGateway">
+            <bean id="entryGateway"
+                class="coldspring.examples.feedviewer.model.entry.xmlEntryGateway">
+                <property name="logger">
+                    <ref bean="loggingService"/>
+                </property>
+            </bean>
+        </property> 
+        <property name="entryDAO">
+            <bean id="entryDAO"
+                class="coldspring.examples.feedviewer.model.entry.xmlEntryDAO">
+                <property name="logger">
+                    <ref bean="loggingService"/>
+                </property>
+            </bean>
+        </property> 
+    </bean>
+    
+    
+    <!-- ok... now we can look at an example of swapping different implementations.
+        I've got two RSS parser/normalizers...
+            1) Roger Benningfield's RSS normalizer
+                -written in CF
+                -needs help retrieving the content
+                
+            2) java ROME library 
+                -written in java
+                -depends on rome-0.5.jar and jdom.jar being in CFMX's classpath
+                
+        So what I've done is defined a psuedo-interface for a normalization service, coldspring.examples.feedviewer.model.normalization.normalizationService
+        Then I wrote a wrapper for Benningfield's RSS normalizer: coldspring.examples.feedviewer.normalization.benningfieldNormalizationService
+                                            And another for ROME: coldspring.examples.feedviewer.model.normalization.romeNormalizationService
+        
+        Since both implementations now have a normalize(string url) that returns and array of struct,
+        (look in coldspring.examples.feedviewer.model.normalization.normalizationService for a description of the keys)
+        I can swap which one I want to use by simply changing the class="" attribute of the normalizationService defined below, or commenting/uncommenting the different definitions.
+             -->
+    
+    <!-- a service for retrieving content over the web, which is ONLY needed for Benningfield's normalizer    -->
+    <bean id="retrievalService"
+        class="coldspring.examples.feedviewer.model.retrieval.cfhttpRetrievalService"/>
+  
+    <!-- a wrapper for Roger Benningfield's RSS normalizer that needs the above retrieval service to get it's content    -->  
+    <bean id="normalizationService"
+        class="coldspring.examples.feedviewer.model.normalization.benningfieldNormalizationService">
+        <constructor-arg name="rssatomnormalizer">
+            <!-- this is Roger Benningfield's actual RSS normalizer needed by the above wrapper    -->  
+            <bean id="rssatomnormalizer"
+                class="coldspring.examples.feedviewer.Benningfield.rssatomnorm"/>
+        </constructor-arg>
+        <property name="retrievalService"><ref bean="retrievalService"/></property>
+    </bean>
+    
+    
+    <!-- here's an alternate implementation of a normalization service that uses the java ROME library 
+    <bean id="normalizationService"
+        class="coldspring.examples.feedviewer.model.normalization.romeNormalizationService">
+    </bean>
+    -->
+    
+    <!-- an aggregator service to utilize the normalization service, 
+        and it will store entries using the entry service from above  -->
+    <bean id="aggregatorService"
+        class="coldspring.examples.feedviewer.model.aggregator.aggregatorService">
+        <property name="normalizationService"><ref bean="normalizationService"/></property>
+        <property name="entryService"><ref bean="entryService"/></property>
+    </bean>    
+    
+</beans>

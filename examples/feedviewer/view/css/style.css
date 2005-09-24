@@ -1,0 +1,112 @@
+body{
+    background:#fdfefd;
+    font-family: verdana;
+}
+h2{
+    font-size: 15px;
+}
+h3{
+    font-size: 13px;
+}
+td{
+    font-size: 11px;
+}
+p{
+    font-size: 12px;
+}
+li{
+    margin-left:-15px;
+    font-size: 12px;
+}
+ul{
+
+}
+#mainTable{
+    border: 2px solid #333;
+}
+#mainTable td.mainHeader{
+    border-bottom: 1px solid #333;
+}
+#mainTable td.mainFooter{
+    border-top: 1px solid #333;
+}
+#mainTable td.leftContent{
+    border-right: 1px solid #333;
+}
+#catTable{
+    border: 1px solid #b66;
+    margin: 5px 2px;
+    
+}
+#catTable td.header{
+    border-bottom: 1px solid #666;
+    font-weight: bold;
+    
+}
+#catTable td.selected{
+    background:#ddd;
+}
+#catTable td.selected a{
+    color:#000;
+}
+
+#catSingleTable{
+    margin-top:5px;
+    margin-left:2px;
+    align:center;
+    width:99%;
+    border:1px solid #b66;
+}
+#catSingleTable td{
+    padding-bottom:4px;
+}
+#catSingleTable td.catTitle{
+    font-weight:bold;
+}
+#catSingleTable td.CategoryChannelHeader{
+    font-style: italic;
+}
+
+#entriesTable table.singleEntry{
+   border-left:1px solid #b66;
+   border-top:1px solid #b66;
+}
+
+#entriesTable td.entryTitle{
+   border-bottom:1px solid #999;
+   padding:2px;
+}
+
+#message{
+    margin-left:20px;
+    font-size:12px;
+    color:#b00;
+    font-weight:bold;
+}
+input{
+    background:#eee;
+    border: 1px solid #ccc;
+     font-family: verdana;
+}
+select{
+    background:#eee;
+    border: 1px solid #ccc;
+     font-family: verdana;
+}
+input.subbtn{
+    background:#fefefe;
+    border: 1px solid #ccc;
+    border-left: 1px solid #aaa;
+    border-top: 1px solid #aaa;
+    padding:3px;
+    font-weight:bold;
+}
+input.rembtn{
+    background:#fefefe;
+    border: 1px solid #ccc;
+    border-left: 1px solid #aaa;
+    border-top: 1px solid #aaa;
+    padding:3px;
+    color:#f00;
+    font-weight:bold;
+}

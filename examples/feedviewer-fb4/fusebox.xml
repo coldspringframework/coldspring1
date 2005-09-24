@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fusebox>	
+
+	<circuits>
+		<circuit alias="c" path="controller/" parent=""/>		
+		<circuit alias="v" path="view/" parent=""/>
+	</circuits>
+	
+	<classes>
+	    <class alias="event" 
+	            classpath="coldspring.examples.feedviewer-fb4.plugins.event" 
+	            type="component"
+	            constructor="init"/>
+	    <class alias="category" 
+	            classpath="coldspring.examples.feedviewer.model.category.category" 
+	            type="component"
+	            constructor="init"/>
+         <class alias="channel" 
+	            classpath="coldspring.examples.feedviewer.model.channel.channel" 
+	            type="component"
+	            constructor="init"/>
+	    
+	</classes>	
+	
+	<parameters>
+		<parameter name="fuseactionVariable" value="event" />
+		<parameter name="defaultFuseaction" value="c.showHome" />
+		<parameter name="precedenceFormOrUrl" value="form"/>
+		<parameter name="password" value="" />
+		<parameter name="execute" value="true" />
+		<parameter name="reparse" value="true" />
+		<parameter name="parseWithComments" value="true" />
+		<parameter name="mode" value="production" />
+		<parameter name="scriptlanguage" value="cfmx" />
+		<parameter name="scriptFileDelimiter" value="cfm"/>
+		<parameter name="maskedFileDelimiters" value="htm,cfm,cfml,php,php4,asp,aspx"/>
+	</parameters> 
+	
+	<globalfuseactions>
+		<preprocess>
+		</preprocess>
+		<postprocess>	
+			<do action="v.renderPage"/>
+		</postprocess>
+	</globalfuseactions>
+	
+	<plugins>
+		<phase name="preProcess">
+		</phase>
+		<phase name="preFuseaction">
+			<plugin name="EventArgs" template="eventArgs.cfm"/>
+		</phase>
+		<phase name="postFuseaction">	
+		</phase>
+		<phase name="fuseactionException">
+		</phase>		
+		<phase name="postProcess">
+		</phase>
+		<phase name="processError">
+		</phase>
+		
+	</plugins>
+
+</fusebox>

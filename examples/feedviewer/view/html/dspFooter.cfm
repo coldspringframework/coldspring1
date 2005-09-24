@@ -1,0 +1,1 @@
+<h3 style="margin=0px;" align="center"> Copyright (c) 2005 David Ross</h3> 
