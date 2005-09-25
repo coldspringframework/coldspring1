@@ -1,5 +1,5 @@
 <!---
-	 $Id: AopProxyBean.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
+	 $Id: AopProxyBean.cfc,v 1.2 2005/09/25 00:55:00 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott

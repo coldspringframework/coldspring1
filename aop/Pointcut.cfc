@@ -1,5 +1,5 @@
 <!---
-	 $Id: Pointcut.cfc,v 1.1 2005/09/13 17:01:53 scottc Exp $
+	 $Id: Pointcut.cfc,v 1.2 2005/09/25 00:54:59 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott

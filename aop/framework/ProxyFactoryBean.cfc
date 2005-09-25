@@ -1,5 +1,5 @@
 <!---
-	 $Id: ProxyFactoryBean.cfc,v 1.2 2005/09/13 17:33:13 scottc Exp $
+	 $Id: ProxyFactoryBean.cfc,v 1.3 2005/09/25 00:55:00 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -39,6 +39,9 @@
 	<cfset variables.constructed = false />
 			
 	<cffunction name="init" access="public" returntype="coldspring.aop.framework.ProxyFactoryBean" output="false">
+		<cfset var category = CreateObject("java", "org.apache.log4j.Category") />
+		<cfset variables.logger = category.getInstance('coldspring.aop') />
+		<cfset variables.logger.info("ProxyFactoryBean created") />
 		<cfreturn this />
 	</cffunction>
 	
@@ -88,8 +91,10 @@
 	<cffunction name="getObject" access="public" returntype="any" output="true">
 		<cfif isSingleton()>
 			<cfif not isConstructed()>
+				<cfset variables.logger.info("ProxyFactoryBean.getObject() creating new proxy instance") />
 				<cfreturn createProxyInstance() />
 			<cfelse>
+				<cfset variables.logger.info("ProxyFactoryBean.getObject() returning cached proxy instance") />
 				<cfreturn variables.proxyObject />
 			</cfif>
 		<cfelse>
@@ -139,7 +144,7 @@
 		
 		<!--- store the proxyObject --->
 		<cfset variables.proxyObject = aopProxyBean />
-		<cfset variables.isConstructed = true />
+		<cfset variables.constructed = true />
 		
 		<cfreturn aopProxyBean />
 		
@@ -150,6 +155,9 @@
 		<cfset var ix = 0 />
 		<cfif isArray(variables.interceptorNames)>
 			<cfloop from="1" to="#ArrayLen(variables.interceptorNames)#" index="ix">
+				<cfif variables.logger.isInfoEnabled()>
+					<cfset variables.logger.info("ProxyFactoryBean.getObject() buildAdvisorChain adding Advisor: " & variables.interceptorNames[ix]) />
+				</cfif>
 				<cfset ArrayAppend(variables.advisorChain, getBeanFactory().getBean(variables.interceptorNames[ix])) />
 			</cfloop>
 		</cfif>

@@ -1,0 +1,1 @@
+Default folder for logs4j log files.
