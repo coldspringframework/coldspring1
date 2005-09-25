@@ -1,5 +1,5 @@
 <!---
-	 $Id: NamedMethodPointcut.cfc,v 1.2 2005/09/25 00:54:59 scottc Exp $
+	 $Id: NamedMethodPointcut.cfc,v 1.3 2005/09/25 17:37:47 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -68,10 +68,12 @@
 	<cffunction name="isMatch" access="private" returntype="boolean" output="true">
 		<cfargument name="methodName" type="string" required="true" />
 		<cfargument name="mappedName" type="string" required="true" />
-		<cfif mappedName.endsWith('*')>
-			<cfreturn methodName.startsWith(Left(mappedName, mappedName.length()-1)) />
+		<cfif mappedName EQ "*">
+			<cfreturn true />
 		<cfelseif mappedName.startsWith('*')>
 			<cfreturn methodName.endsWith(Right(mappedName,mappedName.length()-1)) />
+		<cfelseif mappedName.endsWith('*')>
+			<cfreturn methodName.startsWith(Left(mappedName, mappedName.length()-1)) />
 		</cfif>
 		<cfreturn false />
 	</cffunction>

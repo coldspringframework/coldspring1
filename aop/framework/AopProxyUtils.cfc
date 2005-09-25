@@ -1,5 +1,5 @@
 <!---
-	 $Id: AopProxyUtils.cfc,v 1.2 2005/09/25 00:55:00 scottc Exp $
+	 $Id: AopProxyUtils.cfc,v 1.3 2005/09/25 17:37:48 scottc Exp $
 	 $log$
 	
 	Copyright (c) 2005, Chris Scott
@@ -57,7 +57,12 @@
 			  target with it --->
 		<cfloop from="1" to="#arraylen(metaData.functions)#" index="functionIx">
 			<cfset function = metaData.functions[functionIx].name />
-			<cfif function.startsWith('set')>
+			
+			<!--- catch the init function --->
+			<cfif function eq "init">
+				<cfset target.init() />
+				
+			<cfelseif function.startsWith('set')>
 				<cfset property = Right(function, function.length()-3) />
 				<cftry>
 					<cfinvoke component="#arguments.obj#"

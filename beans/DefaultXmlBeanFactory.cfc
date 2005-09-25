@@ -1,5 +1,5 @@
 <!---
-	 $Id: DefaultXmlBeanFactory.cfc,v 1.8 2005/09/24 22:13:18 rossd Exp $
+	 $Id: DefaultXmlBeanFactory.cfc,v 1.9 2005/09/25 17:37:48 scottc Exp $
 ---> 
 
 <cfcomponent name="DefaultXmlBeanFactory" 
@@ -313,6 +313,7 @@
 										--->
 										<cfinvokeargument name="#argDefs[arg].getName()#"
 														  value="#getBean(argDefs[arg].getValue())#"/> <!--- value="#dependentBeanInstance#"  --->
+										
 									</cfcase>		
 									
 																				  
@@ -359,9 +360,21 @@
 					
 							<cfset dependentBeanDef = getBeanDefinition(propDefs[prop].getValue()) />
 							<cfif dependentBeanDef.isSingleton()>
-								<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
+								<!--- we need to actually get the dependent bean object from it's beanDefinition
+									  because it's aware of the FactoryBean concept --->
+								<!--- <cfif dependentBeanDef.isFactory()>
+									<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID()).getObject() />
+								<cfelse>
+									<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID()) />
+								</cfif> --->
+								<!--- <cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())> --->
+								<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
 							<cfelse>
-								<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+								<cfif dependentBeanDef.isFactory()>
+									<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
+								<cfelse>
+									<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+								</cfif>
 							</cfif>
 							
 							
