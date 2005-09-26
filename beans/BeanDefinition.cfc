@@ -15,21 +15,38 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.8 2005/09/26 02:01:03 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.9 2005/09/26 17:24:20 rossd Exp $
 
 --->
-<cfcomponent name="BeanDefinition">
+
+<cfcomponent name="BeanDefinition" 
+			displayname="BeanDefinition" 
+			hint="I model a single bean definition within a ColdSpring bean factory" 
+			output="false">
 
 	<cfset variables.instanceData = StructNew() />
+	<!--- struct of all the constructor args for this bean definition: --->
 	<cfset variables.instanceData.ConstructorArgs = StructNew() />
+	<!--- struct of all the properties for this bean definition: --->	
 	<cfset variables.instanceData.Properties = StructNew() />
+	<!--- whether this bean is a singleton or a prototype: --->
 	<cfset variables.instanceData.Singleton = true />
+	<!--- whether this bean's instance has actually been constructed by the beanFactory:--->
 	<cfset variables.instanceData.Constructed = false />
+	<!--- whether this bean is a factory bean: --->	
 	<cfset variables.instanceData.Factory = false />
+	<!--- name of an init-method to call on this bean once all dependencies are set: --->
+	<cfset variables.instanceData.initMethod = ''/>
+	<!--- whether this bean should be constructed imeediately upon the beanFactory receiving its definition
+			OR should the factory wait until someone asks for the bean: --->
+	<cfset variables.instanceData.lazyInit = true />
+	<!--- list of known dependent beans (by name): --->	
 	<cfset variables.instanceData.Dependencies = '' />
 	
-	<cffunction name="init" returntype="coldspring.beans.BeanDefinition" output="false">
-		<cfargument name="beanFactory" type="coldspring.beans.BeanFactory" required="true" />
+	<cffunction name="init" returntype="coldspring.beans.BeanDefinition" output="false"
+				hint="Constructor. Creates a new Bean Definition.">
+		<cfargument name="beanFactory" type="coldspring.beans.BeanFactory" required="true" 
+					hint="reference to the coldspring BeanFactory who is creating this bean definition."/>					
 		<cfset setBeanFactory(arguments.beanFactory) />
 		<cfreturn this/>	
 	</cffunction>
@@ -120,9 +137,11 @@
 		</cfif>
 	</cffunction>
 	
-	<cffunction name="getDependencies" access="public" output="false" returntype="string">
+	<cffunction name="getDependencies" access="public" output="false" returntype="string"
+				hint="I retrieve the full list of dependencies for this bean definition. The BeanFactory will probably ask for this when I'm being constructed, so he can construct my dependencies first!">
 		<cfargument name="dependencyList" type="string" required="true" />
 		
+		<!--- local vars --->
 		<cfset var myDependencies = '' />
 		<cfset var refName = '' />
 		<cfset var md = '' />
@@ -144,8 +163,7 @@
 			<cfset md = getMetaData(beanInstance) />		
 			<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
 				<!--- look for init (constructor) --->
-				<!--- todo:
-							respect how we are told to autowire (byName|byType) --->
+				<!--- todo: respect how we are told to autowire (byName|byType) --->
 				<cfif md.functions[functionIndex].name eq "init" and arraylen(md.functions[functionIndex].parameters)>
 					<!--- loop over args --->
 					<cfloop from="1" to="#arraylen(md.functions[functionIndex].parameters)#" index="argIndex">
@@ -189,7 +207,9 @@
 						</cfif>
 						
 				
-					
+					<!--- so, if we didn't already explicly set this property
+						  and the beanFactory knows it by name or by type
+						  well, let's inject it! --->
 					<cfif not structKeyExists(variables.instanceData.properties, setterName)
 							and (
 									(
@@ -227,6 +247,12 @@
 				</cfif>
 			</cfloop>			
 		</cfif>		
+		
+		
+		<!--- ok, the above code went through and autowired up any dependencies (at the last possible moment)
+			  now this bean definition's own dependency list is complete, so we can recurse through
+			  that list to get every single possible dependency --->
+		
 		<cfloop list="#variables.instanceData.Dependencies#" index="refName">
 			<cfif ListFindNoCase(arguments.dependencyList, refName) LT 1>
 				<cfset arguments.dependencyList = ListAppend(arguments.dependencyList,refName) />
@@ -327,9 +353,8 @@
 	</cffunction>
 	
 	<cffunction name="hasInitMethod" access="public" output="false" returntype="boolean" hint="I retrieve whether this bean def contains an init-method attibute, meaning a method that will be called after bean construction and dep. injection (confusiong because 'init()' is the constructor in CF)">
-		<cfreturn structKeyExists(variables.instanceData,"initMethod")/>
+		<cfreturn structKeyExists(variables.instanceData,"initMethod") and len(variables.instanceData.initMethod)/>
 	</cffunction>
-	
 	
 	<cffunction name="getInstance" access="public" output="false" returntype="any" hint="I retrieve the Instance from this instance's data">
 		<cfif isFactory()>

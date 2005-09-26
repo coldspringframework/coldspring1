@@ -15,13 +15,14 @@
   limitations under the License.
 		
 			
- $Id: BeanReference.cfc,v 1.2 2005/09/26 02:01:04 rossd Exp $
+ $Id: BeanReference.cfc,v 1.3 2005/09/26 17:24:20 rossd Exp $
 
 --->
 
 <cfcomponent>
 
-	<cffunction name="init" returntype="coldspring.beans.BeanReference" access="public" output="false">
+	<cffunction name="init" returntype="coldspring.beans.BeanReference" access="public" output="false"
+				hint="I am used within complex Bean Properties as a placeholder for a bean">
 		<cfargument name="beanID" type="string" required="true" />
 		<cfset this.beanID = arguments.beanID/>		
 		<cfreturn this />

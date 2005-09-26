@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.11 2005/09/26 13:52:28 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.12 2005/09/26 17:24:20 rossd Exp $
 
 ---> 
 
@@ -29,9 +29,9 @@
 	<cfset variables.beanDefs = structnew()/>
 	
 	<cffunction name="init" access="public" returntype="coldspring.beans.DefaultXmlBeanFactory" output="false"
-				hint="">
+				hint="Constuctor. Creates a beanFactory">
 		<cfargument name="defaultAttributes" type="struct" required="false" default="#structnew()#" hint="default behaviors for undefined bean attributes"/>
-		<cfargument name="defaultProperties" type="struct" required="false" default="#structnew()#" hint="any default properties"/>
+		<cfargument name="defaultProperties" type="struct" required="false" default="#structnew()#" hint="any default properties, which can be refernced via ${key} in your bean definitions"/>
 		
 		<!--- set defaults passed into constructor --->
 		<cfset setDefaultAttributes(arguments.defaultAttributes)/>
@@ -40,7 +40,7 @@
 		<cfreturn this />
 	</cffunction>
 	
-	<cffunction name="loadBeans" access="public" returntype="void" output="false">
+	<cffunction name="loadBeans" access="public" returntype="void" output="false" hint="loads bean definitions into the bean factory from an xml file location">
 		<cfargument name="beanDefinitionFileName" type="string" required="true" />
 		
 		<cfset loadBeansFromXmlFile(arguments.beanDefinitionFileName)/>
@@ -89,14 +89,11 @@
 		</cfif>
 			
 	</cffunction>
-	
-	
-	
-	
-	
-	<cffunction name="loadBeanDefinitions" access="public" returntype="void">
-		<cfargument name="XmlBeanDefinitions" type="string" required="true" 
-					hint="I am a parsed Xml file of bean definitions"/>
+		
+	<cffunction name="loadBeanDefinitions" access="public" returntype="void"
+				hint="actually loads the bean definitions by processing the supplied xml data">
+		<cfargument name="XmlBeanDefinitions" type="any" required="true" 
+					hint="I am a parsed Xml of bean definitions"/>
 					
 		<cfset var beans = 0 />
 		<cfset var beanDef = 0 />
@@ -105,17 +102,15 @@
 		<cfset var beanAttributes = 0 />
 		<cfset var beanChildren = 0 />
 		<cfset var isSingleton = true />
-
-		<!--- <cfset var beanChildIx = 0 />
-		<cfset var beanChild = 0 /> --->
-		
+	
+		<!--- make sure some beans exist --->
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
 			<cfset beans = arguments.XmlBeanDefinitions.beans.bean>
 		<cfelse>
 			<cfthrow type="coldspring.XmlParserException" message="Xml file contains no beans!">
 		</cfif>
 		
-		<!--- create bean definition objects for each bean in config file --->
+		<!--- create bean definition objects for each (top level) bean in the xml--->
 		<cfloop from="1" to="#ArrayLen(beans)#" index="beanIx">
 			
 			<cfset beanAttributes = beans[beanIx].XmlAttributes />
@@ -125,35 +120,36 @@
 				<cfthrow type="coldspring.MalformedBeanException" message="Xml bean definitions must contain 'id' and 'class' attributes!">
 			</cfif>
 			
-			<!--- <cfdump var="#beanAttributes#"><cfabort>			
+			<!--- look for an singleton attribute for this bean def --->			
 			<cfif StructKeyExists(beanAttributes,'singleton')>
 				<cfset isSingleton = beanAttributes.singleton />
 			<cfelse>
 				<cfset isSingleton = true />
-			</cfif> --->
+			</cfif>
 			
-			<!--- <cftry> --->
-				<!--- call function to create bean definition and add to store --->
-				<cfif StructKeyExists(beanAttributes,'init-method') and len(beanAttributes['init-method'])>
-					<cfset initMethod = beanAttributes['init-method'] />
-				<cfelse>
-					<cfset initMethod = ""/>
-				</cfif>
-				<cfset createBeanDefinition(beanAttributes.id, beanAttributes.class, beanChildren, isSingleton, false, initMethod) />
+			<!--- look for an init-method attribute for this bean def --->
+			<cfif StructKeyExists(beanAttributes,'init-method') and len(beanAttributes['init-method'])>
+				<cfset initMethod = beanAttributes['init-method'] />
+			<cfelse>
+				<cfset initMethod = ""/>
+			</cfif>
 			
-			<!--- 	<cfcatch>
-						<cfthrow type="coldspring.BeanDefinitionCreationException" message="Error occured creating bean: #beanAttributes.class# (#cfcatch.message#)">
-				</cfcatch>
+			<!--- call function to create bean definition and add to store --->
+			<cfset createBeanDefinition(beanAttributes.id, 
+										beanAttributes.class, 
+										beanChildren, 
+										isSingleton, 
+										false,
+										initMethod) />
 		
-			</cftry>
-		 --->	
 		</cfloop>
 		
 		
 		
 	</cffunction>
 	
-	<cffunction name="createBeanDefinition" access="public" returntype="void" output="false">
+	<cffunction name="createBeanDefinition" access="public" returntype="void" output="false"
+				hint="creates a bean definition within this bean factory.">
 		<cfargument name="beanID" type="string" required="true" />
 		<cfargument name="beanClass" type="string" required="true" />
 		<cfargument name="children" type="any" required="true" />
@@ -178,7 +174,8 @@
 			<cfset variables.beanDefs[arguments.beanID].setInitMethod(arguments.initMethod) />		
 		</cfif>
 		
-		<!--- set up property readers for this beanDefinition --->
+		<!--- add properties/constructor-args to this beanDefinition 
+			  each property/constructor arg is responsible for its own configuration--->
 		<cfloop from="1" to="#ArrayLen(arguments.children)#" index="childIx">
 			<cfset child = arguments.children[childIx] />
 			<cfif child.XmlName eq "property">
@@ -212,8 +209,9 @@
 		<cfreturn ""/>
 	</cffunction>	
 	
-	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
-		<cfargument name="beanName" type="string" required="true" />
+	<cffunction name="isSingleton" access="public" returntype="boolean" output="false"
+				hint="returns whether the bean with the specified name is a singleton">
+		<cfargument name="beanName" type="string" required="true" hint="the bean name to look for"/>
 		<cfif containsBean(arguments.beanName)>
 			<cfreturn variables.beanDefs[arguments.beanName].isSingleton() />
 		<cfelse>
@@ -222,7 +220,7 @@
 	</cffunction>
 	
 	<cffunction name="getBean" access="public" output="false" returntype="any" 
-				hint="returns an instance of the bean registered under the given name. Depending on how the bean was configured by the BeanFactory configuration, either a singleton and thus shared instance or a newly created bean will be returned. A BeansException will be thrown when either the bean could not be found (in which case it'll be a NoSuchBeanDefinitionException), or an exception occurred while instantiating and preparing the bean">
+				hint="returns an instance of the bean registered under the given name. Depending on how the bean was configured, either a singleton and thus shared instance or a newly created bean will be returned. A BeansException will be thrown when either the bean could not be found (in which case it'll be a NoSuchBeanDefinitionException), or an exception occurred while instantiating and preparing the bean">
 		<cfargument name="beanName" required="true" type="string" hint="name of bean to look for"/>
 		
 		<cfif containsBean(arguments.beanName)>
@@ -246,7 +244,9 @@
 	</cffunction>
 	
 	
-	<cffunction name="initNonLazyBeans" access="public" output="false" returntype="void">
+	<cffunction name="initNonLazyBeans" access="private" output="false" returntype="void"
+				hint="constructs all non-lazy beans">
+		
 	</cffunction>	
 	
 	<cffunction name="constructBean" access="private" returntype="any">
@@ -254,9 +254,9 @@
 		<cfargument name="returnInstance" type="boolean" required="false" default="false" 
 					hint="true when constructing a non-singleton bean (aka a prototype)"/>
 					
-		<!--- first get list of beans including this bean and it's dependencies --->
 		<cfset var localBeanCache = StructNew() />
 		<cfset var dependentBeanDefs = ArrayNew(1) />
+		<!--- first get list of beans including this bean and it's dependencies --->
 		<cfset var dependentBeanNames = getBeanDefinition(arguments.beanName).getDependencies(arguments.beanName) />
 		<cfset var beanDefIx = 0 />
 		<cfset var beanDef = 0 />
@@ -283,7 +283,7 @@
 		
 		
 	
-		<!--- now resolve all dependencies  --->
+		<!--- now resolve all dependencies by looping through list backwards, causing the "most dependent" beans to get created first  --->
 		<cfloop from="#ArrayLen(dependentBeanDefs)#" to="1" index="beanDefIx" step="-1">
 			<cfset beanDef = dependentBeanDefs[beanDefIx] />
 		
@@ -350,9 +350,6 @@
 				<!---
 				do we need to make sure that value is in the extends key??
 				--->
-				
-			
-		
 		
 				<!--- now do dependency injection via setters --->		
 				<cfloop collection="#propDefs#"	item="prop">
@@ -409,6 +406,7 @@
 			
 			
 				<!--- now call an init-method if it's defined
+					actually we need a separate loop for this.
 				<cfif beanDef.hasInitMethod()>
 									
 					<cfinvoke component="#beanInstance#"
@@ -423,7 +421,7 @@
 			
 		</cfloop>
 		
-		<!--- now loop again for init-methods  --->
+		<!--- now loop again (same direction: backwards) for init-methods  --->
 		<cfloop from="#ArrayLen(dependentBeanDefs)#" to="1" index="beanDefIx" step="-1">
 			<cfset beanDef = dependentBeanDefs[beanDefIx] />
 			
@@ -453,7 +451,8 @@
 		
 	</cffunction>	
 	
-	<cffunction name="getBeanDefinition" access="public" returntype="coldspring.beans.BeanDefinition" output="false">
+	<cffunction name="getBeanDefinition" access="public" returntype="coldspring.beans.BeanDefinition" output="false"
+				hint="retrieves a bean definition for the specified bean">
 		<cfargument name="beanName" type="string" required="true" />
 		<cfif not StructKeyExists(variables.beanDefs, beanName)>
 			<cfthrow type="coldspring.MissingBeanReference" message="There is no bean registered with the factory with the id #arguments.beanName#" />
@@ -514,7 +513,8 @@
 
 
 
-	<cffunction name="constructComplexProperty" access="private" output="false" returntype="any">
+	<cffunction name="constructComplexProperty" access="private" output="false" returntype="any"
+				hint="recurses through properties/constructor-args that are complex, resolving dependencies along the way">
 		<cfargument name="ComplexProperty" type="any" required="true"/>
 		<cfargument name="type" type="string" required="true"/>
 		<cfargument name="localBeanCache" type="struct" required="true"/>
@@ -539,10 +539,14 @@
 		<cfset var entry=0/>
 		<cfset var tmp_ref=0/>
 		
+		<!--- based on the the type of property/con-arg --->
 		<cfswitch expression="#arguments.type#">
 			<cfcase value="map">
-				<cfloop collection="#arguments.ComplexProperty#" item="entry">					
+				<cfloop collection="#arguments.ComplexProperty#" item="entry">
+					<!--- loop thru the map (struct) --->			
 					<cfif isObject(arguments.ComplexProperty[entry]) and getMetaData(arguments.ComplexProperty[entry]).name eq "coldspring.beans.BeanReference">
+						<!--- this key's value is a beanReference, basically a placeholder that we replace
+							  with the actual bean, right now --->
 						<cfset dependentBeanDef = getBeanDefinition(arguments.ComplexProperty[entry].getBeanID()) />
 						<cfif dependentBeanDef.isSingleton()>
 							<cfset arguments.ComplexProperty[entry] = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
@@ -550,15 +554,20 @@
 							<cfset arguments.ComplexProperty[entry] = localBeanCache[dependentBeanDef.getBeanID()] />
 						</cfif>						
 					<cfelseif isStruct(arguments.ComplexProperty[entry])>
+						<!--- ok, we found a map within this map, so recurse --->
 						<cfset findComplexPropertyRefs(arguments.ComplexProperty[entry],"map",arguments.localBeanCache)/>
 					<cfelseif isArray(arguments.ComplexProperty[entry])>
+						<!--- ok, we found a list within this map, so recurse --->						
 						<cfset arguments.ComplexProperty[entry] = findComplexPropertyRefs(arguments.ComplexProperty[entry],"list",arguments.localBeanCache)/>						
 					</cfif>	
 				</cfloop>	
 			</cfcase>
 			<cfcase value="list">
 				<cfloop from="1" to="#arraylen(arguments.ComplexProperty)#" index="entry">
+					<!--- loop thru the list (array) --->			
 					<cfif isObject(arguments.ComplexProperty[entry]) and getMetaData(arguments.ComplexProperty[entry]).name eq "coldspring.beans.BeanReference">
+						<!--- same as above, this key's value is a beanReference, basically a placeholder that we replace
+							  with the actual bean, right now --->
 						<cfset dependentBeanDef = getBeanDefinition(arguments.ComplexProperty[entry].getBeanID()) />
 						<cfif dependentBeanDef.isSingleton()>
 							<cfset arguments.ComplexProperty[entry] = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
@@ -566,8 +575,10 @@
 							<cfset arguments.ComplexProperty[entry] = localBeanCache[dependentBeanDef.getBeanID()] />
 						</cfif>						
 					<cfelseif isStruct(arguments.ComplexProperty[entry])>
+						<!--- ok, we found a map within this list, so recurse --->
 						<cfset findComplexPropertyRefs(arguments.ComplexProperty[entry],"map",arguments.localBeanCache)/>
 					<cfelseif isArray(arguments.ComplexProperty[entry])>
+						<!--- ok, we found a list within this list, so recurse --->
 						<cfset arguments.ComplexProperty[entry] = findComplexPropertyRefs(arguments.ComplexProperty[entry],"list",arguments.localBeanCache)/>
 					</cfif>	
 				</cfloop>			
@@ -575,8 +586,7 @@
 			</cfcase>
 		</cfswitch>
 		
-	</cffunction>
-	
+	</cffunction>	
 	
 	<cffunction name="getDefaultProperties" access="public" output="false" returntype="struct">
 		<cfreturn variables.DefaultProperties/>
