@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.7 2005/09/26 02:01:04 rossd Exp $
+ $Id: BeanProperty.cfc,v 1.8 2005/09/26 13:52:28 scottc Exp $
 
 ---> 
 
@@ -56,7 +56,8 @@
 		<cfargument name="childNode" type="any" required="true" />
 		
 		<cfset var child = arguments.childNode />
-	
+		<cfset var initMethod = ""/>
+		
 		<!--- this needs to implements maps and lists, but I'm only going to do bean refs and values for now --->
 		<cfswitch expression="#child.xmlName#">
 			
@@ -69,10 +70,16 @@
 				<cfif not (StructKeyExists(child.XmlAttributes,'class'))>
 					<cfthrow type="coldspring.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute!">
 				</cfif>
+				<!--- set flag to create bean definition and add to store --->
+				<cfif StructKeyExists(child.XmlAttributes,'init-method') and len(child.XmlAttributes['init-method'])>
+					<cfset initMethod = child.XmlAttributes['init-method'] />
+				<cfelse>
+					<cfset initMethod = ""/>
+				</cfif>
 				<!--- create uid for new Bean, store as value for lookup --->
 				<cfset beanUID = CreateUUID() />
 				<cfset setValue(beanUID) />
-				<cfset createInnerBeanDefinition(beanUID, child.XmlAttributes.class, child.XmlChildren) />
+				<cfset createInnerBeanDefinition(beanUID, child.XmlAttributes.class, child.XmlChildren, initMethod) />
 				<cfset addParentDefinitionDependency(beanUID) />
 			</cfcase>
 			
@@ -111,6 +118,7 @@
 		<cfset var entryChild = 0/>
 		<cfset var entryKey = 0/>
 		<cfset var entryBeanID = 0/>
+		<cfset var initMethod = ""/>
 	
 		<cfif returnType eq 'map'>
 			<cfset rtn = structNew() />
@@ -164,7 +172,13 @@
 																		"coldspring.beans.BeanReference").init(
 																				entryBeanID
 																				)/>
-					<cfset createInnerBeanDefinition(entryBeanID, entryChild.XmlAttributes.class, entryChild.XmlChildren) />
+					<!--- set flag to create bean definition and add to store --->
+					<cfif StructKeyExists(entryChild.XmlAttributes,'init-method') and len(entryChild.XmlAttributes['init-method'])>
+						<cfset initMethod = entryChild.XmlAttributes['init-method'] />
+					<cfelse>
+						<cfset initMethod = ""/>
+					</cfif>
+					<cfset createInnerBeanDefinition(entryBeanID, entryChild.XmlAttributes.class, entryChild.XmlChildren, initMethod) />
 					<cfset addParentDefinitionDependency(entryBeanID) />
 				</cfcase>					
 				
@@ -196,8 +210,9 @@
 		<cfargument name="beanID" type="string" required="true" />
 		<cfargument name="beanClass" type="string" required="true" />
 		<cfargument name="children" type="any" required="true" />
+		<cfargument name="initMethod" type="string" default="" required="false" />
 		<!--- call parent's bean factory to create new bean definition --->
-		<cfset getParentBeanDefinition().getBeanFactory().createBeanDefinition(arguments.beanID, arguments.beanClass, arguments.children, false, true) />
+		<cfset getParentBeanDefinition().getBeanFactory().createBeanDefinition(arguments.beanID, arguments.beanClass, arguments.children, false, true, arguments.initMethod) />
 	</cffunction>
 	
 	<cffunction name="getName" access="public" output="false" returntype="string" hint="I retrieve the Name from this instance's data">

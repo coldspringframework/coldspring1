@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.10 2005/09/26 02:01:04 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.11 2005/09/26 13:52:28 scottc Exp $
 
 ---> 
 
@@ -408,12 +408,12 @@
 				</cfloop>
 			
 			
-				<!--- now call an init-method if it's defined --->
+				<!--- now call an init-method if it's defined
 				<cfif beanDef.hasInitMethod()>
 									
 					<cfinvoke component="#beanInstance#"
 							  method="#beanDef.getInitMethod()#"/>
-				</cfif>
+				</cfif> --->
 					
 				<cfif beanDef.isSingleton()>
 					<cfset beanDef.setIsConstructed(true)/>
@@ -421,9 +421,26 @@
 				
 			</cfif>
 			
-
 		</cfloop>
+		
+		<!--- now loop again for init-methods  --->
+		<cfloop from="#ArrayLen(dependentBeanDefs)#" to="1" index="beanDefIx" step="-1">
+			<cfset beanDef = dependentBeanDefs[beanDefIx] />
 			
+			<cfif beanDef.isSingleton()>
+				<cfset beanInstance = getBeanFromSingletonCache(beanDef.getBeanID())>
+			<cfelse>
+				<cfset beanInstance = localBeanCache[beanDef.getBeanID()] />
+			</cfif>
+			
+			<!--- now call an init-method if it's defined --->
+			<cfif beanDef.hasInitMethod()>
+								
+				<cfinvoke component="#beanInstance#"
+						  method="#beanDef.getInitMethod()#"/>
+			</cfif>
+			
+		</cfloop>
 
 		<!--- if we're supposed to return the new object, do it --->
 		<cfif arguments.returnInstance>
