@@ -1,5 +1,22 @@
 <!---
-	 $Id: DefaultXmlBeanFactory.cfc,v 1.9 2005/09/25 17:37:48 scottc Exp $
+ 
+  Copyright (c) 2002-2005	David Ross,	Chris Scott
+  
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+		
+			
+ $Id: DefaultXmlBeanFactory.cfc,v 1.10 2005/09/26 02:01:04 rossd Exp $
+
 ---> 
 
 <cfcomponent name="DefaultXmlBeanFactory" 
@@ -11,7 +28,8 @@
 	<!--- local struct to hold bean definitions --->
 	<cfset variables.beanDefs = structnew()/>
 	
-	<cffunction name="init" access="public" returntype="coldspring.beans.DefaultXmlBeanFactory" output="false">
+	<cffunction name="init" access="public" returntype="coldspring.beans.DefaultXmlBeanFactory" output="false"
+				hint="">
 		<cfargument name="defaultAttributes" type="struct" required="false" default="#structnew()#" hint="default behaviors for undefined bean attributes"/>
 		<cfargument name="defaultProperties" type="struct" required="false" default="#structnew()#" hint="any default properties"/>
 		

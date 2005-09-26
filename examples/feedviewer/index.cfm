@@ -1,32 +1,22 @@
 <!---
-	$Id: index.cfm,v 1.1 2005/09/24 22:12:49 rossd Exp $
-	$Source: D:/CVSREPO/coldspring/coldspring/examples/feedviewer/index.cfm,v $
-	$State: Exp $
-	$Log: index.cfm,v $
-	Revision 1.1  2005/09/24 22:12:49  rossd
-	first commit of sample app and m2 plugin
-	
-	Revision 1.6  2005/02/14 00:42:37  rossd
-	*** empty log message ***
-	
-	Revision 1.5  2005/02/14 00:12:37  rossd
-	*** empty log message ***
-	
-	Revision 1.4  2005/02/13 17:48:20  rossd
-	*** empty log message ***
-	
-	Revision 1.3  2005/02/11 17:56:55  rossd
-	eliminated rdbms vendor-specific services, replaced with generic sql services
-	added datasourceSettings bean containing vendor information
-	
-	Revision 1.2  2005/02/11 14:17:39  rossd
-	now just links to both controller implementations
-	
-	Revision 1.1  2005/02/07 21:57:38  rossd
-	initial checkin of feedviewer sample app
-	
+ 
+  Copyright (c) 2002-2005	David Ross,	Chris Scott
+  
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+		
+			
+ $Id: index.cfm,v 1.2 2005/09/26 02:01:04 rossd Exp $
 
-    Copyright (c) 2005 David Ross
 --->
 
 <cfoutput>

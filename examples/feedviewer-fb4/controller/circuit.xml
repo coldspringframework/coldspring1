@@ -1,28 +1,23 @@
-<!-- 
-
-	$Id: circuit.xml,v 1.1 2005/09/24 22:12:44 rossd Exp $
-	$Source: D:/CVSREPO/coldspring/coldspring/examples/feedviewer-fb4/controller/circuit.xml,v $
-	$State: Exp $
-	$Log: circuit.xml,v $
-	Revision 1.1  2005/09/24 22:12:44  rossd
-	first commit of sample app and m2 plugin
+<!--
 	
-	Revision 1.3  2005/02/14 00:56:35  rossd
-	*** empty log message ***
+	Copyright (c) 2002-2005	David Ross,	Chris Scott
 	
-	Revision 1.2  2005/02/11 17:56:54  rossd
-	eliminated rdbms vendor-specific services, replaced with generic sql services
-	added datasourceSettings bean containing vendor information
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
 	
-	Revision 1.2  2005/02/10 16:40:18  rossd
-	*** empty log message ***
+	http://www.apache.org/licenses/LICENSE-2.0
 	
-	Revision 1.1  2005/02/10 13:07:22  rossd
-	*** empty log message ***
-
-    Copyright (c) 2005 David Ross
-
- -->
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+	
+	
+	$Id: circuit.xml,v 1.2 2005/09/26 02:01:04 rossd Exp $
+	
+-->
 
 
 <circuit access="public">

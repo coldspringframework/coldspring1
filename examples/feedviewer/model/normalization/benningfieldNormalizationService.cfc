@@ -1,23 +1,25 @@
 <!---
-	$Id: benningfieldNormalizationService.cfc,v 1.1 2005/09/24 22:12:51 rossd Exp $
-	$Source: D:/CVSREPO/coldspring/coldspring/examples/feedviewer/model/normalization/benningfieldNormalizationService.cfc,v $
-	$State: Exp $
-	$Log: benningfieldNormalizationService.cfc,v $
-	Revision 1.1  2005/09/24 22:12:51  rossd
-	first commit of sample app and m2 plugin
-	
-	Revision 1.2  2005/02/11 17:56:55  rossd
-	eliminated rdbms vendor-specific services, replaced with generic sql services
-	added datasourceSettings bean containing vendor information
-	
-	Revision 1.1  2005/02/09 04:26:41  rossd
-	*** empty log message ***
-	
-	
-    Copyright (c) 2005 David Ross
+ 
+  Copyright (c) 2002-2005	David Ross,	Chris Scott
+  
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+		
+			
+ $Id: benningfieldNormalizationService.cfc,v 1.2 2005/09/26 02:01:07 rossd Exp $
+
 --->
 
-<cfcomponent name="Concrete Normalization Service" hint="Uses Roger Benningfield's rssatomnormcfc"  extends="coldspring.examples.feedviewer.model.normalization.normalizationService" output="false">
+<cfcomponent name="Normalization Service" hint="Uses Roger Benningfield's rssatomnormcfc"  extends="coldspring.examples.feedviewer.model.normalization.normalizationService" output="false">
 	
 	<cffunction name="init" returntype="coldspring.examples.feedviewer.model.normalization.benningfieldNormalizationService" access="public">
 		<cfargument name="rssatomnormalizer" type="coldspring.examples.feedviewer.Benningfield.rssatomnorm" required="true"/>

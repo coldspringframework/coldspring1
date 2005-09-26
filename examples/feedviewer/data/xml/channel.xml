@@ -1,3 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-			<channels></channels>
-			
+			<channels>
+				
+					<channel id="1"
+							title="New "
+							description=""
+							url="http://www.d-ross.org/xml/rss.xml"
+							categoryIds="1"/>
+				
+			</channels>
+		

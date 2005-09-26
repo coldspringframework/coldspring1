@@ -1,8 +1,11 @@
 <!---
-	$Id: index.cfm,v 1.1 2005/09/24 22:12:44 rossd Exp $
+	$Id: index.cfm,v 1.2 2005/09/26 02:01:04 rossd Exp $
 	$Source: D:/CVSREPO/coldspring/coldspring/examples/feedviewer-remote/index.cfm,v $
 	$State: Exp $
 	$Log: index.cfm,v $
+	Revision 1.2  2005/09/26 02:01:04  rossd
+	updated license section
+	
 	Revision 1.1  2005/09/24 22:12:44  rossd
 	first commit of sample app and m2 plugin
 	
@@ -12,6 +15,7 @@
 	
     Copyright (c) 2005 David Ross
 --->
+
 <cfoutput>
 <html>
 <head>

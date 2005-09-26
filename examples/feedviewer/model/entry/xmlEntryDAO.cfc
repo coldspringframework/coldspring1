@@ -1,38 +1,22 @@
 <!---
-	$Id: xmlEntryDAO.cfc,v 1.1 2005/09/24 22:12:51 rossd Exp $
-	$Source: D:/CVSREPO/coldspring/coldspring/examples/feedviewer/model/entry/xmlEntryDAO.cfc,v $
-	$State: Exp $
-	$Log: xmlEntryDAO.cfc,v $
-	Revision 1.1  2005/09/24 22:12:51  rossd
-	first commit of sample app and m2 plugin
-	
-	Revision 1.3  2005/02/14 20:59:38  rossd
-	fixed invalid entities in url/guid attribs
-	
-	Revision 1.2  2005/02/14 00:12:37  rossd
-	*** empty log message ***
-	
-	Revision 1.1  2005/02/13 22:21:14  rossd
-	first checkin of xml storage components
-	
-	Revision 1.1  2005/02/11 17:56:55  rossd
-	eliminated rdbms vendor-specific services, replaced with generic sql services
-	added datasourceSettings bean containing vendor information
-	
-	Revision 1.4  2005/02/10 16:40:09  rossd
-	naming convention change to support view re-use in fb4 example
-	
-	Revision 1.3  2005/02/09 04:26:41  rossd
-	*** empty log message ***
-	
-	Revision 1.2  2005/02/08 21:31:18  rossd
-	*** empty log message ***
-	
-	Revision 1.1  2005/02/07 21:57:39  rossd
-	initial checkin of feedviewer sample app
-	
+ 
+  Copyright (c) 2002-2005	David Ross,	Chris Scott
+  
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+		
+			
+ $Id: xmlEntryDAO.cfc,v 1.2 2005/09/26 02:01:07 rossd Exp $
 
-    Copyright (c) 2005 David Ross
 --->
 
 <cfcomponent name="MySQL entry DAO" output="false" extends="coldspring.examples.feedviewer.model.entry.entryDAO">

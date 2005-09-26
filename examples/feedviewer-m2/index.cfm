@@ -1,16 +1,22 @@
 <!---
-	$Id: index.cfm,v 1.1 2005/09/24 22:12:44 rossd Exp $
-	$Source: D:/CVSREPO/coldspring/coldspring/examples/feedviewer-m2/index.cfm,v $
-	$State: Exp $
-	$Log: index.cfm,v $
-	Revision 1.1  2005/09/24 22:12:44  rossd
-	first commit of sample app and m2 plugin
-	
-	Revision 1.1  2005/02/11 02:05:43  rossd
-	mach-ii split out into it's own folder
-	
+ 
+  Copyright (c) 2002-2005	David Ross,	Chris Scott
+  
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+		
+			
+ $Id: index.cfm,v 1.2 2005/09/26 02:01:04 rossd Exp $
 
-    Copyright (c) 2005 David Ross
 --->
 
 <cfset request.MachIIConfigMode =iif(isDefined("url.rl"),1,0)/>
