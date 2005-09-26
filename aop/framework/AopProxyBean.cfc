@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.3 2005/09/26 15:48:12 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.4 2005/09/26 19:12:29 scottc Exp $
  $log$
 	
 ---> 
@@ -65,7 +65,7 @@
 			<cfset adviceChain = variables.adviceChains[arguments.methodName].getAdvice('around') />
 			<cfif ArrayLen(adviceChain)>
 				<!--- now if there's an around advice call that --->
-				<cfset rtn = adviceChain[1].around(method, argumenths.args, variables.target) />
+				<cfset rtn = adviceChain[1].around(method, arguments.args, variables.target) />
 			<cfelse>
 				<!--- or call the method --->
 				<cfset rtn = method.proceed() />

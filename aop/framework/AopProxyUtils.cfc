@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.4 2005/09/26 15:48:12 scottc Exp $
+ $Id: AopProxyUtils.cfc,v 1.5 2005/09/26 19:12:29 scottc Exp $
  $log$
 	
 ---> 
@@ -70,7 +70,7 @@
 						  <cfinvokeargument name="#property#" value="#propVal#" />
 					</cfinvoke>	
 					<cfcatch>
-						<cfif variables.logger.isErrorEnabled()>
+						<cfif variables.logger.isDebugEnabled()>
 							<cfset variables.logger.error("[coldspring.aop.AspectCloneError] Error reading: Error setting property #property#, #cfcatch.Detail#") />
 						</cfif>
 						<cfthrow type="coldspring.aop.AspectCloneError" message="Error setting property #property#, #cfcatch.Detail#" />
@@ -103,7 +103,7 @@
 		<cftry>
 			<cffile action="read" file="#path#/AopProxyBean.cfc" variable="beanDescription" />
 			<cfcatch>
-				<cfif variables.logger.isErrorEnabled()>
+				<cfif variables.logger.isDebugEnabled()>
 					<cfset variables.logger.error("[coldspring.aop.AopProxyError]: Error reading: #path#/AopProxyBean.cfc, #cfcatch.Detail#") />
 				</cfif>
 				<cfthrow type="coldspring.aop.AopProxyError" message="Error reading: #path#/AopProxyBean.cfc, #cfcatch.Detail#" />
@@ -122,7 +122,7 @@
 			 <!--- delete the file --->
 			 <cffile action="delete" file="#path#/tmp/#tmpBean#.cfc" />
 			 <cfcatch>
-				<cfif variables.logger.isErrorEnabled()>
+				<cfif variables.logger.isDebugEnabled()>
 					<cfset variables.logger.error("[coldspring.aop.AopProxyError] Error reading: Error Loading: #tmpBean#, #cfcatch.Detail#") />
 				</cfif>
 			 	<cfthrow type="coldspring.aop.AopProxyError" message="Error Loading: #tmpBean#, #cfcatch.Detail#" />
@@ -199,7 +199,7 @@
 			 <!--- delete the file --->  
 			 <cffile action="delete" file="#path#/#tmpFile#" />
 			 <cfcatch>
-				<cfif variables.logger.isErrorEnabled()>
+				<cfif variables.logger.isDebugEnabled()>
 					<cfset variables.logger.error("[coldspring.aop.UdfError] Error reading: Error Loading: #tmptmpFileBean#, #cfcatch.Detail#") />
 				</cfif>
 			 	<cfthrow type="coldspring.aop.UdfError" message="Error Loading: #tmpFile#, #cfcatch.Detail#" />

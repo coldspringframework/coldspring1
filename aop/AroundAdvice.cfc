@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: AroundAdvice.cfc,v 1.2 2005/09/26 15:48:12 scottc Exp $
+  $Id: AroundAdvice.cfc,v 1.3 2005/09/26 19:12:29 scottc Exp $
   $log$
 
 ---> 
@@ -32,8 +32,7 @@
 		<cfthrow message="Abstract CFC. Cannot be initialized" />
 	</cffunction>
 	
-	<cffunction name="afterReturning" access="public" returntype="any">
-		<cfargument name="returnVal" type="any" required="true" />
+	<cffunction name="around" access="public" returntype="any">
 		<cfargument name="method" type="coldspring.aop.Method" required="true" />
 		<cfargument name="args" type="struct" required="true" />
 		<cfargument name="target" type="any" required="true" />
