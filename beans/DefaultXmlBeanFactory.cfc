@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.12 2005/09/26 17:24:20 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.13 2005/10/06 16:18:32 rossd Exp $
 
 ---> 
 
@@ -308,12 +308,12 @@
 							<cfloop collection="#argDefs#" item="arg">
 								<cfswitch expression="#argDefs[arg].getType()#">
 									<cfcase value="value">
-										<cfinvokeargument name="#argDefs[arg].getName()#"
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
 												    	  value="#argDefs[arg].getValue()#"/>
 									</cfcase>
 
 									<cfcase value="list,map">
-										<cfinvokeargument name="#argDefs[arg].getName()#"
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
 												    	  value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
 									</cfcase>
 									
@@ -329,7 +329,7 @@
 											<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
 										</cfif> 
 										--->
-										<cfinvokeargument name="#argDefs[arg].getName()#"
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
 														  value="#getBean(argDefs[arg].getValue())#"/> <!--- value="#dependentBeanInstance#"  --->
 										
 									</cfcase>		
@@ -357,7 +357,7 @@
 						<cfcase value="value">
 							<cfinvoke component="#beanInstance#"
 									  method="set#propDefs[prop].getName()#">
-								<cfinvokeargument name="#propDefs[prop].getName()#"
+								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
 									  	value="#propDefs[prop].getValue()#"/>
 							</cfinvoke>					
 						</cfcase>
@@ -365,7 +365,7 @@
 						<cfcase value="map,list">
 							<cfinvoke component="#beanInstance#"
 									  method="set#propDefs[prop].getName()#">
-								<cfinvokeargument name="#propDefs[prop].getName()#"
+								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
 									  	value="#constructComplexProperty(propDefs[prop].getValue(), propDefs[prop].getType(), localBeanCache)#"/>
 							</cfinvoke>					
 						</cfcase>
@@ -395,7 +395,7 @@
 							
 							<cfinvoke component="#beanInstance#"
 									  method="set#propDefs[prop].getName()#">
-								<cfinvokeargument name="#propDefs[prop].getName()#"
+								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
 												  value="#dependentBeanInstance#"/>
 							</cfinvoke>
 							

@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.9 2005/09/26 17:24:20 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.10 2005/10/06 16:18:28 rossd Exp $
 
 --->
 
@@ -154,8 +154,10 @@
 		<cfset var beanInstance = 0/>
 		<cfset var beanName = 0/>
 		<cfset var autoArg = 0/>
+		<cfset var prop = 0/>
+		<cfset var argumentName = 0/>
 		<cfset var tempProps = arraynew(1)/>		
-		
+				
 		<!--- this is where the bean is actually created if it hasn't been --->
 		<cfif not autoWireChecked()>
 			<cfset  beanInstance = getBeanInstance() />
@@ -164,7 +166,8 @@
 			<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
 				<!--- look for init (constructor) --->
 				<!--- todo: respect how we are told to autowire (byName|byType) --->
-				<cfif md.functions[functionIndex].name eq "init" and arraylen(md.functions[functionIndex].parameters)>
+				<cfif md.functions[functionIndex].name eq "init" 
+					  and arraylen(md.functions[functionIndex].parameters)>
 					<!--- loop over args --->
 					<cfloop from="1" to="#arraylen(md.functions[functionIndex].parameters)#" index="argIndex">
 						<cfset autoArg = md.functions[functionIndex].parameters[argIndex]/>
@@ -188,8 +191,19 @@
 																								)) />						
 							
 						</cfif>
+						
+						<!--- try set the argumentName on this constructor arg if it exists --->
+						<cftry>
+							<cfset prop = getConstructorArg(autoArg.name) />
+							<cfset prop.setArgumentName(argumentName) />
+							<cfcatch></cfcatch>
+						</cftry>
+						
 					</cfloop>
-				<cfelseif left(md.functions[functionIndex].name,3) eq "set" and arraylen(md.functions[functionIndex].parameters) eq 1>
+				<cfelseif left(md.functions[functionIndex].name,3) eq "set" 
+						and not structKeyExists(variables.instanceData.properties, mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3))
+						and arraylen(md.functions[functionIndex].parameters) eq 1>
+		
 					<!--- look for setters (same as above for constructor-args) --->
 					<!--- todo:
 							respect how we are told to autowire (byName|byType) --->
@@ -243,8 +257,26 @@
 																						) ) >
 							
 												
-					</cfif>				
+					</cfif>			
+					
+				
+						
 				</cfif>
+				
+				
+				<!--- try set the argumentName on this property if it exists --->
+				<cfif left(md.functions[functionIndex].name,3) eq "set" 
+						and arraylen(md.functions[functionIndex].parameters) eq 1>
+					<cfset argumentName = md.functions[functionIndex].parameters[1].name />
+					<cftry>
+						<cfset prop = getProperty(mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)) />
+						<cfset prop.setArgumentName(argumentName) />
+						
+						<cfcatch></cfcatch>
+												
+					</cftry>
+				</cfif>
+				
 			</cfloop>			
 		</cfif>		
 		

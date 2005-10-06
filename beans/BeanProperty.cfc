@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.9 2005/09/26 17:24:20 rossd Exp $
+ $Id: BeanProperty.cfc,v 1.10 2005/10/06 16:18:31 rossd Exp $
 
 ---> 
 
@@ -276,6 +276,19 @@
 	<cffunction name="setName" access="public" output="false" returntype="void"  hint="I set the Name in this instance's data">
 		<cfargument name="Name" type="string" required="true"/>
 		<cfset variables.instanceData.Name = arguments.Name/>
+	</cffunction>
+
+	<cffunction name="getArgumentName" access="public" output="false" returntype="string" hint="I retrieve the Name from this instance's data">
+		<cfif structKeyExists(variables.instanceData,"argName")>
+			<cfreturn variables.instanceData.argName/>
+		<cfelse>
+			<cfreturn getName() />
+		</cfif>
+	</cffunction>
+
+	<cffunction name="setArgumentName" access="public" output="false" returntype="void"  hint="I set the Name in this instance's data">
+		<cfargument name="argName" type="string" required="true"/>
+		<cfset variables.instanceData.argName = arguments.argName/>
 	</cffunction>
 
 	<cffunction name="getType" access="public" output="false" returntype="string" hint="I retrieve the Type from this instance's data">
