@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.4 2005/09/26 19:12:29 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.5 2005/10/06 13:08:42 scottc Exp $
  $log$
 	
 ---> 
@@ -69,9 +69,6 @@
 			<cfelse>
 				<!--- or call the method --->
 				<cfset rtn = method.proceed() />
-				<cfif not isDefined('rtn')>
-					<cfset rtn = 0 />
-				</cfif>
 			</cfif>
 			
 			<!--- now any after returning advice --->
@@ -84,7 +81,9 @@
 			<cfset rtn = method.proceed() />
 		</cfif>
 		
-		<cfreturn rtn />
+		<cfif isDefined('rtn')>
+			<cfreturn rtn />
+		</cfif>
 	</cffunction>
 	
 </cfcomponent>
