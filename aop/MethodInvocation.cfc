@@ -15,8 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: MethodInvocation.cfc,v 1.1 2005/10/06 13:11:20 scottc Exp $
- $log$
+ $Id: MethodInvocation.cfc,v 1.2 2005/10/07 13:13:13 scottc Exp $
+ $log:$
 	
 ---> 
  
@@ -29,7 +29,6 @@
 		<cfargument name="method" type="coldspring.aop.Method" required="true" />
 		<cfargument name="args" type="struct" required="true" />
 		<cfargument name="target" type="any" required="true" />
-		<cfargument name="methodInterceptor" type="coldspring.aop.MethodInvocation" required="false" />
 		
 		<cfset variables.method = arguments.method />
 		<cfset variables.args = arguments.args />
@@ -42,11 +41,15 @@
 	</cffunction>
 	
 	<cffunction name="proceed" access="public" returntype="any">
+		<cfset var rtn = 0 />
 		<!--- continue with interceptor chain or call method to proceed --->
 		<cfif StructKeyExists(variables,"methodInterceptor")>
-			<cfset variables.methodInterceptor.invoke() />
+			<cfset rtn = variables.methodInterceptor.invokeMethod(variables.nextInvocation) />
 		<cfelse>
-			<cfset variables.method.proceed() />
+			<cfset rtn = variables.method.proceed() />
+		</cfif>
+		<cfif isDefined('rtn')>
+			<cfreturn rtn />
 		</cfif>
 	</cffunction>
 	
@@ -60,6 +63,13 @@
 	
 	<cffunction name="getTarget" access="public" returntype="struct" output="false">
 		<cfreturn variables.target />
+	</cffunction>
+	
+	<cffunction name="setInterceptor" access="public" returntype="void" output="false">
+		<cfargument name="methodInterceptor" type="coldspring.aop.MethodInterceptor" required="false" />
+		<cfargument name="nextInvocation" type="coldspring.aop.MethodInvocation" required="false" />
+		<cfset variables.methodInterceptor = arguments.methodInterceptor />
+		<cfset variables.nextInvocation = arguments.nextInvocation />
 	</cffunction>
 	
 </cfcomponent>

@@ -15,8 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: Method.cfc,v 1.4 2005/09/26 15:48:12 scottc Exp $
-  $log$
+  $Id: Method.cfc,v 1.5 2005/10/07 13:13:13 scottc Exp $
+  $log:$
 
 ---> 
  
@@ -41,6 +41,7 @@
 				hint="Executes captured method on target object">
 				
 		<cfset var rtn = 0 />
+		
 		<cfinvoke component="#variables.target#"
 				  method="#variables.method#" 
 				  argumentcollection="#variables.args#" 

@@ -15,8 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: Advisor.cfc,v 1.3 2005/09/26 15:48:12 scottc Exp $
- $log$
+ $Id: Advisor.cfc,v 1.4 2005/10/07 13:13:13 scottc Exp $
+ $log:$
 	
 ---> 
  

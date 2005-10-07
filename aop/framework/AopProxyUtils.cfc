@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.5 2005/09/26 19:12:29 scottc Exp $
+ $Id: AopProxyUtils.cfc,v 1.6 2005/10/07 13:13:13 scottc Exp $
  $log$
 	
 ---> 
@@ -63,12 +63,11 @@
 					<cfinvoke component="#arguments.obj#"
 						  method="get#property#" 
 						  returnvariable="propVal">
-					</cfinvoke>	
+					</cfinvoke>
 					<cfinvoke component="#target#"
-						  method="set#property#" 
-						  returnvariable="propertyVal">
-						  <cfinvokeargument name="#property#" value="#propVal#" />
-					</cfinvoke>	
+						  method="set#property#">
+						  <cfinvokeargument name="#metaData.functions[functionIx].parameters[1].name#" value="#propVal#" />
+					</cfinvoke>
 					<cfcatch>
 						<cfif variables.logger.isDebugEnabled()>
 							<cfset variables.logger.error("[coldspring.aop.AspectCloneError] Error reading: Error setting property #property#, #cfcatch.Detail#") />

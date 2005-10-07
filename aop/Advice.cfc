@@ -15,8 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: Advice.cfc,v 1.3 2005/09/26 15:48:12 scottc Exp $
- $log$
+ $Id: Advice.cfc,v 1.4 2005/10/07 13:13:13 scottc Exp $
+ $log:$
 	
 ---> 
  
@@ -37,7 +37,7 @@
 	</cffunction>
 	
 	<cffunction name="getType" access="public" returntype="string" output="false">
-		<cfif not(ListFindNoCase('before,around,afterReturning',variables.adviceType))>
+		<cfif not(ListFindNoCase('before,around,interceptor,afterReturning',variables.adviceType))>
 			<cfthrow type="coldspring.aop.MalformedAviceException" message="Advice Type is not correctly set, please extend the correct cfc for the advice type you are trying to implement!" />
 		<cfelse>
 			<cfreturn variables.adviceType />

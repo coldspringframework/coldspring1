@@ -9,7 +9,7 @@
 		<cfargument name="args" type="struct" required="true" />
 		<cfargument name="target" type="any" required="true" />
 		
-		Greetings!<br><br>
+		<cfset args['inputString'] = 'Greetings!<br><br>' />
 		
 	</cffunction>
 	

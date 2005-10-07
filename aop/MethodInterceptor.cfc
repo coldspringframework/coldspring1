@@ -15,8 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: MethodInterceptor.cfc,v 1.1 2005/10/06 13:11:20 scottc Exp $
- $log$
+ $Id: MethodInterceptor.cfc,v 1.2 2005/10/07 13:13:13 scottc Exp $
+ $log:$
 	
 ---> 
  
@@ -32,7 +32,7 @@
 		<cfthrow message="Abstract CFC. Cannot be initialized" />
 	</cffunction>
 	
-	<cffunction name="invoke" access="public" returntype="any">
+	<cffunction name="invokeMethod" access="public" returntype="any">
 		<cfargument name="methodInvocation" type="coldspring.aop.MethodInvocation" required="true" />
 		<cfthrow type="Method.NotImplemented">
 	</cffunction>

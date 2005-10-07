@@ -1,8 +1,11 @@
 <cfsilent>
-	<cfset path = ExpandPath('.') />
-	<cfset configFile = path & "/beans.xml" />
-	<cfset beanFactory = CreateObject('component', 'coldspring.beans.DefaultXmlBeanFactory').init() />
-	<cfset beanFactory.loadBeans(configFile) />
+	<cfif not StructKeyExists(application,"beanFactoryX")>
+		<cfset path = ExpandPath('.') />
+		<cfset configFile = path & "/beans.xml" />
+		<cfset application.beanFactory = CreateObject('component', 'coldspring.beans.DefaultXmlBeanFactory').init() />
+		<cfset application.beanFactory.loadBeans(configFile) />
+	</cfif>
+	<cfset beanFactory = application.beanFactory />
 	<cfset beanDefinitions = beanFactory.getBeanDefinitionList() />
 </cfsilent>
 
@@ -19,10 +22,10 @@
 		<!--- call the methods to see some aop --->
 		<cfoutput>
 		TEST SAYHELLO():<br>
-		#testBean.sayHello(ArrayNew(1),0)#
+		#testBean.sayHello('')#
 		<br><br>
 		TEST SAY GOODBYE():<br><br>
-		#testBean.sayGoodbye(ArrayNew(1),0)#
+		#testBean.sayGoodbye('')#
 		<br><br>
 		
 		<!--- just show the factory bean definitions --->
@@ -38,6 +41,7 @@
 			<cfloop collection="#beanProperties#" item="property">
 				PropertyName: #beanProperties[property].getName()#<br/>
 				PropertyType: #beanProperties[property].getType()#<br/>
+				<!--- PropertyValue: #beanProperties[property].getValue()#<br/> --->
 			</cfloop>
 			<br>
 			Dependencies: #beanDefinitions[beanID].getDependencies(beanID)#<br />

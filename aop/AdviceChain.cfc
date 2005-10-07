@@ -15,8 +15,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AdviceChain.cfc,v 1.3 2005/09/26 15:48:12 scottc Exp $
- $log$
+ $Id: AdviceChain.cfc,v 1.4 2005/10/07 13:13:13 scottc Exp $
+ $log:$
 	
 ---> 
  
@@ -28,6 +28,8 @@
 	<cffunction name="init" access="public" returntype="coldspring.aop.AdviceChain" output="false">
 		<cfset variables.beforeAdvice = ArrayNew(1) />
 		<cfset variables.afterAdvice = ArrayNew(1) />
+		<cfset variables.interceptors = ArrayNew(1) />
+		<!--- depreciated --->
 		<cfset variables.aroundAdvice = ArrayNew(1) />
 		<cfreturn this />
 	</cffunction>
@@ -41,6 +43,10 @@
 			<cfcase value="afterReturning">
 				<cfset ArrayAppend(variables.afterAdvice, arguments.advice) />
 			</cfcase>
+			<cfcase value="interceptor">
+				<cfset ArrayAppend(variables.interceptors, arguments.advice) />
+			</cfcase>
+			<!--- depreciated --->
 			<cfcase value="around">
 				<cfif ArrayLen(variables.aroundAdvice) GT 0>
 					<cfthrow type="coldspring.aop.MalformedAviceException" message="There can only be one around advice declared for each method!" />
@@ -60,10 +66,36 @@
 			<cfcase value="afterReturning">
 				<cfreturn variables.afterAdvice />
 			</cfcase>
+			<!--- depreciated --->
 			<cfcase value="around">
 				<cfreturn variables.aroundAdvice />
 			</cfcase>
 		</cfswitch>
+	</cffunction>
+	
+	<cffunction name="getInterceptorChain" access="public" returntype="coldspring.aop.MethodInvocation" output="false">
+		<cfargument name="method" type="coldspring.aop.Method" required="true" />
+		<cfargument name="args" type="struct" required="true" />
+		<cfargument name="target" type="any" required="true" />
+		
+		<cfset var lastInvocation = 0 />
+		<cfset var currentInvocation = 0 />
+		<cfset var ix = 0 />
+		
+		<!--- first make a methodInvocation object, to call the method --->
+		<cfset lastInvocation = 
+			   CreateObject('component','coldspring.aop.MethodInvocation').init(arguments.method, arguments.args, arguments.target) />
+			   
+		<!--- now loop through the interceptors and chain em up! --->
+		<cfloop from="#ArrayLen(variables.interceptors)#" to="1" index="ix" step="-1">
+			<cfset currentInvocation = 
+			   CreateObject('component','coldspring.aop.MethodInvocation').init(arguments.method, arguments.args, arguments.target) />
+			<cfset currentInvocation.setInterceptor(variables.interceptors[ix],lastInvocation) />
+			<cfset lastInvocation = currentInvocation />
+		</cfloop>
+		
+		<cfreturn lastInvocation />
+		
 	</cffunction>
 	
 </cfcomponent>

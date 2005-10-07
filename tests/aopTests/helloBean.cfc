@@ -5,15 +5,13 @@
 	</cffunction>
 
 	<cffunction name="sayHello" access="public" returntype="string">
-		<cfargument name="stuff" type="array" required="true" />
-		<cfargument name="other" type="any" required="false" default="0" />
-		<cfreturn "<b>Hello!</b><br/>" />
+		<cfargument name="inputString" type="string" required="true" />
+		<cfreturn arguments.inputString & "<b>Hello!</b><br/>" />
 	</cffunction>
 
 	<cffunction name="sayGoodbye" access="public" returntype="string">
-		<cfargument name="stuff" type="array" required="true" />
-		<cfargument name="other" type="any" required="false" />
-		<cfreturn "<b>Goodbye!</b><br/>" />
+		<cfargument name="inputString" type="string" required="true" />
+		<cfreturn arguments.inputString & "<b>Goodbye!</b><br/>" />
 	</cffunction>
 	
 </cfcomponent>
