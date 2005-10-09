@@ -1,6 +1,6 @@
 <!---
 	  
-  Copyright (c) 2005, Chris Scott
+  Copyright (c) 2005, Chris Scott, David Ross
   All rights reserved.
 	
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.7 2005/10/09 16:12:58 scottc Exp $
- $log$
+ $Id: AopProxyBean.cfc,v 1.8 2005/10/09 22:45:25 scottc Exp $
+ $Log: AopProxyBean.cfc,v $
+ Revision 1.8  2005/10/09 22:45:25  scottc
+ Forgot to add Dave to AOP license
+
 	
 ---> 
  

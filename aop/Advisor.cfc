@@ -1,6 +1,6 @@
 <!---
 	  
-  Copyright (c) 2005, Chris Scott
+  Copyright (c) 2005, Chris Scott, David Ross
   All rights reserved.
 	
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: Advisor.cfc,v 1.4 2005/10/07 13:13:13 scottc Exp $
- $log:$
+ $Id: Advisor.cfc,v 1.5 2005/10/09 22:45:24 scottc Exp $
+ $Log: Advisor.cfc,v $
+ Revision 1.5  2005/10/09 22:45:24  scottc
+ Forgot to add Dave to AOP license
+
 	
 ---> 
  
