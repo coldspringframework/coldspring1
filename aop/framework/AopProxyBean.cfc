@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.6 2005/10/07 13:13:13 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.7 2005/10/09 16:12:58 scottc Exp $
  $log$
 	
 ---> 
@@ -61,17 +61,7 @@
 				<cfset adviceChain[advIx].before(method, arguments.args, variables.target) />
 			</cfloop>
 			
-			<!--- next around advice
-			<cfset adviceChain = variables.adviceChains[arguments.methodName].getAdvice('around') />
-			<cfif ArrayLen(adviceChain)>
-				<!--- now if there's an around advice call that --->
-				<cfset rtn = adviceChain[1].around(method, arguments.args, variables.target) />
-			<cfelse>
-				<!--- or call the method --->
-				<cfset rtn = method.proceed() />
-			</cfif> --->
-			
-			<!--- NEW for methodInterceptors, the advice chain will create a proper interceptorChain --->
+			<!---  for methodInterceptors, the advice chain will create a proper interceptorChain --->
 			<cfset adviceChain = variables.adviceChains[arguments.methodName].getInterceptorChain(method, arguments.args, variables.target) />
 			<cfset rtn = adviceChain.proceed() />
 			
