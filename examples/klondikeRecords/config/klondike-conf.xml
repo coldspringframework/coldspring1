@@ -16,8 +16,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: klondike-conf.xml,v 1.3 2005/10/10 02:03:14 rossd Exp $
+  $Id: klondike-conf.xml,v 1.4 2005/10/10 02:57:09 scottc Exp $
   $Log: klondike-conf.xml,v $
+  Revision 1.4  2005/10/10 02:57:09  scottc
+  removed login events that can't work
+
   Revision 1.3  2005/10/10 02:03:14  rossd
   ok, moved all controller cfcs into net/klondike/controller
 
@@ -77,23 +80,11 @@
 			<filter name="eventArgs">
 				<parameter name="crumb" value="Login|logout" />
 				<parameter name="reset" value="true" />
-				<parameter name="submitEvent" value="login" />
+				<parameter name="submitEvent" value="home" />
 			</filter>
 			<notify listener="breadcrumb" method="addCrumb" resultKey="request.breadcrumb" />
 			<view-page name="loginForm" contentKey="request.content" />
 			<view-page name="mainLayout" />
-		</event-handler>
-		
-		<!-- login  -->
-		<event-handler event="login" access="public">
-			<event-mapping event="Home" mapping="clients" />
-			<notify listener="users" method="attemptLogin" />
-		</event-handler>
-		
-		<!-- logout -->
-		<event-handler event="logout" access="public">
-			<notify listener="users" method="removeSession" />
-			<announce event="loginForm" copyEventArgs="false" />
 		</event-handler>
 		
 		<!-- home (highlights) -->
