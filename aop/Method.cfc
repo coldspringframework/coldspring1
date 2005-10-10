@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: Method.cfc,v 1.6 2005/10/09 22:45:24 scottc Exp $
+  $Id: Method.cfc,v 1.7 2005/10/10 18:40:10 scottc Exp $
   $Log: Method.cfc,v $
+  Revision 1.7  2005/10/10 18:40:10  scottc
+  Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
+
   Revision 1.6  2005/10/09 22:45:24  scottc
   Forgot to add Dave to AOP license
 
@@ -36,28 +39,40 @@
 		<cfset variables.target = arguments.target />
 		<cfset variables.method = arguments.method />
 		<cfset variables.args = arguments.args />
+		<cfset variables.runnable = false />
 		
 		<cfreturn this />
 	</cffunction>
 	
 	<cffunction name="proceed" access="public" returntype="any" output="false" 
 				hint="Executes captured method on target object">
-				
+		
 		<cfset var rtn = 0 />
 		
-		<cfinvoke component="#variables.target#"
-				  method="#variables.method#" 
-				  argumentcollection="#variables.args#" 
-				  returnvariable="rtn">
-		</cfinvoke>	
-		<cfif isDefined('rtn')>
-			<cfreturn rtn />
+		<cfif isRunnable()>
+			<cfinvoke component="#variables.target#"
+					  method="#variables.method#" 
+					  argumentcollection="#variables.args#" 
+					  returnvariable="rtn">
+			</cfinvoke>	
+			<cfset variables.runnable = false />
+			<cfif isDefined('rtn')>
+				<cfreturn rtn />
+			</cfif>
 		</cfif>
 		
 	</cffunction>
 	
 	<cffunction name="getMethodName" access="public" returntype="string" output="false">
 		<cfreturn variables.method />
+	</cffunction>
+	
+	<cffunction name="isRunnable" access="public" returntype="string" output="false">
+		<cfreturn variables.runnable />
+	</cffunction>
+	
+	<cffunction name="setRunnable" access="public" returntype="void" output="false">
+		<cfset variables.runnable = true />
 	</cffunction>
 	
 </cfcomponent>

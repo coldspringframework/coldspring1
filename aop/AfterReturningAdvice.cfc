@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AfterReturningAdvice.cfc,v 1.5 2005/10/09 22:45:24 scottc Exp $
+ $Id: AfterReturningAdvice.cfc,v 1.6 2005/10/10 18:40:10 scottc Exp $
  $Log: AfterReturningAdvice.cfc,v $
+ Revision 1.6  2005/10/10 18:40:10  scottc
+ Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
+
  Revision 1.5  2005/10/09 22:45:24  scottc
  Forgot to add Dave to AOP license
 
@@ -36,7 +39,7 @@
 	</cffunction>
 	
 	<cffunction name="afterReturning" access="public" returntype="any">
-		<cfargument name="returnVal" type="any" required="true" />
+		<cfargument name="returnVal" type="any" required="false" />
 		<cfargument name="method" type="coldspring.aop.Method" required="true" />
 		<cfargument name="args" type="struct" required="true" />
 		<cfargument name="target" type="any" required="true" />

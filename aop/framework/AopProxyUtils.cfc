@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.7 2005/10/09 22:45:25 scottc Exp $
+ $Id: AopProxyUtils.cfc,v 1.8 2005/10/10 18:40:10 scottc Exp $
  $Log: AopProxyUtils.cfc,v $
+ Revision 1.8  2005/10/10 18:40:10  scottc
+ Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
+
  Revision 1.7  2005/10/09 22:45:25  scottc
  Forgot to add Dave to AOP license
 
@@ -188,7 +191,7 @@
 		
 		<!--- return a value if we need to --->
 		<cfif not FindNoCase('void',metaData.returnType)>
-			<cfset function = function & "<cfreturn rtn /> " & Chr(10) />
+			<cfset function = function & "<cfif isDefined('rtn')><cfreturn rtn /></cfif>" & Chr(10) />
 		</cfif>
 		<!--- close function --->
 		<cfset function = function & "</cffunction>" />
@@ -198,7 +201,7 @@
 			<cffile action="write" file="#path#/#tmpFile#" output="#function#" />
 			 <!--- import the file --->
 			 <cfinclude template="#tmpFile#" /> 
-			 <!--- delete the file --->  
+			 <!--- delete the file --->
 			 <cffile action="delete" file="#path#/#tmpFile#" />
 			 <cfcatch>
 				<cfif variables.logger.isDebugEnabled()>

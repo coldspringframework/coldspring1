@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: MethodInvocation.cfc,v 1.3 2005/10/09 22:45:24 scottc Exp $
+ $Id: MethodInvocation.cfc,v 1.4 2005/10/10 18:40:10 scottc Exp $
  $Log: MethodInvocation.cfc,v $
+ Revision 1.4  2005/10/10 18:40:10  scottc
+ Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
+
  Revision 1.3  2005/10/09 22:45:24  scottc
  Forgot to add Dave to AOP license
 
@@ -49,6 +52,7 @@
 		<cfif StructKeyExists(variables,"methodInterceptor")>
 			<cfset rtn = variables.methodInterceptor.invokeMethod(variables.nextInvocation) />
 		<cfelse>
+			<cfset variables.method.setRunnable() />
 			<cfset rtn = variables.method.proceed() />
 		</cfif>
 		<cfif isDefined('rtn')>

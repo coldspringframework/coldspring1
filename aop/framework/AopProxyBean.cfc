@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.8 2005/10/09 22:45:25 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.9 2005/10/10 18:40:10 scottc Exp $
  $Log: AopProxyBean.cfc,v $
+ Revision 1.9  2005/10/10 18:40:10  scottc
+ Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
+
  Revision 1.8  2005/10/09 22:45:25  scottc
  Forgot to add Dave to AOP license
 
@@ -71,10 +74,16 @@
 			<!--- now any after returning advice --->
 			<cfset adviceChain = variables.adviceChains[arguments.methodName].getAdvice('afterReturning') />
 			<cfloop from="1" to="#ArrayLen(adviceChain)#" index="advIx">
-				<cfset rtn = adviceChain[advIx].afterReturning(rtn, method, arguments.args, variables.target) />
+				<!--- if there's a return value, pass it in to afterReturning, if not, don't --->
+				<cfif isDefined('rtn')>
+					<cfset rtn = adviceChain[advIx].afterReturning(rtn, method, arguments.args, variables.target) />
+				<cfelse>
+					<cfset rtn = adviceChain[advIx].afterReturning(method=method, args=arguments.args, target=variables.target) />
+				</cfif>
 			</cfloop>
 		<cfelse>
 			<!--- if there's no advice chains to execute, just call the method --->
+			<cfset variables.method.setRunnable() />
 			<cfset rtn = method.proceed() />
 		</cfif>
 		
