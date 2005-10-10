@@ -15,8 +15,24 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ModelGlueBeanFactoryAdapter.cfc,v 1.2 2005/10/10 02:12:29 rossd Exp $
+  $Id: ModelGlueBeanFactoryAdapter.cfc,v 1.3 2005/10/10 02:25:41 rossd Exp $
 
+  
+  This is the first cut at writing an adapter CFC to allow replacing 
+  the ModelGlue framework's internal beanFactory with a coldspring bean
+  factory. The following code would be used within a ModelGlue
+  controller:
+  
+  <cfset var beanFactory = createObject("component","coldspring.beans.DefaultXmlBeanFactory").init()/>
+  <cfset var mgAdapterFactory = createObject("component","coldspring.modelglue.ModelGlueBeanFactoryAdapter").init()/>
+  <cfset super.Init(arguments.ModelGlue) />
+  
+  <cfset beanFactory.loadBeans(expandPath("./config/beans/allBeans.xml"))>
+	
+  <cfset mgAdapterFactory.setBeanFactory(beanFactory)/>
+
+  <cfset arguments.ModelGlue.setBeanFactory(mgAdapterFactory)>
+  
 --->
 
 <cfcomponent
