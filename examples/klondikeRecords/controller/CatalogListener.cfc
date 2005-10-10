@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: CatalogListener.cfc,v 1.1 2005/10/09 20:12:06 scottc Exp $
+  $Id: CatalogListener.cfc,v 1.1 2005/10/10 01:52:05 rossd Exp $
   $Log: CatalogListener.cfc,v $
+  Revision 1.1  2005/10/10 01:52:05  rossd
+  renamed /model to /controller to reflect best practice
+
   Revision 1.1  2005/10/09 20:12:06  scottc
   First commit of the record store example app. Contains a hopefully detailed readme file on usage.
 

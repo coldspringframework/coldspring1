@@ -16,8 +16,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: klondike-conf.xml,v 1.1 2005/10/09 20:12:06 scottc Exp $
+  $Id: klondike-conf.xml,v 1.2 2005/10/10 01:52:05 rossd Exp $
   $Log: klondike-conf.xml,v $
+  Revision 1.2  2005/10/10 01:52:05  rossd
+  renamed /model to /controller to reflect best practice
+
   Revision 1.1  2005/10/09 20:12:06  scottc
   First commit of the record store example app. Contains a hopefully detailed readme file on usage.
 
@@ -42,11 +45,11 @@
 
 	<!-- LISTENERS -->
 	<listeners>
-		<listener name="breadcrumb" type="klondike.model.Breadcrumb">
+		<listener name="breadcrumb" type="klondike.controller.Breadcrumb">
 			<invoker type="MachII.framework.invokers.CFCInvoker_EventArgs" />	
 		</listener>
 		
-		<listener name="catalog" type="klondike.model.CatalogListener">
+		<listener name="catalog" type="klondike.controller.CatalogListener">
 			<invoker type="MachII.framework.invokers.CFCInvoker_Event" />
 		</listener>
 	</listeners>
