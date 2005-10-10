@@ -16,8 +16,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: klondike-conf.xml,v 1.4 2005/10/10 02:57:09 scottc Exp $
+  $Id: klondike-conf.xml,v 1.5 2005/10/10 03:00:15 rossd Exp $
   $Log: klondike-conf.xml,v $
+  Revision 1.5  2005/10/10 03:00:15  rossd
+  minor fixes
+
   Revision 1.4  2005/10/10 02:57:09  scottc
   removed login events that can't work
 
@@ -37,7 +40,7 @@
 
 	<!-- PROPERTIES -->
 	<properties>
-		<property name="applicationRoot" value="/klondike" />
+		<property name="applicationRoot" value="/coldspring/examples/klondikeRecords" />
 		<property name="defaultEvent" value="home" />
 		<property name="eventParameter" value="event" />
 		<property name="parameterPrecedence" value="form" />
@@ -63,13 +66,13 @@
 	<!-- EVENT-FILTERS -->
 	<event-filters>
 		<event-filter name="eventArgs" type="MachII.filters.EventArgsFilter" />
-		<event-filter name="requiredFields" type="net.klondike.filters.RequiredFieldsFilter">
+		<event-filter name="requiredFields" type="net.klondike.controller.RequiredFieldsFilter">
 			<parameters>
 				<parameter name="allowZeroValues" value="false" />
 				<parameter name="copyEventArgs" value="true" />
 			</parameters>	
 		</event-filter>
-		<event-filter name="relocate" type="net.klondike.filters.RelocateFitler" />
+		<event-filter name="relocate" type="net.klondike.controller.RelocateFitler" />
 	</event-filters>
 
 	<!-- EVENT-HANDLERS -->
