@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: CatalogListener.cfc,v 1.1 2005/10/10 01:52:05 rossd Exp $
+  $Id: CatalogListener.cfc,v 1.1 2005/10/10 02:03:15 rossd Exp $
   $Log: CatalogListener.cfc,v $
+  Revision 1.1  2005/10/10 02:03:15  rossd
+  ok, moved all controller cfcs into net/klondike/controller
+
   Revision 1.1  2005/10/10 01:52:05  rossd
   renamed /model to /controller to reflect best practice
 

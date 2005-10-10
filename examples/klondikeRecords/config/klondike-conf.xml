@@ -16,8 +16,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: klondike-conf.xml,v 1.2 2005/10/10 01:52:05 rossd Exp $
+  $Id: klondike-conf.xml,v 1.3 2005/10/10 02:03:14 rossd Exp $
   $Log: klondike-conf.xml,v $
+  Revision 1.3  2005/10/10 02:03:14  rossd
+  ok, moved all controller cfcs into net/klondike/controller
+
   Revision 1.2  2005/10/10 01:52:05  rossd
   renamed /model to /controller to reflect best practice
 
@@ -45,11 +48,11 @@
 
 	<!-- LISTENERS -->
 	<listeners>
-		<listener name="breadcrumb" type="klondike.controller.Breadcrumb">
+		<listener name="breadcrumb" type="net.klondike.controller.Breadcrumb">
 			<invoker type="MachII.framework.invokers.CFCInvoker_EventArgs" />	
 		</listener>
 		
-		<listener name="catalog" type="klondike.controller.CatalogListener">
+		<listener name="catalog" type="net.klondike.controller.CatalogListener">
 			<invoker type="MachII.framework.invokers.CFCInvoker_Event" />
 		</listener>
 	</listeners>
@@ -57,13 +60,13 @@
 	<!-- EVENT-FILTERS -->
 	<event-filters>
 		<event-filter name="eventArgs" type="MachII.filters.EventArgsFilter" />
-		<event-filter name="requiredFields" type="klondike.filters.RequiredFieldsFilter">
+		<event-filter name="requiredFields" type="net.klondike.filters.RequiredFieldsFilter">
 			<parameters>
 				<parameter name="allowZeroValues" value="false" />
 				<parameter name="copyEventArgs" value="true" />
 			</parameters>	
 		</event-filter>
-		<event-filter name="relocate" type="klondike.filters.RelocateFitler" />
+		<event-filter name="relocate" type="net.klondike.filters.RelocateFitler" />
 	</event-filters>
 
 	<!-- EVENT-HANDLERS -->
