@@ -15,9 +15,11 @@
 		
 		<cfset rtn = methodInvocation.proceed() />
 		
-		<cfset rtn = rtn & '<br>End intercept Two<br>' />
-		
-		<cfreturn rtn />
+		<cfif isDefined('rtn')>
+			<cfset rtn = rtn & '<br>End intercept Two<br>' />
+			
+			<cfreturn rtn />
+		</cfif>
 	</cffunction>
 	
 </cfcomponent>
