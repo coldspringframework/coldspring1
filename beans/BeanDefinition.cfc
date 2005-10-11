@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.10 2005/10/06 16:18:28 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.11 2005/10/11 02:13:51 rossd Exp $
 
 --->
 
@@ -195,7 +195,7 @@
 						<!--- try set the argumentName on this constructor arg if it exists --->
 						<cftry>
 							<cfset prop = getConstructorArg(autoArg.name) />
-							<cfset prop.setArgumentName(argumentName) />
+							<cfset prop.setArgumentName(autoArg.name) />
 							<cfcatch></cfcatch>
 						</cftry>
 						
