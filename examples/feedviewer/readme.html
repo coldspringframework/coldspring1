@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: readme.html,v 1.2 2005/09/26 02:01:04 rossd Exp $
+ $Id: readme.html,v 1.3 2005/10/11 03:46:35 wiersma Exp $
 
 -->
 
@@ -69,6 +69,8 @@
 </p>
 <p>Right now, the services.xml file is configured to use Roger Benningfield's normalizer. I included ROME because I had difficulty getting Roger's to normalize several popular feeds. To use ROME, you 
 will have to include two jar files, rome-0.5.jar and jdom.jar, in CFMX's classpath. They are included in the javalib/ folder. After a server restart edit services.xml to point at the ROME "normalizer" (just a wrapper I wrote). There are instructions in services.xml as to how one would do that.</p>
+
+<p>The feedviewer-remote directory contains an example of how to setup a flash remoting interface to this application. It uses ColdSpring's flashUtilityService which can convert CFC instances into a java class that the Flash Remoting Gateway can convert into an Actionscript class. This same process also works for arguments passed to CFC from the flash client. In case the Actionscript class will get converted to CFC instance. You can configure the mappings in the services.xml file under the flashMappings bean. </p>
 
 <p>This application is far from complete... it only has basic functionality and was designed to demonstrate the use of coldspring to manage a service layer. In the future its feature set may become more rounded, as I do have a need for a CFML-based server side aggregator to 
 replace a php-version I wrote.</p>

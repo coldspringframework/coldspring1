@@ -1,6 +1,6 @@
 <!---
  
-  Copyright (c) 2002-2005	David Ross,	Chris Scott
+  Copyright (c) 2002-2005	David Ross,	Chris Scott, Kurt Wiersma
   
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
   limitations under the License.
 		
 			
- $Id: remoteFacade.cfc,v 1.2 2005/09/26 02:01:04 rossd Exp $
+ $Id: remoteFacade.cfc,v 1.3 2005/10/11 03:46:35 wiersma Exp $
 
 --->
 
 
 <cfcomponent displayname="Remote Facade" output="false" hint="I am a remote facade for feedviewer">
-	
+		
 	<cffunction name="getAllChannels" returntype="query" access="remote" output="false" hint="I retrieve all existing channels">
 		<!--- remember, each remote call will cause a new instance of this cfc to be created 
 		  thus, we will reference the service factory thru the application scope:
@@ -33,6 +33,23 @@
 	<cffunction name="getAllCategories" returntype="query" access="remote" output="false" hint="I retrieve all existing channel categories">
 		<cfset var categoryService = application.serviceFactory.getBean('categoryService') />
 		<cfreturn categoryService.getAllCategories()/>
+	</cffunction>
+
+	<!--- Returns a ActionScript object with the mapping defined in the flashMappings config --->
+	<cffunction name="getCategory" access="remote" returntype="struct" output="false">
+		<cfargument name="categoryID" type="numeric" required="true">
+		<cfset var categoryService = application.serviceFactory.getBean('categoryService') />
+		<cfset var flashUtilService = application.serviceFactory.getBean('flashUtilityService') />
+		<cfreturn flashUtilService.processServiceMethodResult(categoryService.getById(arguments.categoryID)) />
+	</cffunction>
+		
+	<cffunction name="saveCategory" access="remote" returntype="struct" output="false">
+		<cfargument name="category" type="struct" required="true">
+		<cfset var categoryService = application.serviceFactory.getBean('categoryService') />
+		<cfset var flashUtilService = application.serviceFactory.getBean('flashUtilityService') />
+		<!--- Takes a actionscript category objects and converts it to a CFC instance --->
+		<cfset var args = flashUtilService.processServiceMethodParams(arguments) />
+		<cfset categoryService.save(args.category)>
 	</cffunction>
 
 	<cffunction name="getChannelsByCategoryIds" returntype="query" access="remote" output="false" hint="I retrieve all existing channels within a given category ID">
