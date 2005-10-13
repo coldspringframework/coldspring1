@@ -15,7 +15,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ModelGlueBeanFactoryAdapter.cfc,v 1.3 2005/10/10 02:25:41 rossd Exp $
+  $Id: ModelGlueBeanFactoryAdapter.cfc,v 1.4 2005/10/13 16:23:54 scorfield Exp $
 
   
   This is the first cut at writing an adapter CFC to allow replacing 
@@ -50,7 +50,13 @@
 
 	</cffunction>
 
-
+	<cffunction name="getBeanFactory" returntype="coldspring.beans.BeanFactory" access="public" output="false" 
+				hint="Return the real coldspring bean factory (used by the autowiring code)">
+		
+		<cfreturn variables.myBeanFactory />
+		
+	</cffunction>
+	
 	<cffunction name="CreateBean" access="public" returnType="any" output="false" hint="I create a bean from an XML file.">
    		<cfargument name="beanFile" type="string" required="true" hint="I am the filename representing the bean to instantiate." />
 

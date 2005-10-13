@@ -18,7 +18,7 @@
 		<cfset var method = 0 />
 		<cfset var setterName = "" />
 		<cfset var setterType = "" />
-		<cfset var beanFactory = variables.getBeanFactory().getAdaptedBeanFactory() />
+		<cfset var beanFactory = variables.getBeanFactory().getBeanFactory() />
 		<cfset var beanName = "" />
 		
 		<cfset this.AddControllerTarget(arguments.name, arguments.type) />
@@ -55,27 +55,7 @@
 		</cfif>
 		
 	</cffunction>
-	
-	<!---
-		this proxy gets injected into the Model-Glue bean factory adapter inside ColdSpring
-		so that the controller proxy (above) can get at the underlying ColdSpring bean factory
-	--->
-	<cffunction name="getAdaptedBeanFactory" returntype="coldspring.beans.BeanFactory" access="public" output="false">
 		
-		<cfreturn variables.myBeanFactory />
-		
-	</cffunction>
-	
-	<!---
-		this gets injected into the Model-Glue core so that we can patch the bean factory!
-	--->
-	<cffunction name="patchBeanFactory" returntype="void" access="public" output="false">
-		<cfargument name="beanFactoryProxy" type="any" required="true" />
-		
-		<cfset variables.getBeanFactory().getAdaptedBeanFactory = arguments.beanFactoryProxy />
-
-	</cffunction>
-	
 	<cffunction name="Init" access="public" returnType="ModelGlue.Core.Controller" output="false" hint="I return a new Controller.">
 		<cfargument name="ModelGlue" type="ModelGlue.ModelGlue" required="true" hint="I am an instance of ModelGlue.">
 		<cfargument name="InstanceName" required="false" type="string" default="Unknown">
@@ -85,8 +65,6 @@
 		<!--- rewire ModelGlue framework code so we can proxy the controllers: --->
 		<cfset arguments.ModelGlue.AddControllerTarget = arguments.ModelGlue.AddController />
 		<cfset arguments.ModelGlue.AddController = this.AddControllerProxy />
-		<cfset arguments.ModelGlue.PatchBeanFactory = this.patchBeanFactory />
-		<cfset arguments.ModelGlue.PatchBeanFactory(this.getAdaptedBeanFactory) />
 		
 		<cfreturn this />
 	</cffunction>
