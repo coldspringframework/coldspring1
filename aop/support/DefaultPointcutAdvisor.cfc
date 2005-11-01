@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: DefaultPointcutAdvisor.cfc,v 1.5 2005/10/09 22:45:24 scottc Exp $
+ $Id: DefaultPointcutAdvisor.cfc,v 1.6 2005/11/01 03:48:21 scottc Exp $
  $Log: DefaultPointcutAdvisor.cfc,v $
+ Revision 1.6  2005/11/01 03:48:21  scottc
+ Some fixes to around advice as well as isRunnable in Method class so that advice cannot directly call method.proceed(). also some unitTests
+
  Revision 1.5  2005/10/09 22:45:24  scottc
  Forgot to add Dave to AOP license
 
@@ -31,7 +34,7 @@
 			
 	<cfset variables.pointcut = 0 />
 			
-	<cffunction name="init" access="public" returntype="coldspring.aop.DefaultPointcutAdvisor" output="false">
+	<cffunction name="init" access="public" returntype="coldspring.aop.support.DefaultPointcutAdvisor" output="false">
 		<cfreturn this />
 	</cffunction>
 	
@@ -42,6 +45,11 @@
 	
 	<cffunction name="getPointcut" access="public" returntype="coldspring.aop.Pointcut" output="false">
 		<cfreturn variables.pointcut />
+	</cffunction>
+	
+	<cffunction name="matches" access="public" returntype="boolean" output="true">
+		<cfargument name="methodName" type="string" required="true" />
+		<cfreturn true />
 	</cffunction>
 	
 </cfcomponent>

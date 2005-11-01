@@ -11,7 +11,9 @@
 		<cfset var args = methodInvocation.getArguments() />
 		<cfset var rtn = '' />
 		
-		<cfset args['inputString'] = args['inputString'] & '<br>Begin intercept one<br>' />
+		<cfif StructKeyExists(args,'inputString')>
+			<cfset args['inputString'] = args['inputString'] & '<br>Begin intercept one<br>' />
+		</cfif>
 		
 		<cfset rtn = methodInvocation.proceed() />
 		

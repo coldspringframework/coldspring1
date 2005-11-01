@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.5 2005/10/09 22:45:25 scottc Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.6 2005/11/01 03:48:21 scottc Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.6  2005/11/01 03:48:21  scottc
+  Some fixes to around advice as well as isRunnable in Method class so that advice cannot directly call method.proceed(). also some unitTests
+
   Revision 1.5  2005/10/09 22:45:25  scottc
   Forgot to add Dave to AOP license
 
@@ -56,6 +59,13 @@
 	<cffunction name="addAdvisor" access="public" returntype="string" output="false">
 		<cfargument name="advisor" type="coldspring.aop.Advisor" required="true"/>
 		<cfset ArrayAppend(variables.advisorChain, arguments.advisor) />
+	</cffunction>
+	
+	<cffunction name="addAdviceWithDefaultAdvisor" access="public" returntype="string" output="false">
+		<cfargument name="advice" type="coldspring.aop.Advice" required="true"/>
+		<cfset var defaultAdvisor = CreateObject("component", "coldspring.aop.support.DefaultPointcutAdvisor") />
+		<cfset defaultAdvisor.setAdvice(arguments.advice) />
+		<cfset ArrayAppend(variables.advisorChain, defaultAdvisor) />
 	</cffunction>
 	
 	<cffunction name="getBeanFactory" access="public" output="false" returntype="struct" 
@@ -156,7 +166,20 @@
 				<cfif variables.logger.isInfoEnabled()>
 					<cfset variables.logger.info("ProxyFactoryBean.getObject() buildAdvisorChain adding Advisor: " & variables.interceptorNames[ix]) />
 				</cfif>
-				<cfset ArrayAppend(variables.advisorChain, getBeanFactory().getBean(variables.interceptorNames[ix])) />
+				<!--- new update, now we'll try to add as type advisor, if that fails
+					  we'll try to create a new default advisor and add as an avice --->
+				<cfset advisorBean = getBeanFactory().getBean(variables.interceptorNames[ix]) />
+				<cftry>
+					<cfset addAdvisor(advisorBean) />
+					<cfcatch>
+						<cftry>
+							<cfset addAdviceWithDefaultAdvisor(advisorBean) />
+						<cfcatch>
+							<cfthrow type="coldspring.aop.InvalidAdvisorError" message="You attempted to add an object which is not of type advice or advisor as an interceptor. This is not allowed!" />
+						</cfcatch>
+						</cftry>
+					</cfcatch>
+				</cftry>
 			</cfloop>
 		</cfif>
 	</cffunction>	

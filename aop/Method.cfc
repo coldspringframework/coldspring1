@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: Method.cfc,v 1.7 2005/10/10 18:40:10 scottc Exp $
+  $Id: Method.cfc,v 1.8 2005/11/01 03:48:21 scottc Exp $
   $Log: Method.cfc,v $
+  Revision 1.8  2005/11/01 03:48:21  scottc
+  Some fixes to around advice as well as isRunnable in Method class so that advice cannot directly call method.proceed(). also some unitTests
+
   Revision 1.7  2005/10/10 18:40:10  scottc
   Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
 
@@ -67,12 +70,12 @@
 		<cfreturn variables.method />
 	</cffunction>
 	
-	<cffunction name="isRunnable" access="public" returntype="string" output="false">
-		<cfreturn variables.runnable />
-	</cffunction>
-	
 	<cffunction name="setRunnable" access="public" returntype="void" output="false">
 		<cfset variables.runnable = true />
+	</cffunction>
+	
+	<cffunction name="isRunnable" access="public" returntype="boolean" output="false">
+		<cfreturn variables.runnable />
 	</cffunction>
 	
 </cfcomponent>

@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.9 2005/10/10 18:40:10 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.10 2005/11/01 03:48:21 scottc Exp $
  $Log: AopProxyBean.cfc,v $
+ Revision 1.10  2005/11/01 03:48:21  scottc
+ Some fixes to around advice as well as isRunnable in Method class so that advice cannot directly call method.proceed(). also some unitTests
+
  Revision 1.9  2005/10/10 18:40:10  scottc
  Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
 
@@ -83,7 +86,7 @@
 			</cfloop>
 		<cfelse>
 			<!--- if there's no advice chains to execute, just call the method --->
-			<cfset variables.method.setRunnable() />
+			<cfset method.setRunnable() />
 			<cfset rtn = method.proceed() />
 		</cfif>
 		

@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: NamedMethodPointcut.cfc,v 1.6 2005/10/09 22:45:24 scottc Exp $
+ $Id: NamedMethodPointcut.cfc,v 1.7 2005/11/01 03:48:21 scottc Exp $
  $Log: NamedMethodPointcut.cfc,v $
+ Revision 1.7  2005/11/01 03:48:21  scottc
+ Some fixes to around advice as well as isRunnable in Method class so that advice cannot directly call method.proceed(). also some unitTests
+
  Revision 1.6  2005/10/09 22:45:24  scottc
  Forgot to add Dave to AOP license
 
@@ -53,14 +56,19 @@
 		<cfargument name="methodName" type="string" required="true" />
 		<cfset var mappedName = '' />
 		<cfset var ix = 0 />
-		<cfloop from="1" to="#ArrayLen(variables.mappedNames)#" index="ix">
-			<cfset mappedName = variables.mappedNames[ix] />
-			<cfif (arguments.methodName EQ mappedName) OR
-				  isMatch(arguments.methodName, mappedName) >
-				<cfreturn true />	  
-			</cfif>
-		</cfloop>
-		<cfreturn false />
+		
+		<cfif isArray(variables.mappedNames) and ArrayLen(variables.mappedNames)>
+			<cfloop from="1" to="#ArrayLen(variables.mappedNames)#" index="ix">
+				<cfset mappedName = variables.mappedNames[ix] />
+				<cfif (arguments.methodName EQ mappedName) OR
+					  isMatch(arguments.methodName, mappedName) >
+					<cfreturn true />	  
+				</cfif>
+			</cfloop>
+			<cfreturn false />
+		<cfelse>
+			<cfthrow type="coldspring.aop.InvalidMappedNames" message="You must provide the NamedMethodPointcutAdvisor with a list of method names to match. Use '*' of you would like to match all methods!" />
+		</cfif>
 	</cffunction>
 			
 	<cffunction name="isMatch" access="private" returntype="boolean" output="true">
