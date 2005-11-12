@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AdviceChain.cfc,v 1.5 2005/10/09 22:45:24 scottc Exp $
+ $Id: AdviceChain.cfc,v 1.6 2005/11/12 19:01:07 scottc Exp $
  $Log: AdviceChain.cfc,v $
+ Revision 1.6  2005/11/12 19:01:07  scottc
+ Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
+
  Revision 1.5  2005/10/09 22:45:24  scottc
  Forgot to add Dave to AOP license
 
@@ -31,73 +34,95 @@
 	<cffunction name="init" access="public" returntype="coldspring.aop.AdviceChain" output="false">
 		<cfset variables.beforeAdvice = ArrayNew(1) />
 		<cfset variables.afterAdvice = ArrayNew(1) />
-		<cfset variables.interceptors = ArrayNew(1) />
-		<!--- depreciated --->
+		<cfset variables.throwsAdvice = ArrayNew(1) />
 		<cfset variables.aroundAdvice = ArrayNew(1) />
+		<cfset variables.interceptors = StructNew() />
+		
 		<cfreturn this />
 	</cffunction>
 	
 	<cffunction name="addAdvice" access="public" returntype="void" output="false">
 		<cfargument name="advice" type="coldspring.aop.Advice" required="true" />
+		<cfset var interceptor = 0 />
+		
 		<cfswitch expression="#advice.getType()#">
 			<cfcase value="before">
+				<cfset interceptor = CreateObject('component','coldspring.aop.BeforeAdviceInterceptor').init(arguments.advice) />
+			</cfcase>
+			<cfcase value="afterReturning">
+				<cfset interceptor = CreateObject('component','coldspring.aop.AfterReturningAdviceInterceptor').init(arguments.advice) />
+			</cfcase>
+			<cfcase value="throws">
+				<cfset interceptor = CreateObject('component','coldspring.aop.ThrowsAdviceInterceptor').init(arguments.advice) />
+			</cfcase>
+			<cfdefaultcase>
+				<cfset interceptor = arguments.advice />
+			</cfdefaultcase>
+		</cfswitch>
+		
+		<cfset addInterceptor(interceptor) />
+	</cffunction>
+	
+	<cffunction name="addInterceptor" access="public" returntype="void" output="false">
+		<cfargument name="advice" type="coldspring.aop.MethodInterceptor" required="true" />
+		<cfswitch expression="#advice.getType()#">
+			<cfcase value="beforeInterceptor">
 				<cfset ArrayAppend(variables.beforeAdvice, arguments.advice) />
 			</cfcase>
-			<cfcase value="afterReturning">
+			<cfcase value="afterReturningInterceptor">
 				<cfset ArrayAppend(variables.afterAdvice, arguments.advice) />
 			</cfcase>
-			<cfcase value="interceptor">
-				<cfset ArrayAppend(variables.interceptors, arguments.advice) />
+			<cfcase value="throwsInterceptor">
+				<cfset ArrayAppend(variables.throwsAdvice, arguments.advice) />
 			</cfcase>
-			<!--- depreciated --->
-			<cfcase value="around">
-				<cfif ArrayLen(variables.aroundAdvice) GT 0>
-					<cfthrow type="coldspring.aop.MalformedAviceException" message="There can only be one around advice declared for each method!" />
-				<cfelse>
-					<cfset ArrayAppend(variables.aroundAdvice, arguments.advice) />
-				</cfif>
+			<cfcase value="aroundInterceptor">
+				<cfset ArrayAppend(variables.aroundAdvice, arguments.advice) />
 			</cfcase>
+			<cfdefaultcase>
+				<cfthrow type="coldspring.aop.AdviceTypeError" message="The type of advice you attempted to add to the method was not understood. Please make sure that you extend the proper cfc for the advice type your are trying to use.">
+			</cfdefaultcase>
 		</cfswitch>
 	</cffunction>
 	
-	<cffunction name="getAdvice" access="public" returntype="Array" output="false">
-		<cfargument name="adviceType" type="string" required="true" />
-		<cfswitch expression="#arguments.adviceType#">
-			<cfcase value="before">
-				<cfreturn variables.beforeAdvice />
-			</cfcase>
-			<cfcase value="afterReturning">
-				<cfreturn variables.afterAdvice />
-			</cfcase>
-			<!--- depreciated --->
-			<cfcase value="around">
-				<cfreturn variables.aroundAdvice />
-			</cfcase>
-		</cfswitch>
-	</cffunction>
-	
-	<cffunction name="getInterceptorChain" access="public" returntype="coldspring.aop.MethodInvocation" output="false">
+	<cffunction name="getMethodInvocation" access="public" returntype="coldspring.aop.MethodInvocation" output="false">
 		<cfargument name="method" type="coldspring.aop.Method" required="true" />
 		<cfargument name="args" type="struct" required="true" />
 		<cfargument name="target" type="any" required="true" />
+		<cfset var invocation = 0 />
 		
-		<cfset var lastInvocation = 0 />
-		<cfset var currentInvocation = 0 />
+		<cfif not StructKeyExists(variables.interceptors,'data')>
+			<cfset buildInterceptorChain() />
+		</cfif>
+		
+		<cfset invocation = 
+			   CreateObject('component','coldspring.aop.MethodInvocation').init(arguments.method, 
+																			arguments.args, 
+																			arguments.target, 
+																			variables.interceptors) />
+		
+		<cfreturn invocation>
+	</cffunction>
+	
+	<cffunction name="buildInterceptorChain" access="private" returntype="void" output="false">
 		<cfset var ix = 0 />
 		
-		<!--- first make a methodInvocation object, to call the method --->
-		<cfset lastInvocation = 
-			   CreateObject('component','coldspring.aop.MethodInvocation').init(arguments.method, arguments.args, arguments.target) />
-			   
-		<!--- now loop through the interceptors and chain em up! --->
-		<cfloop from="#ArrayLen(variables.interceptors)#" to="1" index="ix" step="-1">
-			<cfset currentInvocation = 
-			   CreateObject('component','coldspring.aop.MethodInvocation').init(arguments.method, arguments.args, arguments.target) />
-			<cfset currentInvocation.setInterceptor(variables.interceptors[ix],lastInvocation) />
-			<cfset lastInvocation = currentInvocation />
-		</cfloop>
-		
-		<cfreturn lastInvocation />
+		<cflock name="AdviceChain.Interceptors" timeout="5">
+			<cfif not StructKeyExists(variables.interceptors,'data')>
+				<cfset variables.interceptors.data = ArrayNew(1) />
+				<cfloop from="#ArrayLen(variables.throwsAdvice)#" to="1" index="ix" step="-1">
+					<cfset ArrayAppend(variables.interceptors.data, variables.throwsAdvice[ix])>
+				</cfloop>
+				<cfloop from="1" to="#ArrayLen(variables.beforeAdvice)#" index="ix">
+					<cfset ArrayAppend(variables.interceptors.data, variables.beforeAdvice[ix])>
+				</cfloop>
+				<cfloop from="#ArrayLen(variables.afterAdvice)#" to="1" index="ix" step="-1">
+					<cfset ArrayAppend(variables.interceptors.data, variables.afterAdvice[ix])>
+				</cfloop>
+				<cfloop from="1" to="#ArrayLen(variables.aroundAdvice)#" index="ix">
+					<cfset ArrayAppend(variables.interceptors.data, variables.aroundAdvice[ix])>
+				</cfloop>
+			</cfif> 
+		</cflock>
 		
 	</cffunction>
 	

@@ -15,8 +15,11 @@
 		<cfset variables.sys.out.println("I'm called after " & method.getMethodName()) />
 		
 		<cfif StructKeyExists(arguments,'returnVal')>
-			<cfreturn arguments[returnVal] />
+			<cfset variables.sys.out.println("I'm returning " & arguments.returnVal) />
+			<cfreturn arguments.returnVal />
 		</cfif>
+		
+		<cfset variables.sys.out.println("I'm returning nothing") />
 	</cffunction>
 	
 </cfcomponent>

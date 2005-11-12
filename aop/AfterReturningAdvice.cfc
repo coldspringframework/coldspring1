@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AfterReturningAdvice.cfc,v 1.6 2005/10/10 18:40:10 scottc Exp $
+ $Id: AfterReturningAdvice.cfc,v 1.7 2005/11/12 19:01:07 scottc Exp $
  $Log: AfterReturningAdvice.cfc,v $
+ Revision 1.7  2005/11/12 19:01:07  scottc
+ Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
+
  Revision 1.6  2005/10/10 18:40:10  scottc
  Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
 
@@ -38,11 +41,11 @@
 		<cfthrow message="Abstract CFC. Cannot be initialized" />
 	</cffunction>
 	
-	<cffunction name="afterReturning" access="public" returntype="any">
+	<cffunction name="afterReturning" access="public" returntype="void">
 		<cfargument name="returnVal" type="any" required="false" />
-		<cfargument name="method" type="coldspring.aop.Method" required="true" />
-		<cfargument name="args" type="struct" required="true" />
-		<cfargument name="target" type="any" required="true" />
+		<cfargument name="method" type="coldspring.aop.Method" required="false" />
+		<cfargument name="args" type="struct" required="false" />
+		<cfargument name="target" type="any" required="false" />
 		<cfthrow type="Method.NotImplemented">
 	</cffunction>
 	

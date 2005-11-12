@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: MethodInterceptor.cfc,v 1.3 2005/10/09 22:45:24 scottc Exp $
+ $Id: MethodInterceptor.cfc,v 1.4 2005/11/12 19:01:07 scottc Exp $
  $Log: MethodInterceptor.cfc,v $
+ Revision 1.4  2005/11/12 19:01:07  scottc
+ Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
+
  Revision 1.3  2005/10/09 22:45:24  scottc
  Forgot to add Dave to AOP license
 
@@ -29,7 +32,7 @@
 			hint="Abstract Base Class for all Around Advice implimentations" 
 			output="false">
 			
-	<cfset variables.adviceType = 'interceptor' />
+	<cfset variables.adviceType = 'aroundInterceptor' />
 			
 	<cffunction name="init" access="private" returntype="void" output="false">
 		<cfthrow message="Abstract CFC. Cannot be initialized" />

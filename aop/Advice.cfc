@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: Advice.cfc,v 1.5 2005/10/09 22:45:24 scottc Exp $
+ $Id: Advice.cfc,v 1.6 2005/11/12 19:01:07 scottc Exp $
  $Log: Advice.cfc,v $
+ Revision 1.6  2005/11/12 19:01:07  scottc
+ Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
+
  Revision 1.5  2005/10/09 22:45:24  scottc
  Forgot to add Dave to AOP license
 
@@ -40,11 +43,12 @@
 	</cffunction>
 	
 	<cffunction name="getType" access="public" returntype="string" output="false">
-		<cfif not(ListFindNoCase('before,around,interceptor,afterReturning',variables.adviceType))>
+		<!--- <cfif not(ListFindNoCase('before,around,interceptor,throws,afterReturning',variables.adviceType))>
 			<cfthrow type="coldspring.aop.MalformedAviceException" message="Advice Type is not correctly set, please extend the correct cfc for the advice type you are trying to implement!" />
 		<cfelse>
 			<cfreturn variables.adviceType />
-		</cfif>
+		</cfif> --->
+		<cfreturn variables.adviceType />
 	</cffunction>
 	
 </cfcomponent>

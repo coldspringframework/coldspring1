@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.6 2005/11/01 03:48:21 scottc Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.7 2005/11/12 19:01:07 scottc Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.7  2005/11/12 19:01:07  scottc
+  Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
+
   Revision 1.6  2005/11/01 03:48:21  scottc
   Some fixes to around advice as well as isRunnable in Method class so that advice cannot directly call method.proceed(). also some unitTests
 
@@ -117,6 +120,7 @@
 		<cfset var functionName = '' />
 		<cfset var advisorIx = 0 />
 		<cfset var createInterceptMethod = false />
+		<cfset var advice = 0 />
 		<cfset var aopProxyBean = variables.aopProxyUtils.createBaseProxyBean(variables.target) />
 		<!--- <cfset var aopProxyBean = CreateObject('component','coldspring.aop.framework.AopProxyBean').init(variables.target) /> --->
 		
@@ -135,12 +139,16 @@
 						<cfif not StructKeyExists(methodAdviceChains, functionName)>
 							<cfset methodAdviceChains[functionName] = CreateObject('component','coldspring.aop.AdviceChain').init() />
 						</cfif>
-						<!--- and duplicate the advice to this method's advice chain --->
+						<cfset advice = variables.advisorChain[advisorIx].getAdvice() />
+						<!--- and duplicate the advice to this method's advice chain
 						<cfset methodAdviceChains[functionName].addAdvice(
-							   variables.aopProxyUtils.clone(variables.advisorChain[advisorIx].getAdvice()) ) />
+							   variables.aopProxyUtils.clone(variables.advisorChain[advisorIx].getAdvice()) ) /> --->
+						<!--- add the advice to this method's advice chain' --->
+						<cfset methodAdviceChains[functionName].addAdvice(advice) />
 					</cfif>
 				</cfloop>
-				
+				<!--- now freeze the method invocation chain for this method
+				<cfset methodAdviceChains[functionName].buildInterceptorChain() /> --->
 				<!--- so here's where we'll inject intercept methods --->
 				<cfset variables.aopProxyUtils.createUDF(md.functions[functionIx], aopProxyBean) />
 			</cfif>
@@ -175,7 +183,8 @@
 						<cftry>
 							<cfset addAdviceWithDefaultAdvisor(advisorBean) />
 						<cfcatch>
-							<cfthrow type="coldspring.aop.InvalidAdvisorError" message="You attempted to add an object which is not of type advice or advisor as an interceptor. This is not allowed!" />
+							<cfthrow type="coldspring.aop.InvalidAdvisorError" 
+									 message="You attempted to add an object which is not of type advice or advisor as an interceptor. This is not allowed!" />
 						</cfcatch>
 						</cftry>
 					</cfcatch>

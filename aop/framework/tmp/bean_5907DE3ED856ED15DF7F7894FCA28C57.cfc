@@ -15,9 +15,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.11 2005/11/12 19:01:07 scottc Exp $
- $Log: AopProxyBean.cfc,v $
- Revision 1.11  2005/11/12 19:01:07  scottc
+ $Id: bean_5907DE3ED856ED15DF7F7894FCA28C57.cfc,v 1.1 2005/11/12 19:01:07 scottc Exp $
+ $Log: bean_5907DE3ED856ED15DF7F7894FCA28C57.cfc,v $
+ Revision 1.1  2005/11/12 19:01:07  scottc
  Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
 
  Revision 1.10  2005/11/01 03:48:21  scottc
@@ -32,13 +32,13 @@
 	
 ---> 
  
-<cfcomponent name="${name}" 
+<cfcomponent name="coldspring.aop.framework.tmp.bean_5907DE3ED856ED15DF7F7894FCA28C57" 
 			displayname="AopProxyBean" 
-			extends="${extends}"
+			extends="net.klondike.component.catalogGateway"
 			hint="Abstract Base Class for Aop Proxy Bans" 
 			output="false">
 			
-	<cffunction name="init" access="public" returntype="${extends}" output="false">
+	<cffunction name="init" access="public" returntype="net.klondike.component.catalogGateway" output="false">
 		<cfargument name="target" type="any" required="true" />
 		<cfset variables.target = arguments.target />
 		<cfreturn this />
@@ -59,12 +59,12 @@
 		<cfset var adviceChain = 0 />
 		<cfset var methodInvocation = 0 />
 		<cfset var method = 
-			   CreateObject('component','coldspring.aop.Method').init(variables.target, arguments.methodName, arguments.args) />
+			   CreateObject('component','coldspring.aop.Method')init(variables.target, arguments.methodName, arguments.args) />
 		
 		<!--- if an advice chain was created for this method, retrieve a methodInvocation chain from it and proceed --->
 		<cfif StructKeyExists(variables.adviceChains, arguments.methodName)>
 			<cfset adviceChain = variables.adviceChains[arguments.methodName] />
-			<cfset methodInvocation = adviceChain.getMethodInvocation(method, arguments.args, variables.target) />
+			<cfset methodInvocation = adviceChain.getNewInterceptorChain(method, args, testObj) />
 			<cfreturn methodInvocation.proceed() />
 		<cfelse>
 			<!--- if there's no advice chains to execute, just call the method --->

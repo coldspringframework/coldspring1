@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: BeforeAdvice.cfc,v 1.5 2005/10/09 22:45:24 scottc Exp $
+  $Id: BeforeAdvice.cfc,v 1.6 2005/11/12 19:01:07 scottc Exp $
   $Log: BeforeAdvice.cfc,v $
+  Revision 1.6  2005/11/12 19:01:07  scottc
+  Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
+
   Revision 1.5  2005/10/09 22:45:24  scottc
   Forgot to add Dave to AOP license
 
@@ -36,9 +39,9 @@
 	</cffunction>
 	
 	<cffunction name="before" access="public" returntype="any">
-		<cfargument name="method" type="coldspring.aop.Method" required="true" />
-		<cfargument name="args" type="struct" required="true" />
-		<cfargument name="target" type="any" required="true" />
+		<cfargument name="method" type="coldspring.aop.Method" required="false" />
+		<cfargument name="args" type="struct" required="false" />
+		<cfargument name="target" type="any" required="false" />
 		<cfthrow type="Method.NotImplemented">
 	</cffunction>
 	
