@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: BeforeAdvice.cfc,v 1.6 2005/11/12 19:01:07 scottc Exp $
+  $Id: BeforeAdvice.cfc,v 1.7 2005/11/13 15:26:19 scottc Exp $
   $Log: BeforeAdvice.cfc,v $
+  Revision 1.7  2005/11/13 15:26:19  scottc
+  Incorrect return type in BeforeAdvice. before method return type is 'void'
+
   Revision 1.6  2005/11/12 19:01:07  scottc
   Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
 
@@ -38,7 +41,7 @@
 		<cfthrow message="Abstract CFC. Cannot be initialized" />
 	</cffunction>
 	
-	<cffunction name="before" access="public" returntype="any">
+	<cffunction name="before" access="public" returntype="void">
 		<cfargument name="method" type="coldspring.aop.Method" required="false" />
 		<cfargument name="args" type="struct" required="false" />
 		<cfargument name="target" type="any" required="false" />
