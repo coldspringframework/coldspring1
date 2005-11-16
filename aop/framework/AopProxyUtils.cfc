@@ -1,6 +1,6 @@
 <!---
 	  
-  Copyright (c) 2005, Chris Scott, David Ross
+  Copyright (c) 2005, Chris Scott, David Ross, Kurt Wiersma, Sean Corfield
   All rights reserved.
 	
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.8 2005/10/10 18:40:10 scottc Exp $
+ $Id: AopProxyUtils.cfc,v 1.9 2005/11/16 16:16:10 rossd Exp $
  $Log: AopProxyUtils.cfc,v $
+ Revision 1.9  2005/11/16 16:16:10  rossd
+ updates to license in all framework code
+
  Revision 1.8  2005/10/10 18:40:10  scottc
  Lots of fixes pertaining to returning and not returning values with afterAdvice, also added the security for method invocation that we discussed
 

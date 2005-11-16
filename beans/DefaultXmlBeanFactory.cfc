@@ -1,6 +1,6 @@
 <!---
  
-  Copyright (c) 2002-2005	David Ross,	Chris Scott
+  Copyright (c) 2005, David Ross, Chris Scott, Kurt Wiersma, Sean Corfield
   
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.14 2005/11/05 01:49:24 wiersma Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.15 2005/11/16 16:16:11 rossd Exp $
 
 ---> 
 

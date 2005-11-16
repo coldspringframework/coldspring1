@@ -1,6 +1,6 @@
 <!---
 	  
-  Copyright (c) 2005, Chris Scott, David Ross
+  Copyright (c) 2005, Chris Scott, David Ross, Kurt Wiersma, Sean Corfield
   All rights reserved.
 	
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: MethodInterceptor.cfc,v 1.4 2005/11/12 19:01:07 scottc Exp $
+ $Id: MethodInterceptor.cfc,v 1.5 2005/11/16 16:16:10 rossd Exp $
  $Log: MethodInterceptor.cfc,v $
+ Revision 1.5  2005/11/16 16:16:10  rossd
+ updates to license in all framework code
+
  Revision 1.4  2005/11/12 19:01:07  scottc
  Many fixes in new advice type Interceptors, which now don't require parameters to be defined for the afterReturning and before methods. Advice objects are now NOT cloned, so they can be used as real objects and retrieved from the factory, if needed. Implemented the afterThrowing advice which now can be used to create a full suite of exception mapping methods. Also afterReturning does not need to (and shouldn't) return or act on the return value
 

@@ -1,6 +1,6 @@
 <!---
 	  
-  Copyright (c) 2005, Chris Scott, David Ross
+  Copyright (c) 2005, Chris Scott, David Ross, Kurt Wiersma, Sean Corfield
   All rights reserved.
 	
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: NamedMethodPointcutAdvisor.cfc,v 1.5 2005/10/09 22:45:24 scottc Exp $
+ $Id: NamedMethodPointcutAdvisor.cfc,v 1.6 2005/11/16 16:16:11 rossd Exp $
  $Log: NamedMethodPointcutAdvisor.cfc,v $
+ Revision 1.6  2005/11/16 16:16:11  rossd
+ updates to license in all framework code
+
  Revision 1.5  2005/10/09 22:45:24  scottc
  Forgot to add Dave to AOP license
 

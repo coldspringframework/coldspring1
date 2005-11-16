@@ -1,6 +1,6 @@
 <!---
 	  
-  Copyright (c) 2005, Chris Scott, David Ross
+  Copyright (c) 2005, Chris Scott, David Ross, Kurt Wiersma, Sean Corfield
   All rights reserved.
 	
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: BeforeAdvice.cfc,v 1.7 2005/11/13 15:26:19 scottc Exp $
+  $Id: BeforeAdvice.cfc,v 1.8 2005/11/16 16:16:10 rossd Exp $
   $Log: BeforeAdvice.cfc,v $
+  Revision 1.8  2005/11/16 16:16:10  rossd
+  updates to license in all framework code
+
   Revision 1.7  2005/11/13 15:26:19  scottc
   Incorrect return type in BeforeAdvice. before method return type is 'void'
 

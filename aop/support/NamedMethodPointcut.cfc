@@ -1,6 +1,6 @@
 <!---
 	  
-  Copyright (c) 2005, Chris Scott, David Ross
+  Copyright (c) 2005, Chris Scott, David Ross, Kurt Wiersma, Sean Corfield
   All rights reserved.
 	
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: NamedMethodPointcut.cfc,v 1.7 2005/11/01 03:48:21 scottc Exp $
+ $Id: NamedMethodPointcut.cfc,v 1.8 2005/11/16 16:16:10 rossd Exp $
  $Log: NamedMethodPointcut.cfc,v $
+ Revision 1.8  2005/11/16 16:16:10  rossd
+ updates to license in all framework code
+
  Revision 1.7  2005/11/01 03:48:21  scottc
  Some fixes to around advice as well as isRunnable in Method class so that advice cannot directly call method.proceed(). also some unitTests
 

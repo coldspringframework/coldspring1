@@ -1,6 +1,6 @@
 <!---
  
-  Copyright (c) 2002-2005	David Ross,	Chris Scott
+  Copyright (c) 2005, David Ross, Chris Scott, Kurt Wiersma, Sean Corfield
   
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: FactoryBean.cfc,v 1.3 2005/09/26 02:01:04 rossd Exp $
+ $Id: FactoryBean.cfc,v 1.4 2005/11/16 16:16:11 rossd Exp $
 
 ---> 
 <cfcomponent name="FactoryBean" 

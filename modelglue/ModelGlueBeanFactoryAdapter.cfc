@@ -1,8 +1,7 @@
-<!--- 
-	  
-  Copyright (c) 2005, Chris Scott, David Ross
-  All rights reserved.
-	
+<!---
+ 
+  Copyright (c) 2005, David Ross, Chris Scott, Kurt Wiersma, Sean Corfield
+  
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
@@ -14,9 +13,9 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-
-  $Id: ModelGlueBeanFactoryAdapter.cfc,v 1.4 2005/10/13 16:23:54 scorfield Exp $
-
+		
+			
+ $Id: ModelGlueBeanFactoryAdapter.cfc,v 1.5 2005/11/16 16:16:11 rossd Exp $
   
   This is the first cut at writing an adapter CFC to allow replacing 
   the ModelGlue framework's internal beanFactory with a coldspring bean

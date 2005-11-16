@@ -1,5 +1,6 @@
-<!--- 
-  Copyright (c) 2002-2005	David Ross,	Chris Scott, Kurt Wiersma 
+<!---
+ 
+  Copyright (c) 2005, David Ross, Chris Scott, Kurt Wiersma, Sean Corfield
   
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -12,9 +13,11 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
+		
+			
+ $Id: flashMappings.cfc,v 1.2 2005/11/16 16:16:11 rossd Exp $
 
-  $Id:
- --->
+--->
 
 <cfcomponent>
 	<cfset variables.instance = structNew()>
