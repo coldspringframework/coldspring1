@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.13 2005/11/17 19:59:38 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.14 2005/11/17 20:59:59 scottc Exp $
  $Log: AopProxyBean.cfc,v $
+ Revision 1.14  2005/11/17 20:59:59  scottc
+ Fixed big breaking mistake in AopProxyBean
+
  Revision 1.13  2005/11/17 19:59:38  scottc
  tweeked aopProxyBean and Method to make the setRunnable a package method
 
@@ -78,8 +81,8 @@
 			<cfset method.setRunnable() />
 			<cfreturn method.proceed() /> --->
 			<cfinvoke component="#variables.target#"
-					  method="#aguments.method#" 
-					  argumentcollection="#aguments.args#" 
+					  method="#arguments.methodName#" 
+					  argumentcollection="#arguments.args#" 
 					  returnvariable="rtn">
 			</cfinvoke>
 			<cfif isDefined('rtn')>

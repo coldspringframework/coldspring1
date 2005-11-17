@@ -56,8 +56,8 @@
 		<cfset variables.sys.out.println(proxy.sayHello('')) />
 		<cfset proxy.sayGoodBye() />
 		
-		<!--- make sure there really are advice chains created --->
-		<cfset assertFalse(StructIsEmpty(proxy.getAdviceChains())) />
+		<!--- make sure there really are advice chains created
+		<cfset assertFalse(StructIsEmpty(proxy.getAdviceChains())) /> --->
 
 	</cffunction>
 	

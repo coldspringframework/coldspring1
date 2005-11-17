@@ -46,7 +46,7 @@
 		<cfset assertTrue(isArray(ex.getTagContext())) />
 	</cffunction> --->
 	
-	<cffunction name="testFasterException" access="public" returntype="void" output="false">
+	<cffunction name="testException" access="public" returntype="void" output="false">
 		<cfset var r = 0 />
 		<cfset var ex = 0 />
 		<cfset var i = 0 />
@@ -75,48 +75,6 @@
 		
 		<cfset assertTrue(len(ex.getType()) GT 0) />
 		<cfset assertTrue(isArray(ex.getTagContext())) />
-	</cffunction>
-	
-	<cffunction name="testBadAdvice" access="public" returntype="void" output="false">
-		<cfset var testObj = CreateObject('component','coldspring.tests.aopTests.badBean').init() />
-		<cfset var method = CreateObject('component','coldspring.aop.Method') />
-		<cfset var invocation = CreateObject('component','coldspring.aop.MethodInvocation') />
-		<cfset var throwsAdvice = CreateObject('component','coldspring.tests.aopTests.throwAdvice').init() />
-		<cfset var throwsAdviceInterceptor = CreateObject('component','coldspring.aop.ThrowsAdviceInterceptor') />
-		<cfset method.init(testObj, 'doBadMethod', StructNew()) />
-		<cfset invocation.init(method, StructNew(), testObj) />
-		<cfset throwsAdviceInterceptor.init(throwsAdvice) />
-		
-		<cftry>
-			<cfset throwsAdviceInterceptor.invokeMethod(invocation) />
-			<cfcatch>
-				<cfset ex = CreateObject("component", "coldspring.aop.Exception").init(cfcatch) />
-				<cfset variables.sys.out.println("TYPE: " & ex.getType()) />
-				<cfset variables.sys.out.println("MESSAGE: " & ex.getMessage()) />
-			</cfcatch>
-		</cftry>
-		
-	</cffunction>
-	
-	<cffunction name="testGoodAdvice" access="public" returntype="void" output="false">
-		<cfset var testObj = CreateObject('component','coldspring.tests.aopTests.badBean').init() />
-		<cfset var method = CreateObject('component','coldspring.aop.Method') />
-		<cfset var invocation = CreateObject('component','coldspring.aop.MethodInvocation') />
-		<cfset var throwsAdvice = CreateObject('component','coldspring.tests.aopTests.throwAdvice').init() />
-		<cfset var throwsAdviceInterceptor = CreateObject('component','coldspring.aop.ThrowsAdviceInterceptor') />
-		<cfset method.init(testObj, 'doGoodMethod', StructNew()) />
-		<cfset invocation.init(method, StructNew(), testObj) />
-		<cfset throwsAdviceInterceptor.init(throwsAdvice) />
-		
-		<cftry>
-			<cfset throwsAdviceInterceptor.invokeMethod(invocation) />
-			<cfcatch>
-				<cfset ex = CreateObject("component", "coldspring.aop.Exception").init(cfcatch) />
-				<cfset variables.sys.out.println("TYPE: " & ex.getType()) />
-				<cfset variables.sys.out.println("MESSAGE: " & ex.getMessage()) />
-			</cfcatch>
-		</cftry>
-		
 	</cffunction>
 
 </cfcomponent>
