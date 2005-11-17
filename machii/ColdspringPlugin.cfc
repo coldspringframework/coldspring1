@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: ColdspringPlugin.cfc,v 1.2 2005/11/16 16:16:11 rossd Exp $
+ $Id: ColdspringPlugin.cfc,v 1.3 2005/11/17 19:24:45 rossd Exp $
 
 --->
 
@@ -79,8 +79,8 @@
 		<cfset bf = createObject("component","coldspring.beans.DefaultXmlBeanFactory").init(defaults, props)/>
 		
 		<!--- If necessary setup the parent bean factory --->
-		<cfif getParameter("parentBeanFactoryKey", "") neq "">
-			<cfset bf.setParent(evaluate('application.#getParameter("parentBeanFactoryKey", "")#.getBeanFactory()'))>
+		<cfif len(getParameter("parentBeanFactoryKey", ""))>
+			<cfset bf.setParent(application[getParameter("parentBeanFactoryKey")].getBeanFactory())/>
 		</cfif>
 		
 		<cfif getParameter('configFilePathIsRelative','false')>
