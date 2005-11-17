@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.14 2005/11/17 20:59:59 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.15 2005/11/17 21:25:50 scottc Exp $
  $Log: AopProxyBean.cfc,v $
+ Revision 1.15  2005/11/17 21:25:50  scottc
+ removed commented out method call in AopProxyBean
+
  Revision 1.14  2005/11/17 20:59:59  scottc
  Fixed big breaking mistake in AopProxyBean
 
@@ -77,9 +80,7 @@
 			<cfset methodInvocation = adviceChain.getMethodInvocation(method, arguments.args, variables.target) />
 			<cfreturn methodInvocation.proceed() />
 		<cfelse>
-			<!--- if there's no advice chains to execute, just call the method
-			<cfset method.setRunnable() />
-			<cfreturn method.proceed() /> --->
+			<!--- if there's no advice chains to execute, just call the method --->
 			<cfinvoke component="#variables.target#"
 					  method="#arguments.methodName#" 
 					  argumentcollection="#arguments.args#" 
