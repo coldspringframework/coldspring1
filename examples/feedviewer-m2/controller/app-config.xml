@@ -16,7 +16,7 @@
     limitations under the License.
     
     
-    $Id: app-config.xml,v 1.2 2005/09/26 02:01:04 rossd Exp $
+    $Id: app-config.xml,v 1.3 2005/11/17 19:24:21 rossd Exp $
     
 -->
      
@@ -251,7 +251,7 @@
 		    </parameters>
         </plugin>
         
-   		<plugin name="coldSpringPlugin" type="coldspring.machii.coldspringPlugin">
+   		<plugin name="coldSpringPlugin" type="coldspring.machii.ColdspringPlugin">
 			<parameters>
 				<parameter name="beanFactoryPropertyName" value="serviceFactory"/>
 				<parameter name="configFilePropertyName" value="ColdspringComponentRelativePath"/>
