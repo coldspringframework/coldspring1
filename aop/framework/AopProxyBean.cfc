@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.12 2005/11/16 16:16:10 rossd Exp $
+ $Id: AopProxyBean.cfc,v 1.13 2005/11/17 19:59:38 scottc Exp $
  $Log: AopProxyBean.cfc,v $
+ Revision 1.13  2005/11/17 19:59:38  scottc
+ tweeked aopProxyBean and Method to make the setRunnable a package method
+
  Revision 1.12  2005/11/16 16:16:10  rossd
  updates to license in all framework code
 
@@ -61,65 +64,29 @@
 		<cfargument name="args" type="struct" required="true" />
 		<cfset var adviceChain = 0 />
 		<cfset var methodInvocation = 0 />
-		<cfset var method = 
-			   CreateObject('component','coldspring.aop.Method').init(variables.target, arguments.methodName, arguments.args) />
+		<cfset var rtn = 0 />
+		<cfset var method = 0 />
 		
 		<!--- if an advice chain was created for this method, retrieve a methodInvocation chain from it and proceed --->
 		<cfif StructKeyExists(variables.adviceChains, arguments.methodName)>
+			<cfset method = CreateObject('component','coldspring.aop.Method').init(variables.target, arguments.methodName, arguments.args) />
 			<cfset adviceChain = variables.adviceChains[arguments.methodName] />
 			<cfset methodInvocation = adviceChain.getMethodInvocation(method, arguments.args, variables.target) />
 			<cfreturn methodInvocation.proceed() />
 		<cfelse>
-			<!--- if there's no advice chains to execute, just call the method --->
+			<!--- if there's no advice chains to execute, just call the method
 			<cfset method.setRunnable() />
-			<cfreturn method.proceed() />
+			<cfreturn method.proceed() /> --->
+			<cfinvoke component="#variables.target#"
+					  method="#aguments.method#" 
+					  argumentcollection="#aguments.args#" 
+					  returnvariable="rtn">
+			</cfinvoke>
+			<cfif isDefined('rtn')>
+				<cfreturn rtn />
+			</cfif>
 		</cfif>
 		
-	</cffunction>
-
-	<cffunction name="callMethodOld" access="public" returntype="any">
-		<cfargument name="methodName" type="string" required="true" />
-		<cfargument name="args" type="struct" required="true" />
-		<cfset var method = CreateObject('component','coldspring.aop.Method') />
-		<cfset var rtn = 0 />
-		<cfset var adviceChain = 0 />
-		<cfset var advice = 0 />
-		<cfset var advIx = 0 />
-		
-		<!--- first create a method object to pass through advice chain --->
-		<cfset method.init(variables.target, arguments.methodName, arguments.args) />
-		
-		<!--- now find advice chains to call --->
-		<cfif StructKeyExists(variables.adviceChains, arguments.methodName)>
-			<!--- first call any before methods --->
-			<cfset adviceChain = variables.adviceChains[arguments.methodName].getAdvice('before') />
-			<cfloop from="1" to="#ArrayLen(adviceChain)#" index="advIx">
-				<cfset adviceChain[advIx].before(method, arguments.args, variables.target) />
-			</cfloop>
-			
-			<!---  for methodInterceptors, the advice chain will create a proper interceptorChain --->
-			<cfset adviceChain = variables.adviceChains[arguments.methodName].getInterceptorChain(method, arguments.args, variables.target) />
-			<cfset rtn = adviceChain.proceed() />
-			
-			<!--- now any after returning advice --->
-			<cfset adviceChain = variables.adviceChains[arguments.methodName].getAdvice('afterReturning') />
-			<cfloop from="1" to="#ArrayLen(adviceChain)#" index="advIx">
-				<!--- if there's a return value, pass it in to afterReturning, if not, don't --->
-				<cfif isDefined('rtn')>
-					<cfset rtn = adviceChain[advIx].afterReturning(rtn, method, arguments.args, variables.target) />
-				<cfelse>
-					<cfset rtn = adviceChain[advIx].afterReturning(method=method, args=arguments.args, target=variables.target) />
-				</cfif>
-			</cfloop>
-		<cfelse>
-			<!--- if there's no advice chains to execute, just call the method --->
-			<cfset method.setRunnable() />
-			<cfset rtn = method.proceed() />
-		</cfif>
-		
-		<cfif isDefined('rtn')>
-			<cfreturn rtn />
-		</cfif>
 	</cffunction>
 	
 </cfcomponent>

@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: Method.cfc,v 1.9 2005/11/16 16:16:10 rossd Exp $
+  $Id: Method.cfc,v 1.10 2005/11/17 19:59:38 scottc Exp $
   $Log: Method.cfc,v $
+  Revision 1.10  2005/11/17 19:59:38  scottc
+  tweeked aopProxyBean and Method to make the setRunnable a package method
+
   Revision 1.9  2005/11/16 16:16:10  rossd
   updates to license in all framework code
 
@@ -73,11 +76,11 @@
 		<cfreturn variables.method />
 	</cffunction>
 	
-	<cffunction name="setRunnable" access="public" returntype="void" output="false">
+	<cffunction name="setRunnable" access="package" returntype="void" output="false">
 		<cfset variables.runnable = true />
 	</cffunction>
 	
-	<cffunction name="isRunnable" access="public" returntype="boolean" output="false">
+	<cffunction name="isRunnable" access="private" returntype="boolean" output="false">
 		<cfreturn variables.runnable />
 	</cffunction>
 	
