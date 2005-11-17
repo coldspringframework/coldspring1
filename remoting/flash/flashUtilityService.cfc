@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: flashUtilityService.cfc,v 1.2 2005/11/16 16:16:11 rossd Exp $
+ $Id: flashUtilityService.cfc,v 1.3 2005/11/17 19:28:29 rossd Exp $
 
 --->
 
@@ -23,7 +23,7 @@
 		
 	<cffunction name="setFlashMappings" access="public" returntype="void" output="false">
 		<cfargument name="flashMappings" type="coldspring.remoting.flash.flashMappings" required="true">
-		<cfset variables.mappings = arguments.mappings>
+		<cfset variables.mappings = arguments.flashMappings/>
 	</cffunction>
 	
 	<cffunction name="addMapping" access="public" returntype="void" output="false">
@@ -32,7 +32,7 @@
 		<cfset variables.mappings.addMapping(arguments.cfcType,arguments.flashType)>
 	</cffunction>
 	
-	<cffunction name="processServiceMethodResult" returntype="any" access="private" output="false" hint="">
+	<cffunction name="processServiceMethodResult" returntype="any" access="public" output="false" hint="">
 		<cfargument name="result" type="any" required="true" />
 		<cfset var aresult = 0>
 		<cfif isObject(arguments.result)>

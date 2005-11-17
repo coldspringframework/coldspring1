@@ -17,7 +17,7 @@
     limitations under the License.
     
     
-    $Id: services.xml,v 1.3 2005/10/11 03:46:35 wiersma Exp $
+    $Id: services.xml,v 1.4 2005/11/17 19:28:29 rossd Exp $
     
 -->
 
@@ -189,12 +189,10 @@
 		<constructor-arg name="mappings">
 			<!-- Here we use a "list" element to pass in an array of structures to the constructor -->
 			<list>
-				<value>1</value>
 				<map>
 					<entry key="cfcType"><value>coldspring.examples.feedviewer.model.category.category</value></entry>
 					<entry key="asType"><value>CategoryVO</value></entry>
 				</map>	
-				<value>2</value>
 				<map>
 					<entry key="cfcType"><value>coldspring.examples.feedviewer.model.channel.channel</value></entry>
 					<entry key="asType"><value>ChannelVO</value></entry>

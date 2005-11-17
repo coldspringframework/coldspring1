@@ -1,8 +1,11 @@
 <!---
-	$Id: index.cfm,v 1.2 2005/09/26 02:01:04 rossd Exp $
+	$Id: index.cfm,v 1.3 2005/11/17 19:28:29 rossd Exp $
 	$Source: D:/CVSREPO/coldspring/coldspring/examples/feedviewer-remote/index.cfm,v $
 	$State: Exp $
 	$Log: index.cfm,v $
+	Revision 1.3  2005/11/17 19:28:29  rossd
+	fixes to the flash utils... in the future we need to supply the method to call (or inspect the bean manually), rather than relying on getTO()
+	
 	Revision 1.2  2005/09/26 02:01:04  rossd
 	updated license section
 	
@@ -44,11 +47,21 @@
 <h3>The calls below were made remotely:</h3>
 
 <br /><br />  
-<cfdump var="#remoteFacade.getAllCategories()#" label="All Categories"/>
-<br /><br />  
+<cfset allCats = remoteFacade.getAllCategories()/>
+<cfdump var="#allCats#" label="All Categories"/>
+<br />
+</cfoutput>
+
+<cfoutput query="allCats" maxrows="1">
+	<cfdump var="#remoteFacade.getCategory(allCats.ID)#" label="A single category"/>
+</cfoutput>
+<cfoutput>
+
+<br />  
 <cfdump var="#remoteFacade.getAllChannels()#" label="All Channels"/>
 <br /><br />  
 <cfdump var="#remoteFacade.getRecentEntries(3)#" label="3 most recent entries"/>
+<br /><br />
 </td></tr>
 </body>
 </html>
