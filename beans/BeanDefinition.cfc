@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.12 2005/11/16 16:16:11 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.13 2006/01/09 21:46:27 rossd Exp $
 
 --->
 
@@ -210,17 +210,25 @@
 							
 					<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)/>
 					<cfset setterNameToCall = setterName/>
-					<cfset setterType = md.functions[functionIndex].parameters[1].type/>	
-					<cfset beanByType = getBeanFactory().findBeanNameByType(setterType)/>	
-						
+					
+					<!--- ensure a type was actually specified --->
+					<cfif structKeyExists(md.functions[functionIndex].parameters[1],"type")>
+						<cfset setterType = md.functions[functionIndex].parameters[1].type/>						
+					
+						<cfset beanByType = getBeanFactory().findBeanNameByType(setterType)/>	
+							
 						<!--- this should be refactored
 								basically if you register a bean with a name that matches the type we found here
 								currently we are autowiring in that situation --->
 						<cfif getBeanFactory().containsBean(setterType)>
 							<cfset setterName = setterType/>							
 						</cfif>
-						
-				
+							
+					<cfelse>
+						<cfset setterType = ""/>
+						<cfset beanByType = ""/>
+					</cfif>
+		
 					<!--- so, if we didn't already explicly set this property
 						  and the beanFactory knows it by name or by type
 						  well, let's inject it! --->
