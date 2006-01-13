@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.15 2005/11/16 16:16:11 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.16 2006/01/13 14:57:21 scottc Exp $
 
 ---> 
 
@@ -251,17 +251,20 @@
 	<cffunction name="getBean" access="public" output="false" returntype="any" 
 				hint="returns an instance of the bean registered under the given name. Depending on how the bean was configured, either a singleton and thus shared instance or a newly created bean will be returned. A BeansException will be thrown when either the bean could not be found (in which case it'll be a NoSuchBeanDefinitionException), or an exception occurred while instantiating and preparing the bean">
 		<cfargument name="beanName" required="true" type="string" hint="name of bean to look for"/>
-		
+		<cfset var returnFactory = Left(arguments.beanName,1) IS '&'>
+		<cfif returnFactory>
+			<cfset arguments.beanName = Right(arguments.beanName,Len(arguments.beanName)-1) />
+		</cfif>
 		<cfif containsBean(arguments.beanName)>
 			<cfif variables.beanDefs[arguments.beanName].isSingleton()>
 				<cfif variables.beanDefs[arguments.beanName].isConstructed()>
 					<!--- <cfreturn getBeanFromSingletonCache(arguments.beanName) > --->
-					<cfreturn variables.beanDefs[arguments.beanName].getInstance() />
+					<cfreturn variables.beanDefs[arguments.beanName].getInstance(returnFactory) />
 				<cfelse>
 					<!--- lazy-init happens here --->
 					<cfset constructBean(arguments.beanName)/>	
 				</cfif>
-				<cfreturn variables.beanDefs[arguments.beanName].getInstance() />
+				<cfreturn variables.beanDefs[arguments.beanName].getInstance(returnFactory) />
 			<cfelse>
 				<!--- return a new instance of this bean def --->
 				<cfreturn constructBean(arguments.beanName,true)/>
@@ -300,6 +303,9 @@
 		<cfset var arg = 0/>
 		<cfset var md = '' />
 		<cfset var functionIndex = '' />
+		<!--- new, for faster factoryBean lookup --->
+		<cfset var searchMd = '' />
+		<cfset var instanceType = '' />
 		
 		<!--- put them all in an array, and while we're at it, make sure they're in the singleton cache, or the localbean cache --->
 		<cfloop from="1" to="#ListLen(dependentBeanNames)#" index="beanDefIx">
@@ -373,17 +379,26 @@
 					</cfif>
 				</cfloop>
 				
-				<!--- if this is a bean that extends the factory bean, set is factory --->
-				<cfif ArrayLen(StructFindValue(md,"coldspring.beans.factory.FactoryBean","ALL"))>
-					<cfset beanDef.setIsFactory(true) />
-					<cfset beanInstance.setBeanFactory(this) />
+				<!--- if this is a bean that extends the factory bean, set IsFactory, and give it a ref to the beanFactory --->
+				<cfset searchMd = md />
+				<cfif searchMd.name IS 'coldspring.aop.framework.RemoteFactoryBean'>
+					<cfset beanInstance.setId(arguments.beanName) />
 				</cfif>
-				<!---
-				do we need to make sure that value is in the extends key??
-				--->
+				
+				<cfloop condition="#StructKeyExists(searchMd,"extends")#">
+					<cfset searchMd = searchMd.extends />
+					<cfif searchMd.name IS 'coldspring.aop.framework.RemoteFactoryBean'>
+						<cfset beanInstance.setId(arguments.beanName) />
+					</cfif>
+					<cfif searchMd.name IS 'coldspring.beans.factory.FactoryBean'>
+						<cfset beanDef.setIsFactory(true) />
+						<cfset beanInstance.setBeanFactory(this) />
+						<cfbreak />
+					</cfif>
+				</cfloop>
 		
 				<!--- now do dependency injection via setters --->		
-				<cfloop collection="#propDefs#"	item="prop">
+				<cfloop collection="#propDefs#" item="prop">
 					<cfswitch expression="#propDefs[prop].getType()#">
 						<cfcase value="value">
 							<cfinvoke component="#beanInstance#"

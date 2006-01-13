@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.13 2006/01/09 21:46:27 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.14 2006/01/13 14:57:21 scottc Exp $
 
 --->
 
@@ -397,7 +397,8 @@
 	</cffunction>
 	
 	<cffunction name="getInstance" access="public" output="false" returntype="any" hint="I retrieve the Instance from this instance's data">
-		<cfif isFactory()>
+		<cfargument name="returnFactory" type="boolean" default="false" />
+		<cfif isFactory() and not arguments.returnFactory>
 			<cfreturn getBeanFactory().getBeanFromSingletonCache(getBeanID()).getObject() >
 		<cfelse>
 			<cfreturn getBeanFactory().getBeanFromSingletonCache(getBeanID()) >
