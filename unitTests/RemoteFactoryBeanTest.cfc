@@ -1,0 +1,56 @@
+<cfcomponent name="RemoteFactoryBeanTest" 
+			displayname="RemoteFactoryBeanTest" 
+			hint="test remote factory bean methods" 
+			extends="org.cfcunit.framework.TestCase">
+
+	<cffunction name="setUp" access="private" returntype="void" output="false">
+		<cfset var path = GetDirectoryFromPath(getMetaData(this).path) />
+		<cfset var acu = 0 />
+		<cfset var ac = 0 />
+		<cfset var bf = 0 />
+		<cfset variables.sys = CreateObject('java','java.lang.System') />
+	
+		<cfset variables.sys.out.println("Loading bean factory...") />
+		<!--- set up the bean factory --->
+		<cfset acu = createObject("component","coldspring.context.util.ApplicationContextUtils").init() />
+		<!--- create a new bean factory and appContext --->
+		<cfset bf = createObject("component","coldspring.beans.DefaultXmlBeanFactory").init()/>
+		<cfset ac = createObject("component","coldspring.context.DefaultApplicationContext").init(bf)/>
+		<!--- load the bean defs --->
+		<cfset bf.loadBeansFromXmlFile(path&'/klondike-services.xml')/>
+		<!--- store in app context --->
+		<cfset acu.setDefaultApplicationContext('application',ac)>
+		
+		<cfset variables.sys.out.println("Stored default bean factory") />
+		
+		
+	</cffunction>
+	
+	<cffunction name="testRemoteFactory" access="public" returntype="void" output="false">
+		<!--- OK, let's try to get the remoteStub generated --->
+		<cfset var appContextUtils = createObject("component","coldspring.context.util.ApplicationContextUtils").init() />
+		<cfset var appContext = appContextUtils.getDefaultApplicationContext('application') />
+		
+		<cfset variables.sys.out.println("Retrieved bean factory") />
+		
+		<!--- should be the target service returned form the remote factory --->
+		<cfset myTarget = appContext.getBean('remoteCatalogService') />
+		<!--- should be the remote factory itself --->
+		<cfset myFactory = appContext.getBean('&remoteCatalogService') />
+		
+		<!--- now load up the remote service object --->
+		<cfset myService = createObject("component","klondike.machii.remoting.RemoteCatalogService") />
+		
+		<!--- dump some data from the remote service! --->
+		<cfdump var="#myService.getGenres()#" label="Genres" /><br/><br/>
+		<!--- now dump em --->
+		<cfdump var="#myTarget#" label="Remote Service Target"><br/><br/>
+		<cfdump var="#myFactory#" label="Remote Service Factory"><br/><br/>
+		<cfdump var="#myService#" label="Remote Service Facade"><br/><br/>
+
+		<cfset variables.sys.out.println("Done!") />
+		
+		<cfabort />
+	</cffunction>
+	
+</cfcomponent>
