@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultApplicationContext.cfc,v 1.2 2005/11/16 16:16:11 rossd Exp $
+ $Id: DefaultApplicationContext.cfc,v 1.3 2006/01/13 14:52:19 scottc Exp $
 
 	Implements the AbstractApplicationContext interface with support for having a hierarchical 
 	set of configs bean containers 
@@ -33,6 +33,11 @@
 		<cfargument name="beanFactory" required="yes" type="coldspring.beans.BeanFactory">
 		<cfset variables.beanFactory = arguments.beanFactory>
 		<cfreturn this>
+	</cffunction>
+	
+	<cffunction name="setBeanFactory" access="public" returntype="void" output="false">
+		<cfargument name="beanFactory" required="yes" type="coldspring.beans.BeanFactory">
+		<cfset variables.beanFactory = arguments.beanFactory>
 	</cffunction>
 	
 	<cffunction name="setParent" access="public" returntype="void" output="false">
