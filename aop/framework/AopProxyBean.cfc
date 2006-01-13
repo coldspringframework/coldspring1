@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.15 2005/11/17 21:25:50 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.16 2006/01/13 15:00:12 scottc Exp $
  $Log: AopProxyBean.cfc,v $
+ Revision 1.16  2006/01/13 15:00:12  scottc
+ CSP-38 - First pass at RemoteProxyBean, creating remote services for CS managed seriveces through AOP
+
  Revision 1.15  2005/11/17 21:25:50  scottc
  removed commented out method call in AopProxyBean
 
@@ -47,7 +50,7 @@
 <cfcomponent name="${name}" 
 			displayname="AopProxyBean" 
 			extends="${extends}"
-			hint="Abstract Base Class for Aop Proxy Bans" 
+			hint="Abstract Base Class for Aop Proxy Beans" 
 			output="false">
 			
 	<cffunction name="init" access="public" returntype="${extends}" output="false">

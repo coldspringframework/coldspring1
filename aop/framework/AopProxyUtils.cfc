@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.9 2005/11/16 16:16:10 rossd Exp $
+ $Id: AopProxyUtils.cfc,v 1.10 2006/01/13 15:00:12 scottc Exp $
  $Log: AopProxyUtils.cfc,v $
+ Revision 1.10  2006/01/13 15:00:12  scottc
+ CSP-38 - First pass at RemoteProxyBean, creating remote services for CS managed seriveces through AOP
+
  Revision 1.9  2005/11/16 16:16:10  rossd
  updates to license in all framework code
 
@@ -108,6 +111,8 @@
 		</cfif>
 		
 		<!--- first load the AopProxyBean definition (the actual cfc file) --->
+		<cfset beanDescription = loadBeanFile("#path#/AopProxyBean.cfc") />
+		<!--- 
 		<cftry>
 			<cffile action="read" file="#path#/AopProxyBean.cfc" variable="beanDescription" />
 			<cfcatch>
@@ -116,7 +121,7 @@
 				</cfif>
 				<cfthrow type="coldspring.aop.AopProxyError" message="Error reading: #path#/AopProxyBean.cfc, #cfcatch.Detail#" />
 			</cfcatch>
-		</cftry>
+		</cftry> --->
 		
 		<!--- set the type for the proxy (extends) --->
 		<cfset beanDescription = Replace(beanDescription, '${name}', 'coldspring.aop.framework.tmp.'&tmpBean, "ALL") />
@@ -141,6 +146,63 @@
 		
 	</cffunction>
 	
+	<cffunction name="createRemoteProxyBean" access="public" returntype="void" output="false">
+		<cfargument name="serviceName" type="string" required="true" />
+		<cfargument name="serviceLocation" type="string" required="true" />
+		<cfargument name="contextName" type="string" required="true" />
+		<cfargument name="scope" type="string" required="true" />
+		<cfargument name="functions" type="string" required="true" />
+		<cfargument name="proxyFactoryId" type="string" required="true" />
+		
+		<cfset var path = GetDirectoryFromPath(getMetaData(this).path) />
+		<cfset var beanDescription = '' />
+		
+		<cfif variables.logger.isInfoEnabled()>
+			<cfset variables.logger.info("AopProxyUtils.createRemoteProxyBean() creating remote proxy for " & serviceName) />
+		</cfif>
+		
+		<!--- first load the AopProxyBean definition (the actual cfc file) --->
+		<cfset beanDescription = loadBeanFile("#path#/RemoteProxyBean.cfc") />
+		
+		<!--- set the service name, and the scope and contextName of the beanfactory --->
+		<cfset beanDescription = Replace(beanDescription, '${name}', arguments.serviceName, "ALL") />
+		<cfset beanDescription = Replace(beanDescription, '${scope}', arguments.scope, "ALL") />
+		<cfset beanDescription = Replace(beanDescription, '${contextName}', arguments.contextName, "ALL") />
+		<cfset beanDescription = Replace(beanDescription, '${proxyFactoryId}', arguments.proxyFactoryId, "ALL") />
+		<cfset beanDescription = Replace(beanDescription, '${functions}', arguments.functions, "ALL") />
+		
+		<!--- now create methods for all the remote service methods --->
+		
+		<!--- write it to disk, load it and delete it --->
+		<cftry>
+			<cffile action="write" file="#arguments.serviceLocation#/#arguments.serviceName#.cfc" output="#beanDescription#" />
+			 <cfcatch>
+				<cfif variables.logger.isDebugEnabled()>
+					<cfset variables.logger.error("[coldspring.aop.AopProxyError] Error reading: Error writing: #arguments.serviceLocation#/#arguments.serviceName#.cfc, #cfcatch.Detail#") />
+				</cfif>
+			 	<cfthrow type="coldspring.aop.AopProxyError" message="Error Loading: #arguments.serviceLocation#/#arguments.serviceName#.cfc, #cfcatch.Detail#" />
+			 </cfcatch>
+		</cftry>
+		
+	</cffunction>
+	
+	<cffunction name="removeRemoteProxyBean" access="public" returntype="void" output="false">
+		<cfargument name="serviceName" type="string" required="true" />
+		<cfargument name="serviceLocation" type="string" required="true" />
+		
+		<cftry>
+			 <!--- delete the file --->
+			 <cffile action="delete" file="#arguments.serviceLocation#/#arguments.serviceName#.cfc" />
+			<cfcatch>
+				<cfif variables.logger.isDebugEnabled()>
+					<cfset variables.logger.error("[coldspring.aop.AopProxyError] Error reading: Error removing: #arguments.serviceLocation#/#arguments.serviceName#.cfc, #cfcatch.Detail#") />
+				</cfif>
+			 	<cfthrow type="coldspring.aop.AopProxyError" message="Error removing: #arguments.serviceLocation#/#arguments.serviceName#.cfc, #cfcatch.Detail#" />
+			 </cfcatch>
+		</cftry>
+		
+	</cffunction>
+	
 	<cffunction name="createUDF" access="public" returntype="void" output="false">
 		<cfargument name="metaData" type="any" required="true" />
 		<cfargument name="proxyObj" type="any" required="true" />
@@ -157,13 +219,52 @@
 		</cfif>
 		
 		<!--- <cfset var path = ExpandPath('coldspring.aop.framework.tmp') /> --->
-		<!--- start method, but we'll use the uuid as the function name 
-			  (to avoid namespace crashes with udfs in variables scope) --->
-		<cfset function = "<cffunction name=""" & tmpFunction & """" />
-		<cfif StructKeyExists(metaData,'access')>
+		<!--- generate function string --->
+		<cfset function = generateFunction(arguments.metaData, tmpFunction) />
+		
+		<!--- now try to write the function to the tmp file, load and delete it --->
+		<cftry>
+			<cffile action="write" file="#path#/#tmpFile#" output="#function#" />
+			 <!--- import the file --->
+			 <cfinclude template="#tmpFile#" /> 
+			 <!--- delete the file --->
+			 <cffile action="delete" file="#path#/#tmpFile#" />
+			 <cfcatch>
+				<cfif variables.logger.isDebugEnabled()>
+					<cfset variables.logger.error("[coldspring.aop.UdfError] Error reading: Error Loading: #tmptmpFileBean#, #cfcatch.Detail#") />
+				</cfif>
+			 	<cfthrow type="coldspring.aop.UdfError" message="Error Loading: #tmpFile#, #cfcatch.Detail#" />
+			 </cfcatch>
+		</cftry>
+		
+		<!--- add function to the proxy Object --->
+		<cfset arguments.proxyObj[metaData.name] = variables[tmpFunction] />
+	</cffunction>
+	
+	<cffunction name="createRemoteMethod" access="public" returntype="string" output="false">
+		<cfargument name="metaData" type="any" required="true" />
+		<cfargument name="functionName" type="string" required="true" />
+		<cfargument name="accessType" type="string" required="false" />
+		<cfreturn generateFunction(arguments.metaData, arguments.functionName, arguments.accessType) />
+	</cffunction> 
+	
+	<cffunction name="generateFunction" access="private" returntype="string" output="false">
+		<cfargument name="metaData" type="any" required="true" />
+		<cfargument name="functionName" type="string" required="true" />
+		<cfargument name="accessType" type="string" required="false" />
+		<cfset var funtion = '' />
+		
+		<!--- start method --->
+		<cfset function = "<cffunction name=""" & arguments.functionName & """" />
+		<cfif StructKeyExists(arguments,"accessType")>
+			<cfset function = function & " access=""" & arguments.accessType & """" />
+		<cfelseif StructKeyExists(metaData,'access')>
 			<cfset function = function & " access=""" & metaData.access & """" />
 		</cfif>
-		<cfif StructKeyExists(metaData,'returntype')>
+		<!--- for remoting apps, return type may need to be changed to 'any' --->
+		<cfif StructKeyExists(arguments,"accessType") AND (arguments.accessType IS 'remote')>
+			<cfset function = function & " returntype=""any""" />
+		<cfelseif StructKeyExists(metaData,'returntype')>
 			<cfset function = function & " returntype=""" & metaData.returntype & """" />
 		<cfelse>
 			<cfthrow type="coldspring.aop.BadProgrammingError" message="Not including a return type in cfc method declarations is considered bad practice and is not allowed by coldspring.aop !!" />
@@ -199,23 +300,22 @@
 		<!--- close function --->
 		<cfset function = function & "</cffunction>" />
 		
-		<!--- now try to write the function to the tmp file, load and delete it --->
+		<cfreturn function />
+	</cffunction>
+	
+	<cffunction name="loadBeanFile" access="private" returntype="string" output="false">
+		<cfargument name="fileName" type="string" required="true" />
+		<cfset var fileText = "" />
 		<cftry>
-			<cffile action="write" file="#path#/#tmpFile#" output="#function#" />
-			 <!--- import the file --->
-			 <cfinclude template="#tmpFile#" /> 
-			 <!--- delete the file --->
-			 <cffile action="delete" file="#path#/#tmpFile#" />
-			 <cfcatch>
+			<cffile action="read" file="#fileName#" variable="fileText" />
+			<cfcatch>
 				<cfif variables.logger.isDebugEnabled()>
-					<cfset variables.logger.error("[coldspring.aop.UdfError] Error reading: Error Loading: #tmptmpFileBean#, #cfcatch.Detail#") />
+					<cfset variables.logger.error("[coldspring.aop.AopProxyError]: Error reading: #fileName#, #cfcatch.Detail#") />
 				</cfif>
-			 	<cfthrow type="coldspring.aop.UdfError" message="Error Loading: #tmpFile#, #cfcatch.Detail#" />
-			 </cfcatch>
+				<cfthrow type="coldspring.aop.AopProxyError" message="Error reading: #fileName#, #cfcatch.Detail#" />
+			</cfcatch>
 		</cftry>
-		
-		<!--- add function to the proxy Object --->
-		<cfset arguments.proxyObj[metaData.name] = variables[tmpFunction] />
+		<cfreturn fileText />
 	</cffunction>
 	
 </cfcomponent>
