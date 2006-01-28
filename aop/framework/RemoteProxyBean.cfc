@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: RemoteProxyBean.cfc,v 1.1 2006/01/13 15:00:12 scottc Exp $
+ $Id: RemoteProxyBean.cfc,v 1.2 2006/01/28 21:39:57 scottc Exp $
  $Log: RemoteProxyBean.cfc,v $
+ Revision 1.2  2006/01/28 21:39:57  scottc
+ Shoot, the RemoteProxyBean was looking for an applicationContext instead of a bean factory. Updated to look for a beanFactory, but I need to test!
+
  Revision 1.1  2006/01/13 15:00:12  scottc
  CSP-38 - First pass at RemoteProxyBean, creating remote services for CS managed seriveces through AOP
 
@@ -33,23 +36,22 @@
 	<cfset setup() />
 	
 	<cffunction name="setup" access="public" returntype="void">
-		<cfset var appContextUtils = 0 />
-		<cfset var appContext = 0 />
-		<cfset var remoteFactory = 0 />
+		<cfset var bfUtils = 0 />
+		<cfset var bf = 0 />
+		<cfset var bfUtils = 0 />
 		<!--- make sure scope is setup (could have been set to '', meaning application, default) --->
 		<cfif not len(variables.beanFactoryScope)>
 			<cfset variables.beanFactoryScope = 'application' />
 		</cfif>
 		<cftry>		
-			<cfset appContextUtils = createObject("component","coldspring.context.util.ApplicationContextUtils").init()/>
+			<cfset bfUtils = createObject("component","coldspring.beans.util.BeanFactoryUtils").init()/>
 			<cfif not len(variables.beanFactoryName)>
-				<cfset appContext = appContextUtils.getDefaultApplicationContext(variables.beanFactoryScope) />
+				<cfset bf = bfUtils.getDefaultFactory(variables.beanFactoryScope) />
 			<cfelse>
-				<cfset appContext = appContextUtils.getNamedApplicationContext(variables.beanFactoryScope,
-					   																variables.beanFactoryName) />
+				<cfset bf = bfUtils.getNamedFactory(variables.beanFactoryScope, variables.beanFactoryName) />
 			</cfif>
-			<cfset remoteFactory = appContext.getBean("&${proxyFactoryId}") />
-			<cfset variables.target = appContext.getBean("${proxyFactoryId}") />
+			<cfset remoteFactory = bf.getBean("&${proxyFactoryId}") />
+			<cfset variables.target = bf.getBean("${proxyFactoryId}") />
 			<cfset variables.adviceChains = remoteFactory.getProxyAdviceChains() />
 			
 			<!--- so we can dump and see out data members --->
@@ -58,7 +60,7 @@
 			<cfcatch>
 				<cfdump var="#cfcatch#" /><cfabort />
 				<cfthrow type="coldspring.remoting.ApplicationContextError" 
-						 message="Sorry, a ColdSpring ApplicationContext named ${contextName} was not found in ${scope} scope. Please make sure your context is properly loaded. Perhapse your main application is not running?" />
+						 message="Sorry, a ColdSpring BeanFactory named #variables.beanFactoryName# was not found in #variables.beanFactoryScope# scope. Please make sure your bean factory is properly loaded. Perhapse your main application is not running?" />
 			</cfcatch>
 		</cftry>
 	</cffunction>
