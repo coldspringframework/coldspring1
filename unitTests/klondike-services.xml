@@ -154,8 +154,13 @@
 		<property name="serviceName">
 			<value>RemoteCatalogService</value>
 		</property>
-		<property name="serviceLocation">
+		<!-- 
+		<property name="absolutePath">
 			<value>/usr/local/cf7/htdocs/klondike/machii/remoting/</value>
+		</property>
+		-->
+		<property name="relativePath">
+			<value>klondike/machii/remoting</value>
 		</property>
 		<property name="flashUtilityService">
 			<ref bean="flashUtilityService" />

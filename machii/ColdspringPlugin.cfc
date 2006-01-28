@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: ColdspringPlugin.cfc,v 1.4 2006/01/28 20:51:12 scottc Exp $
+ $Id: ColdspringPlugin.cfc,v 1.5 2006/01/28 21:33:42 scottc Exp $
 
 --->
 
@@ -65,10 +65,10 @@
 		<cfset var defaults = structnew()/>
 		
 		<!--- vars for locating and storing bean factory (from properties/params) --->
-		<cfset var bfUtils = createObject("component","coldspring.context.util.ApplicationContextUtils").init()/>
+		<cfset var bfUtils = createObject("component","coldspring.beans.util.BeanFactoryUtils").init()/>
 		<cfset var parentBeanFactoryKey = getParameter("parentBeanFactoryKey", "") />
 		
-		<cfset var localBeanFactoryKey = getParameter('beanFactoryPropertyName', bfUtils.DEFAULT_CONTEXT_KEY)>
+		<cfset var localBeanFactoryKey = getParameter('beanFactoryPropertyName', bfUtils.DEFAULT_FACTORY_KEY)>
 		<cfset var placeFactoryInApplicationScope = getParameter('placeFactoryInApplicationScope','false') />
 		
 		<cfset var appContext = 0 />
@@ -86,20 +86,20 @@
 		<!--- create a new bean factory and appContext --->
 		<cfset bf = createObject("component","coldspring.beans.DefaultXmlBeanFactory").init(defaults, props)/>
 		
-		<!--- if we're using an application scoped factory, retrieve the appContext from app scope --->
+		<!--- if we're using an application scoped factory, retrieve the appContext from app scope
 		<cfif placeFactoryInApplicationScope and bfUtils.namedContextExists('application', localBeanFactoryKey)>
 			<cfset appContext = bfUtils.getNamedApplicationContext('application', localBeanFactoryKey)>
 			<cfset appContext.setBeanFactory(bf) />
 		<cfelse>
 			<cfset appContext = createObject("component","coldspring.context.DefaultApplicationContext").init(bf)/>
-		</cfif>
+		</cfif> --->
 		<!--- <cfset appContext = createObject("component","coldspring.context.DefaultApplicationContext").init(bf)/> --->
 		
 		<!--- If necessary setup the parent bean factory --->
 		<!--- todo: we discussed supplying a scope for retrieving the app contexts, but we're passing in application explicitly --->
-		<cfif len(parentBeanFactoryKey) and bfUtils.namedContextExists('application', parentBeanFactoryKey)>
+		<cfif len(parentBeanFactoryKey) and bfUtils.namedFactoryExists('application', parentBeanFactoryKey)>
 			<!--- OK, this time we're gonna try to use the new ApplicationContextUtils --->
-			<cfset appContext.setParent(bfUtils.getNamedApplicationContext('application', parentBeanFactoryKey))/>
+			<cfset bf.setParent(bfUtils.getNamedFactory('application', parentBeanFactoryKey))/>
 			<!--- <cfset bf.setParent(application[getParameter("parentBeanFactoryKey")].getBeanFactory())/> --->
 		</cfif>
 		
@@ -111,13 +111,11 @@
 		<cfset bf.loadBeansFromXmlFile(serviceDefXmlLocation,true)/>
 
 		<!--- put bean factory back into property mgr --->
-		<!--- <cfset setProperty('beanFactoryName',getParameter('beanFactoryPropertyName','beanFactory')) />
-		<cfset setProperty(getProperty('beanFactoryName'),bf)/> --->
 		<cfset setProperty('beanFactoryName',localBeanFactoryKey) />
-		<cfset setProperty(localBeanFactoryKey,appContext)/>
+		<cfset setProperty(localBeanFactoryKey,bf)/>
 		
 		<cfif placeFactoryInApplicationScope>
-			<cfset bfUtils.setNamedApplicationContext('application', localBeanFactoryKey, appContext)>
+			<cfset bfUtils.setNamedFactory('application', localBeanFactoryKey, bf)>
 		</cfif>
 		
 		<cfif getParameter('resolveMachiiDependencies','false')>

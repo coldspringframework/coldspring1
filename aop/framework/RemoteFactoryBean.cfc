@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: RemoteFactoryBean.cfc,v 1.1 2006/01/13 15:00:12 scottc Exp $
+  $Id: RemoteFactoryBean.cfc,v 1.2 2006/01/28 21:33:41 scottc Exp $
   $Log: RemoteFactoryBean.cfc,v $
+  Revision 1.2  2006/01/28 21:33:41  scottc
+  Changed machii.ColdspringPlugin back to using beanFactory instead of applicationContext. Created a beanFactoryUtil class just like the appContextUtils to serve the same function and used in the plugin. Also updated the remoteFactoryBean to use absolute and relative paths for writing the proxied remote service
+
   Revision 1.1  2006/01/13 15:00:12  scottc
   CSP-38 - First pass at RemoteProxyBean, creating remote services for CS managed seriveces through AOP
 
@@ -58,9 +61,25 @@
 		<cfset variables.serviceName = arguments.serviceName />
 	</cffunction>
 	
+	<!--- DEPRECIATED, in favor of absolure and relative path --->
 	<cffunction name="setServiceLocation" access="public" returntype="void" output="false">
 		<cfargument name="serviceLocation" type="string" required="true" />
 		<cfset variables.serviceLocation = arguments.serviceLocation />
+	</cffunction>
+	
+	<cffunction name="setAbsolutePath" access="public" returntype="void" output="false">
+		<cfargument name="absolutePath" type="string" required="true" />
+		<cfset variables.serviceLocation = arguments.absolutePath />
+	</cffunction>
+	
+	<cffunction name="setRelativePath" access="public" returntype="void" output="false">
+		<cfargument name="relativePath" type="string" required="true" />
+		<cfif Left(arguments.relativePath,1) IS "/">
+			<cfset variables.serviceLocation = expandPath(arguments.relativePath) />
+		<cfelse>
+			<cfset variables.serviceLocation = expandPath("/" & arguments.relativePath) />
+		</cfif>
+		<!--- <cfset variables.relativePath = arguments.relativePath /> --->
 	</cffunction>
 	
 	<cffunction name="setRemoteMethodNames" access="public" returntype="void" output="false">
@@ -127,8 +146,6 @@
 		<cfif StructKeyExists(variables,'flashUtilityService')>
 			<cfset flashMappingsInterceptor = CreateObject('component','coldspring.aop.FlashMappingsInterceptor').init() />
 			<cfset flashMappingsInterceptor.setFlashUtilityService(variables.flashUtilityService) />
-			<!--- <cfset variables.methodAdviceChain = CreateObject('component','coldspring.aop.AdviceChain').init() />
-			<cfset variables.methodAdviceChain.addAdvice(flashMappingsInterceptor) /> --->
 		</cfif>
 		
 		<!--- NEW --->
