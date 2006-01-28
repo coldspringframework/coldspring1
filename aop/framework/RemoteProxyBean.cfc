@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: RemoteProxyBean.cfc,v 1.2 2006/01/28 21:39:57 scottc Exp $
+ $Id: RemoteProxyBean.cfc,v 1.3 2006/01/28 21:44:13 scottc Exp $
  $Log: RemoteProxyBean.cfc,v $
+ Revision 1.3  2006/01/28 21:44:13  scottc
+ Another slight tweek, everything refers to beanFactory, not context
+
  Revision 1.2  2006/01/28 21:39:57  scottc
  Shoot, the RemoteProxyBean was looking for an applicationContext instead of a bean factory. Updated to look for a beanFactory, but I need to test!
 
@@ -31,7 +34,7 @@
 			hint="Abstract Base Class for Aop Based Remote Proxy Beans" 
 			output="false">
 	
-	<cfset variables.beanFactoryName = "${contextName}" />
+	<cfset variables.beanFactoryName = "${factoryName}" />
 	<cfset variables.beanFactoryScope = "${scope}" />
 	<cfset setup() />
 	

@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.10 2006/01/13 15:00:12 scottc Exp $
+ $Id: AopProxyUtils.cfc,v 1.11 2006/01/28 21:44:14 scottc Exp $
  $Log: AopProxyUtils.cfc,v $
+ Revision 1.11  2006/01/28 21:44:14  scottc
+ Another slight tweek, everything refers to beanFactory, not context
+
  Revision 1.10  2006/01/13 15:00:12  scottc
  CSP-38 - First pass at RemoteProxyBean, creating remote services for CS managed seriveces through AOP
 
@@ -149,7 +152,7 @@
 	<cffunction name="createRemoteProxyBean" access="public" returntype="void" output="false">
 		<cfargument name="serviceName" type="string" required="true" />
 		<cfargument name="serviceLocation" type="string" required="true" />
-		<cfargument name="contextName" type="string" required="true" />
+		<cfargument name="factoryName" type="string" required="true" />
 		<cfargument name="scope" type="string" required="true" />
 		<cfargument name="functions" type="string" required="true" />
 		<cfargument name="proxyFactoryId" type="string" required="true" />
@@ -164,10 +167,10 @@
 		<!--- first load the AopProxyBean definition (the actual cfc file) --->
 		<cfset beanDescription = loadBeanFile("#path#/RemoteProxyBean.cfc") />
 		
-		<!--- set the service name, and the scope and contextName of the beanfactory --->
+		<!--- set the service name, and the scope and factoryName of the beanfactory --->
 		<cfset beanDescription = Replace(beanDescription, '${name}', arguments.serviceName, "ALL") />
 		<cfset beanDescription = Replace(beanDescription, '${scope}', arguments.scope, "ALL") />
-		<cfset beanDescription = Replace(beanDescription, '${contextName}', arguments.contextName, "ALL") />
+		<cfset beanDescription = Replace(beanDescription, '${factoryName}', arguments.factoryName, "ALL") />
 		<cfset beanDescription = Replace(beanDescription, '${proxyFactoryId}', arguments.proxyFactoryId, "ALL") />
 		<cfset beanDescription = Replace(beanDescription, '${functions}', arguments.functions, "ALL") />
 		
