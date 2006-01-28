@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: ColdspringPlugin.cfc,v 1.3 2005/11/17 19:24:45 rossd Exp $
+ $Id: ColdspringPlugin.cfc,v 1.4 2006/01/28 20:51:12 scottc Exp $
 
 --->
 
@@ -54,7 +54,7 @@
 <cfcomponent name="ColdspringPlugin" extends="MachII.framework.Plugin" hint="I am a mach-ii plugin for coldspring" output="false">
 	<cffunction name="configure" access="public" returntype="void" output="false" hint="I initialize this plugin during framework startup">
 		<cfset var pm = getAppManager().getPropertyManager()/>
-		
+	
 		<!--- determine the location of the bean def xml file --->
 		<cfset var serviceDefXmlLocation = pm.getProperty(getParameter('configFilePropertyName','ColdSpringComponentsLocation'))/>
 		
@@ -64,6 +64,14 @@
 		<!--- todo: defaults set via mach-ii params --->
 		<cfset var defaults = structnew()/>
 		
+		<!--- vars for locating and storing bean factory (from properties/params) --->
+		<cfset var bfUtils = createObject("component","coldspring.context.util.ApplicationContextUtils").init()/>
+		<cfset var parentBeanFactoryKey = getParameter("parentBeanFactoryKey", "") />
+		
+		<cfset var localBeanFactoryKey = getParameter('beanFactoryPropertyName', bfUtils.DEFAULT_CONTEXT_KEY)>
+		<cfset var placeFactoryInApplicationScope = getParameter('placeFactoryInApplicationScope','false') />
+		
+		<cfset var appContext = 0 />
 		<cfset var bf = 0/>
 		
 		<cfset var p = 0/>
@@ -75,12 +83,24 @@
 			</cfif>
 		</cfloop>
 		
-		<!--- create a new bean factory with the location --->
+		<!--- create a new bean factory and appContext --->
 		<cfset bf = createObject("component","coldspring.beans.DefaultXmlBeanFactory").init(defaults, props)/>
 		
+		<!--- if we're using an application scoped factory, retrieve the appContext from app scope --->
+		<cfif placeFactoryInApplicationScope and bfUtils.namedContextExists('application', localBeanFactoryKey)>
+			<cfset appContext = bfUtils.getNamedApplicationContext('application', localBeanFactoryKey)>
+			<cfset appContext.setBeanFactory(bf) />
+		<cfelse>
+			<cfset appContext = createObject("component","coldspring.context.DefaultApplicationContext").init(bf)/>
+		</cfif>
+		<!--- <cfset appContext = createObject("component","coldspring.context.DefaultApplicationContext").init(bf)/> --->
+		
 		<!--- If necessary setup the parent bean factory --->
-		<cfif len(getParameter("parentBeanFactoryKey", ""))>
-			<cfset bf.setParent(application[getParameter("parentBeanFactoryKey")].getBeanFactory())/>
+		<!--- todo: we discussed supplying a scope for retrieving the app contexts, but we're passing in application explicitly --->
+		<cfif len(parentBeanFactoryKey) and bfUtils.namedContextExists('application', parentBeanFactoryKey)>
+			<!--- OK, this time we're gonna try to use the new ApplicationContextUtils --->
+			<cfset appContext.setParent(bfUtils.getNamedApplicationContext('application', parentBeanFactoryKey))/>
+			<!--- <cfset bf.setParent(application[getParameter("parentBeanFactoryKey")].getBeanFactory())/> --->
 		</cfif>
 		
 		<cfif getParameter('configFilePathIsRelative','false')>
@@ -91,11 +111,13 @@
 		<cfset bf.loadBeansFromXmlFile(serviceDefXmlLocation,true)/>
 
 		<!--- put bean factory back into property mgr --->
-		<cfset setProperty('beanFactoryName',getParameter('beanFactoryPropertyName','beanFactory')) />
-		<cfset setProperty(getProperty('beanFactoryName'),bf)/>
+		<!--- <cfset setProperty('beanFactoryName',getParameter('beanFactoryPropertyName','beanFactory')) />
+		<cfset setProperty(getProperty('beanFactoryName'),bf)/> --->
+		<cfset setProperty('beanFactoryName',localBeanFactoryKey) />
+		<cfset setProperty(localBeanFactoryKey,appContext)/>
 		
-		<cfif getParameter('placeFactoryInApplicationScope','false')>
-			<cfset application[getParameter('beanFactoryPropertyName','beanFactory')] = bf />
+		<cfif placeFactoryInApplicationScope>
+			<cfset bfUtils.setNamedApplicationContext('application', localBeanFactoryKey, appContext)>
 		</cfif>
 		
 		<cfif getParameter('resolveMachiiDependencies','false')>
@@ -106,45 +128,27 @@
 	
 	<cffunction name="resolveDependencies" returntype="void" access="private" output="false">
 		
-		<cfset var configXML = '' />
-		<cfset var configXmlFile = '' />
-		<cfset var listeners = 0 />
-		<cfset var filters = 0 />
-		<cfset var plugins = 0 />
-		<cfset var targets = ArrayNew(1) />
-		<cfset var Ix = 0 />
+		<cfset var beanFactory = getProperty(getProperty('beanFactoryName')) />
+		<cfset var targets = StructNew() />
 		
 		<cfset var targetObj = 0 />
 		<cfset var targetIx = 0 />
 		
 		<cfset var md = '' />
-		<cfset var function = '' />
 		<cfset var functionIndex = 0 />
 		
 		<cfset var setterName = '' />
 		<cfset var setterType = '' />
 		<cfset var beanName = '' />
 		
-		<cfset var beanFactory = getProperty(getProperty('beanFactoryName')) />
+
+		<cfset targets.data = ArrayNew(1) />
+		<cfset getListeners(targets) />
+		<cfset getFilters(targets) />
+		<cfset getPlugins(targets) />
 		
-		<!--- get listeners, filters and plugins --->
-		<cfset listeners = getListeners(configXML) />
-		<cfset filters = getFilters(configXML) />
-		<cfset plugins = getPlugins(configXML) />
-		<!--- join arrays --->
-		<cfloop from="1" to="#ArrayLen(listeners)#" index="Ix">
-			<cfset ArrayAppend(targets, listeners[Ix]) />
-		</cfloop>
-		<cfloop from="1" to="#ArrayLen(filters)#" index="Ix">
-			<cfset ArrayAppend(targets, filters[Ix]) />
-		</cfloop>
-		<cfloop from="1" to="#ArrayLen(plugins)#" index="Ix">
-			<cfset ArrayAppend(targets, plugins[Ix]) />
-		</cfloop>
-		
-		
-		<cfloop from="1" to="#ArrayLen(targets)#" index="targetIx">
-			<cfset targetObj = targets[targetIx] />
+		<cfloop from="1" to="#ArrayLen(targets.data)#" index="targetIx">
+			<cfset targetObj = targets.data[targetIx] />
 			<!--- look for autowirable collaborators for any SETTERS --->
 			<cfset md = getMetaData(targetObj) />	
 
@@ -179,14 +183,11 @@
 		<cfreturn StructKeyArray(variables.listeners) />
 	</cffunction>
 		
-	<cffunction name="getListeners" returntype="array" access="private" output="false">
-		<cfargument name="configXML" type="string" required="true" />
-		<cfset var listenerNodes = 0 />
-		<cfset var listenerName = 0 />
-		<cfset var i = 0 />
-		<cfset var listeners = ArrayNew(1) />
+	<cffunction name="getListeners" returntype="void" access="private" output="false">
+		<cfargument name="targets" type="struct" required="true" />
 		<cfset var listenerManager = getAppManager().getListenerManager() />
 		<cfset var listenerNames = 0 />
+		<cfset var i = 0 />
 		
 		<!--- inject a method I need into the manager and use it to get the listener names --->
 		<cfset listenerManager['getListenerNamesForColdSpring'] = variables['getListenerNamesForColdSpring'] />
@@ -194,59 +195,52 @@
 		<!--- get rid of my mayhem --->
 		<cfset StructDelete(listenerManager,'getListenerNamesForColdSpring') /> 
 		
-		<!--- Get each listener name from mach-ii file, ask listener manager for it --->
+		<!--- append each retrieved listener to the targets array (in struct) --->
 		<cfloop from="1" to="#ArrayLen(listenerNames)#" index="i">
-			<cfset ArrayAppend(listeners, listenerManager.getListener(listenerNames[i])) />
+			<cfset ArrayAppend(targets.data, listenerManager.getListener(listenerNames[i])) />
 		</cfloop>
 		
-		<cfreturn listeners />
 	</cffunction>
 	
 	<cffunction name="getFilterNamesForColdSpring" returntype="array" access="public" output="false">
 		<cfreturn StructKeyArray(variables.filters) />
 	</cffunction>
 		
-	<cffunction name="getFilters" returntype="array" access="private" output="false">
-		<cfargument name="configXML" type="string" required="true" />
-		<cfset var filterNodes = 0 />
-		<cfset var filterName = 0 />
-		<cfset var i = 0 />
-		<cfset var filters = ArrayNew(1) />
+	<cffunction name="getFilters" returntype="void" access="private" output="false">
+		<cfargument name="targets" type="struct" required="true" />
 		<cfset var filterManager = getAppManager().getFilterManager() />
 		<cfset var filterNames = 0 />
+		<cfset var i = 0 />
 		
 		<cfset filterManager['getFilterNamesForColdSpring'] = variables['getFilterNamesForColdSpring'] />
 		<cfset filterNames = filterManager.getFilterNamesForColdSpring() />
 		<cfset StructDelete(filterManager,'getFilterNamesForColdSpring') /> 
 		
+		<!--- append each retrieved filter to the targets array (in struct) --->
 		<cfloop from="1" to="#ArrayLen(filterNames)#" index="i">
-			<cfset ArrayAppend(filters, getAppManager().getFilterManager().getFilter(filterNames[i])) />
+			<cfset ArrayAppend(targets.data, filterManager.getFilter(filterNames[i])) />
 		</cfloop>
 		
-		<cfreturn filters />
 	</cffunction>
 	
 	<cffunction name="getPluginNamesForColdSpring" returntype="array" access="public" output="false">
 		<cfreturn StructKeyArray(variables.plugins) />
 	</cffunction>
 		
-	<cffunction name="getPlugins" returntype="array" access="private" output="false">
-		<cfargument name="configXML" type="string" required="true" />
-		<cfset var pluginNodes = 0 />
-		<cfset var pluginName = 0 />
-		<cfset var i = 0 />
-		<cfset var plugins = ArrayNew(1) />
+	<cffunction name="getPlugins" returntype="void" access="private" output="false">
+		<cfargument name="targets" type="struct" required="true" />
 		<cfset var pluginManager = getAppManager().getPluginManager() />
 		<cfset var pluginNames = 0 />
+		<cfset var i = 0 />
 		
 		<cfset pluginManager['getPluginNamesForColdSpring'] = variables['getPluginNamesForColdSpring'] />
 		<cfset pluginNames = pluginManager.getPluginNamesForColdSpring() />
 		<cfset StructDelete(pluginManager,'getPluginNamesForColdSpring') /> 
 		
+		<!--- append each retrieved plugin to the targets array (in struct) --->
 		<cfloop from="1" to="#ArrayLen(pluginNames)#" index="i">
-			<cfset ArrayAppend(plugins, getAppManager().getPluginManager().getPlugin(pluginNames[i])) />
+			<cfset ArrayAppend(targets.data, pluginManager.getPlugin(pluginNames[i])) />
 		</cfloop>
 		
-		<cfreturn plugins />
 	</cffunction>
 </cfcomponent>
