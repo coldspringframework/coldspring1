@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.16 2006/01/13 14:57:21 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.17 2006/02/11 22:55:02 wiersma Exp $
 
 ---> 
 
@@ -118,6 +118,8 @@
 		<cfset var beanAttributes = 0 />
 		<cfset var beanChildren = 0 />
 		<cfset var isSingleton = true />
+		<cfset var factoryBean = "" />
+		<cfset var factoryMethod = "" />
 	
 		<!--- make sure some beans exist --->
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
@@ -132,8 +134,10 @@
 			<cfset beanAttributes = beans[beanIx].XmlAttributes />
 			<cfset beanChildren = beans[beanIx].XmlChildren />
 			
-			<cfif not (StructKeyExists(beanAttributes,'id') and StructKeyExists(beanAttributes,'class'))>
-				<cfthrow type="coldspring.MalformedBeanException" message="Xml bean definitions must contain 'id' and 'class' attributes!">
+			<cfif not structKeyExists(beanAttributes, "factory-bean") 
+				AND (not (StructKeyExists(beanAttributes,'id') and StructKeyExists(beanAttributes,'class')))>
+				<cfthrow type="coldspring.MalformedBeanException" 
+					message="Xml bean definitions must contain 'id' and 'class' attributes!">
 			</cfif>
 			
 			<!--- look for an singleton attribute for this bean def --->			
@@ -141,6 +145,18 @@
 				<cfset isSingleton = beanAttributes.singleton />
 			<cfelse>
 				<cfset isSingleton = true />
+			</cfif>
+			
+			<!--- look for an factory-bean and factory-method attribute for this bean def --->			
+			<cfif StructKeyExists(beanAttributes,'factory-bean')>
+				<cfset factoryBean = beanAttributes["factory-bean"] />
+			<cfelse>
+				<cfset factoryBean = "" />
+			</cfif>
+			<cfif StructKeyExists(beanAttributes,'factory-method')>
+				<cfset factoryMethod = beanAttributes["factory-method"] />
+			<cfelse>
+				<cfset factoryMethod = "" />
 			</cfif>
 			
 			<!--- look for an init-method attribute for this bean def --->
@@ -151,12 +167,25 @@
 			</cfif>
 			
 			<!--- call function to create bean definition and add to store --->
-			<cfset createBeanDefinition(beanAttributes.id, 
+			<cfif not structKeyExists(beanAttributes, "factory-bean")> 
+				<cfset createBeanDefinition(beanAttributes.id, 
 										beanAttributes.class, 
 										beanChildren, 
 										isSingleton, 
 										false,
-										initMethod) />
+										initMethod,
+										factoryBean, 
+										factoryMethod) />
+			<cfelse>
+				<cfset createBeanDefinition(beanAttributes.id, 
+										"", 
+										beanChildren, 
+										isSingleton, 
+										false,
+										initMethod,
+										factoryBean, 
+										factoryMethod) />
+			</cfif>
 		
 		</cfloop>
 		
@@ -172,6 +201,8 @@
 		<cfargument name="isSingleton" type="boolean" required="true" />
 		<cfargument name="isInnerBean" type="boolean" required="true" />
 		<cfargument name="initMethod" type="string" default="" required="false" />
+		<cfargument name="factoryBean" type="string" default="" required="false" />
+		<cfargument name="factoryMethod" type="string" default="" required="false" />
 		
 		<cfset var childIx = 0 />
 		<cfset var child = '' />
@@ -184,6 +215,8 @@
 		<cfset variables.beanDefs[arguments.beanID].setBeanClass(arguments.beanClass) />
 		<cfset variables.beanDefs[arguments.beanID].setSingleton(arguments.isSingleton) />
 		<cfset variables.beanDefs[arguments.beanID].setInnerBean(arguments.isInnerBean) />
+		<cfset variables.beanDefs[arguments.beanID].setFactoryBean(arguments.factoryBean) />
+		<cfset variables.beanDefs[arguments.beanID].setFactoryMethod(arguments.factoryMethod) />
 		
 		<cfif len(arguments.initMethod)>
 			
@@ -306,15 +339,25 @@
 		<!--- new, for faster factoryBean lookup --->
 		<cfset var searchMd = '' />
 		<cfset var instanceType = '' />
+		<cfset var factoryBean = 0>
 		
 		<!--- put them all in an array, and while we're at it, make sure they're in the singleton cache, or the localbean cache --->
 		<cfloop from="1" to="#ListLen(dependentBeanNames)#" index="beanDefIx">
 			<cfset beanDef = getBeanDefinition(ListGetAt(dependentBeanNames,beanDefIx)) />
 			<cfset ArrayAppend(dependentBeanDefs,beanDef) />
-			<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
-				<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) /> <!--- CreateObject('component', beanDef.getBeanClass())) /> --->
+			<cfif beanDef.getFactoryBean() eq "">
+				<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
+					<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) /> <!--- CreateObject('component', beanDef.getBeanClass())) /> --->
+				<cfelse>
+					<cfset localBeanCache[beanDef.getBeanID()] = beanDef.getBeanInstance() /> <!--- CreateObject('component', beanDef.getBeanClass()) /> --->
+				</cfif>
 			<cfelse>
-				<cfset localBeanCache[beanDef.getBeanID()] = beanDef.getBeanInstance() /> <!--- CreateObject('component', beanDef.getBeanClass()) /> --->
+				<!--- Since this bean comes from a factory bean we need to initialize it specially --->
+				<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
+					<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) />
+				<cfelse>
+					<cfset localBeanCache[beanDef.getBeanID()] = beanDef.getBeanInstance() /> 
+				</cfif>
 			</cfif>
 		</cfloop>
 		
@@ -324,7 +367,7 @@
 		<cfloop from="#ArrayLen(dependentBeanDefs)#" to="1" index="beanDefIx" step="-1">
 			<cfset beanDef = dependentBeanDefs[beanDefIx] />
 		
-			<cfif not beanDef.isConstructed()>
+			<cfif not beanDef.isConstructed() AND beanDef.getFactoryBean() eq "">
 				<cfif beanDef.isSingleton()>
 					<cfset beanInstance = getBeanFromSingletonCache(beanDef.getBeanID())>
 				<cfelse>
@@ -464,7 +507,7 @@
 				</cfif>
 				
 			</cfif>
-			
+
 		</cfloop>
 		
 		<!--- now loop again (same direction: backwards) for init-methods  --->

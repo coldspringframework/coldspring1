@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.14 2006/01/13 14:57:21 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.15 2006/02/11 22:55:02 wiersma Exp $
 
 --->
 
@@ -42,6 +42,11 @@
 	<cfset variables.instanceData.lazyInit = true />
 	<!--- list of known dependent beans (by name): --->	
 	<cfset variables.instanceData.Dependencies = '' />
+	<!--- factory bean to use to get this bean --->
+	<cfset variables.instanceData.factoryBean = ''>
+	<!--- factory method to use on the factory bean to get this bean --->
+	<cfset variables.instanceData.factoryMethod = ''>
+	
 	
 	<cffunction name="init" returntype="coldspring.beans.BeanDefinition" output="false"
 				hint="Constructor. Creates a new Bean Definition.">
@@ -157,9 +162,13 @@
 		<cfset var prop = 0/>
 		<cfset var argumentName = 0/>
 		<cfset var tempProps = arraynew(1)/>		
+		
+		<cfif getFactoryBean() neq "">
+			<cfset arguments.dependencyList = ListAppend(arguments.dependencyList, getFactoryBean())>
+		</cfif>
 				
 		<!--- this is where the bean is actually created if it hasn't been --->
-		<cfif not autoWireChecked()>
+		<cfif not autoWireChecked() AND getFactoryBean() eq "">
 			<cfset  beanInstance = getBeanInstance() />
 			<!--- look for autowirable collaborators --->
 			<cfset md = getMetaData(beanInstance) />		
@@ -288,7 +297,6 @@
 			</cfloop>			
 		</cfif>		
 		
-		
 		<!--- ok, the above code went through and autowired up any dependencies (at the last possible moment)
 			  now this bean definition's own dependency list is complete, so we can recurse through
 			  that list to get every single possible dependency --->
@@ -305,10 +313,22 @@
 	
 	<cffunction name="getBeanInstance" access="public" output="false" returntype="struct" 
 				hint="I retrieve the the actual bean instance (a new one if this is a prototype bean) from this bean definition">
-
+		<cfset var factoryBean = 0 />
+		<cfset var constructorArgs = getConstructorArgs()>
+		<cfset var argname = "">
 		<!--- create this if it doesn't exist --->
-		<cfif not structkeyexists(variables,"beanInstance")>
+		<cfif not structkeyexists(variables,"beanInstance") AND getFactoryBean() eq "">
 			<cfset variables.beanInstance = createObject("component", getBeanClass()) />
+		<cfelseif getFactoryBean() neq "">
+			<!--- Since this bean comes from a factory bean we need to initialize it specially --->
+			<cfset factoryBean = getBeanFactory().getBean(getFactoryBean()) />
+			<cfinvoke component="#factoryBean#" method="#getFactoryMethod()#" 
+				returnvariable="variables.beanInstance">
+				<!--- Loop through constructor args --->
+				<cfloop list="#structKeyList(constructorArgs)#" index="argname">
+					<cfinvokeargument name="#argname#" value="#constructorArgs[argname].getValue()#">
+				</cfloop>
+			</cfinvoke>
 		</cfif>
 
 		<cfif isSingleton()>
@@ -405,4 +425,25 @@
 		</cfif>
 	</cffunction>
 	
+	<cffunction name="getFactoryBean" access="public" output="false" returntype="string" 
+				hint="I retrieve the factoryBean from this instance's data">
+		<cfreturn variables.instanceData.factoryBean />
+	</cffunction>
+
+	<cffunction name="setFactoryBean" access="public" output="false" returntype="void"  
+				hint="I set the BeanID in this instance's data">
+		<cfargument name="factoryBean" type="string" required="true"/>
+		<cfset variables.instanceData.factoryBean = arguments.factoryBean />
+	</cffunction>
+
+	<cffunction name="getFactoryMethod" access="public" output="false" returntype="string" 
+				hint="I retrieve the factoryMethod from this instance's data">
+		<cfreturn variables.instanceData.factoryMethod />
+	</cffunction>
+
+	<cffunction name="setFactoryMethod" access="public" output="false" returntype="void"  
+				hint="I set the factoryMethod in this instance's data">
+		<cfargument name="factoryMethod" type="string" required="true"/>
+		<cfset variables.instanceData.factoryMethod = arguments.factoryMethod />
+	</cffunction>	
 </cfcomponent>
