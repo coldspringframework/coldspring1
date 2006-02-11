@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: flashUtilityService.cfc,v 1.3 2005/11/17 19:28:29 rossd Exp $
+ $Id: flashUtilityService.cfc,v 1.4 2006/02/11 22:56:47 wiersma Exp $
 
 --->
 
@@ -66,6 +66,7 @@
 			</cfif>
 		</cfloop>
 		<!--- <cftrace text="getFlashType = #mappings.getFlashType(getMetaData(result).name)#, cfcType = #getMetaData(result).name#"> --->
+		 <cfset asObject["_REMOTECLASS"] = mappings.getFlashType(getMetaData(result).name) />
 		<cfset asObject.setType(mappings.getFlashType(getMetaData(result).name))>
 		<cfreturn asObject>
 	</cffunction>
