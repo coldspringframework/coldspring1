@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.8 2005/11/16 16:16:10 rossd Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.9 2006/02/14 21:03:29 scottc Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.9  2006/02/14 21:03:29  scottc
+  Little fix Simeon found with naming of AopProxyUtils in create object, not linux compatible, oops!
+
   Revision 1.8  2005/11/16 16:16:10  rossd
   updates to license in all framework code
 
@@ -41,7 +44,7 @@
 	<cfset variables.singleton = true />		
 	<cfset variables.advisorChain = ArrayNew(1) />
 	<cfset variables.interceptorNames = 0 />
-	<cfset variables.aopProxyUtils = CreateObject('component','coldspring.aop.framework.aopProxyUtils').init() />
+	<cfset variables.aopProxyUtils = CreateObject('component','coldspring.aop.framework.AopProxyUtils').init() />
 	<cfset variables.proxyObject = 0 />
 	<cfset variables.constructed = false />
 			
