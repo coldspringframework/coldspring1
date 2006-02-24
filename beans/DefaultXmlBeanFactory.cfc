@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.18 2006/02/24 15:28:09 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.19 2006/02/24 19:51:08 rossd Exp $
 
 ---> 
 
@@ -125,7 +125,8 @@
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
 			<cfset beans = arguments.XmlBeanDefinitions.beans.bean>
 		<cfelse>
-			<cfthrow type="coldspring.XmlParserException" message="Xml file contains no beans!">
+			<!--- no beans found, return without modding the factory at all --->
+			<cfreturn/>
 		</cfif>
 		
 		<!--- create bean definition objects for each (top level) bean in the xml--->
