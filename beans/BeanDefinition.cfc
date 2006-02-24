@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.15 2006/02/11 22:55:02 wiersma Exp $
+ $Id: BeanDefinition.cfc,v 1.16 2006/02/24 15:28:09 rossd Exp $
 
 --->
 
@@ -171,130 +171,132 @@
 		<cfif not autoWireChecked() AND getFactoryBean() eq "">
 			<cfset  beanInstance = getBeanInstance() />
 			<!--- look for autowirable collaborators --->
-			<cfset md = getMetaData(beanInstance) />		
-			<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
-				<!--- look for init (constructor) --->
-				<!--- todo: respect how we are told to autowire (byName|byType) --->
-				<cfif md.functions[functionIndex].name eq "init" 
-					  and arraylen(md.functions[functionIndex].parameters)>
-					<!--- loop over args --->
-					<cfloop from="1" to="#arraylen(md.functions[functionIndex].parameters)#" index="argIndex">
-						<cfset autoArg = md.functions[functionIndex].parameters[argIndex]/>
-						<!--- is this arg not explicitly defined?
-								and the bean facotry knows it by name
-								and if so, *that* bean's class matches this type of arg 
-								then it's a dependency --->
-						<cfif not structKeyExists(variables.instanceData.constructorArgs, autoArg.name)
-							and getBeanFactory().containsBean(autoArg.name)
-							and getBeanFactory().getBeanDefinition(autoArg.name).getBeanClass() eq autoArg.type>
-							
-							<!--- we are going to add the constructor arg as if it had been defined in the xml --->
-							<cfset temp_xml = xmlnew()/>
-							<cfset temp_xml.xmlRoot = XmlElemNew(temp_xml,"constructor-arg")/>
-							<cfset temp_xml.xmlRoot.xmlAttributes['name'] = autoArg.name />
-							<cfset temp_xml.xmlRoot.xmlChildren[1] = XmlElemNew(temp_xml,"ref")/>
-							<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = autoArg.name />
+			<cfset md = getMetaData(beanInstance) />
+			<cfif structKeyExists(md,"functions")>
+				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
+					<!--- look for init (constructor) --->
+					<!--- todo: respect how we are told to autowire (byName|byType) --->
+					<cfif md.functions[functionIndex].name eq "init" 
+						  and arraylen(md.functions[functionIndex].parameters)>
+						<!--- loop over args --->
+						<cfloop from="1" to="#arraylen(md.functions[functionIndex].parameters)#" index="argIndex">
+							<cfset autoArg = md.functions[functionIndex].parameters[argIndex]/>
+							<!--- is this arg not explicitly defined?
+									and the bean facotry knows it by name
+									and if so, *that* bean's class matches this type of arg 
+									then it's a dependency --->
+							<cfif not structKeyExists(variables.instanceData.constructorArgs, autoArg.name)
+								and getBeanFactory().containsBean(autoArg.name)
+								and getBeanFactory().getBeanDefinition(autoArg.name).getBeanClass() eq autoArg.type>
 								
-							<cfset addConstructorArg(createObject("component","coldspring.beans.BeanProperty").init(
-																							temp_xml.xmlRoot,this
-																								)) />						
-							
-						</cfif>
-						
-						<!--- try set the argumentName on this constructor arg if it exists --->
-						<cftry>
-							<cfset prop = getConstructorArg(autoArg.name) />
-							<cfset prop.setArgumentName(autoArg.name) />
-							<cfcatch></cfcatch>
-						</cftry>
-						
-					</cfloop>
-				<cfelseif left(md.functions[functionIndex].name,3) eq "set" 
-						and not structKeyExists(variables.instanceData.properties, mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3))
-						and arraylen(md.functions[functionIndex].parameters) eq 1>
-		
-					<!--- look for setters (same as above for constructor-args) --->
-					<!--- todo:
-							respect how we are told to autowire (byName|byType) --->
-							
-					<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)/>
-					<cfset setterNameToCall = setterName/>
-					
-					<!--- ensure a type was actually specified --->
-					<cfif structKeyExists(md.functions[functionIndex].parameters[1],"type")>
-						<cfset setterType = md.functions[functionIndex].parameters[1].type/>						
-					
-						<cfset beanByType = getBeanFactory().findBeanNameByType(setterType)/>	
-							
-						<!--- this should be refactored
-								basically if you register a bean with a name that matches the type we found here
-								currently we are autowiring in that situation --->
-						<cfif getBeanFactory().containsBean(setterType)>
-							<cfset setterName = setterType/>							
-						</cfif>
-							
-					<cfelse>
-						<cfset setterType = ""/>
-						<cfset beanByType = ""/>
-					</cfif>
-		
-					<!--- so, if we didn't already explicly set this property
-						  and the beanFactory knows it by name or by type
-						  well, let's inject it! --->
-					<cfif not structKeyExists(variables.instanceData.properties, setterName)
-							and (
-									(
-									 getBeanFactory().containsBean(setterName)
-									 )
-								or
-									(
-									len(beanByType)
-									)
-								)>
-							
-							
-							
-							<cfset temp_xml = xmlnew()/>							
-							<cfset temp_xml.xmlRoot = XmlElemNew(temp_xml,"property")/>
-							<cfset temp_xml.xmlRoot.xmlAttributes['name'] = setterNameToCall />
-							<cfset temp_xml.xmlRoot.xmlChildren[1] = XmlElemNew(temp_xml,"ref")/>
-																								
-							<!--- we are making sure the injection will happen if autowired by type
-									by overiding the properties name to what the setter wants
-									clean this up in the future --->
-							<cfif len(beanByType) and not getBeanFactory().containsBean(setterName)>								
-								<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = beanByType />					
-							<cfelse>
-								<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = setterName />	
+								<!--- we are going to add the constructor arg as if it had been defined in the xml --->
+								<cfset temp_xml = xmlnew()/>
+								<cfset temp_xml.xmlRoot = XmlElemNew(temp_xml,"constructor-arg")/>
+								<cfset temp_xml.xmlRoot.xmlAttributes['name'] = autoArg.name />
+								<cfset temp_xml.xmlRoot.xmlChildren[1] = XmlElemNew(temp_xml,"ref")/>
+								<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = autoArg.name />
+									
+								<cfset addConstructorArg(createObject("component","coldspring.beans.BeanProperty").init(
+																								temp_xml.xmlRoot,this
+																									)) />						
+								
 							</cfif>
 							
+							<!--- try set the argumentName on this constructor arg if it exists --->
+							<cftry>
+								<cfset prop = getConstructorArg(autoArg.name) />
+								<cfset prop.setArgumentName(autoArg.name) />
+								<cfcatch></cfcatch>
+							</cftry>
 							
-							<cfset addProperty(createObject("component","coldspring.beans.BeanProperty").init(
-																						temp_xml.xmlRoot,this
-																						) ) >
-							
-												
-					</cfif>			
+						</cfloop>
+					<cfelseif left(md.functions[functionIndex].name,3) eq "set" 
+							and not structKeyExists(variables.instanceData.properties, mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3))
+							and arraylen(md.functions[functionIndex].parameters) eq 1>
+			
+						<!--- look for setters (same as above for constructor-args) --->
+						<!--- todo:
+								respect how we are told to autowire (byName|byType) --->
+								
+						<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)/>
+						<cfset setterNameToCall = setterName/>
+						
+						<!--- ensure a type was actually specified --->
+						<cfif structKeyExists(md.functions[functionIndex].parameters[1],"type")>
+							<cfset setterType = md.functions[functionIndex].parameters[1].type/>						
+						
+							<cfset beanByType = getBeanFactory().findBeanNameByType(setterType)/>	
+								
+							<!--- this should be refactored
+									basically if you register a bean with a name that matches the type we found here
+									currently we are autowiring in that situation --->
+							<cfif getBeanFactory().containsBean(setterType)>
+								<cfset setterName = setterType/>							
+							</cfif>
+								
+						<cfelse>
+							<cfset setterType = ""/>
+							<cfset beanByType = ""/>
+						</cfif>
+			
+						<!--- so, if we didn't already explicly set this property
+							  and the beanFactory knows it by name or by type
+							  well, let's inject it! --->
+						<cfif not structKeyExists(variables.instanceData.properties, setterName)
+								and (
+										(
+										 getBeanFactory().containsBean(setterName)
+										 )
+									or
+										(
+										len(beanByType)
+										)
+									)>
+								
+								
+								
+								<cfset temp_xml = xmlnew()/>							
+								<cfset temp_xml.xmlRoot = XmlElemNew(temp_xml,"property")/>
+								<cfset temp_xml.xmlRoot.xmlAttributes['name'] = setterNameToCall />
+								<cfset temp_xml.xmlRoot.xmlChildren[1] = XmlElemNew(temp_xml,"ref")/>
+																									
+								<!--- we are making sure the injection will happen if autowired by type
+										by overiding the properties name to what the setter wants
+										clean this up in the future --->
+								<cfif len(beanByType) and not getBeanFactory().containsBean(setterName)>								
+									<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = beanByType />					
+								<cfelse>
+									<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = setterName />	
+								</cfif>
+								
+								
+								<cfset addProperty(createObject("component","coldspring.beans.BeanProperty").init(
+																							temp_xml.xmlRoot,this
+																							) ) >
+								
+													
+						</cfif>			
+						
 					
-				
-						
-				</cfif>
-				
-				
-				<!--- try set the argumentName on this property if it exists --->
-				<cfif left(md.functions[functionIndex].name,3) eq "set" 
-						and arraylen(md.functions[functionIndex].parameters) eq 1>
-					<cfset argumentName = md.functions[functionIndex].parameters[1].name />
-					<cftry>
-						<cfset prop = getProperty(mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)) />
-						<cfset prop.setArgumentName(argumentName) />
-						
-						<cfcatch></cfcatch>
-												
-					</cftry>
-				</cfif>
-				
-			</cfloop>			
+							
+					</cfif>
+					
+					
+					<!--- try set the argumentName on this property if it exists --->
+					<cfif left(md.functions[functionIndex].name,3) eq "set" 
+							and arraylen(md.functions[functionIndex].parameters) eq 1>
+						<cfset argumentName = md.functions[functionIndex].parameters[1].name />
+						<cftry>
+							<cfset prop = getProperty(mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)) />
+							<cfset prop.setArgumentName(argumentName) />
+							
+							<cfcatch></cfcatch>
+													
+						</cftry>
+					</cfif>
+					
+				</cfloop>			
+			</cfif>
 		</cfif>		
 		
 		<!--- ok, the above code went through and autowired up any dependencies (at the last possible moment)

@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.17 2006/02/11 22:55:02 wiersma Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.18 2006/02/24 15:28:09 rossd Exp $
 
 ---> 
 
@@ -380,47 +380,49 @@
 				
 				<cfset md = getMetaData(beanInstance)/>
 				
-				<!--- we need to call init method if it exists --->
-				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
-					<cfif md.functions[functionIndex].name eq "init">
-						<cfinvoke component="#beanInstance#" method="init">
-							<!--- loop over any bean constructor-args and pass them into the init() --->
-							<cfloop collection="#argDefs#" item="arg">
-								<cfswitch expression="#argDefs[arg].getType()#">
-									<cfcase value="value">
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-												    	  value="#argDefs[arg].getValue()#"/>
-									</cfcase>
-
-									<cfcase value="list,map">
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-												    	  value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
-									</cfcase>
-									
-									<cfcase value="ref,bean">
-										<!--- 
-										we thought we could support circular references with constructor args...
-											turns out that's not the case --->
-										<!--- 
-										<cfset dependentBeanDef = getBeanDefinition(argDefs[arg].getValue()) />
-										<cfif dependentBeanDef.isSingleton()>
-											<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
-										<cfelse>
-											<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
-										</cfif> 
-										--->
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-														  value="#getBean(argDefs[arg].getValue())#"/> <!--- value="#dependentBeanInstance#"  --->
+				<cfif structKeyExists(md, "functions")>
+					<!--- we need to call init method if it exists --->
+					<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
+						<cfif md.functions[functionIndex].name eq "init">
+							<cfinvoke component="#beanInstance#" method="init">
+								<!--- loop over any bean constructor-args and pass them into the init() --->
+								<cfloop collection="#argDefs#" item="arg">
+									<cfswitch expression="#argDefs[arg].getType()#">
+										<cfcase value="value">
+											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+													    	  value="#argDefs[arg].getValue()#"/>
+										</cfcase>
+	
+										<cfcase value="list,map">
+											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+													    	  value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
+										</cfcase>
 										
-									</cfcase>		
-									
-																				  
-								</cfswitch> 				  								
-							</cfloop>
-						</cfinvoke>
-						<!--- <cfbreak /> --->
-					</cfif>
-				</cfloop>
+										<cfcase value="ref,bean">
+											<!--- 
+											we thought we could support circular references with constructor args...
+												turns out that's not the case --->
+											<!--- 
+											<cfset dependentBeanDef = getBeanDefinition(argDefs[arg].getValue()) />
+											<cfif dependentBeanDef.isSingleton()>
+												<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
+											<cfelse>
+												<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+											</cfif> 
+											--->
+											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+															  value="#getBean(argDefs[arg].getValue())#"/> <!--- value="#dependentBeanInstance#"  --->
+											
+										</cfcase>		
+										
+																					  
+									</cfswitch> 				  								
+								</cfloop>
+							</cfinvoke>
+							<!--- <cfbreak /> --->
+						</cfif>
+					</cfloop>
+				</cfif>				
 				
 				<!--- if this is a bean that extends the factory bean, set IsFactory, and give it a ref to the beanFactory --->
 				<cfset searchMd = md />
