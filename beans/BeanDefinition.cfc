@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.16 2006/02/24 15:28:09 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.17 2006/02/24 16:05:34 rossd Exp $
 
 --->
 
@@ -313,8 +313,8 @@
 		
 	</cffunction>
 	
-	<cffunction name="getBeanInstance" access="public" output="false" returntype="struct" 
-				hint="I retrieve the the actual bean instance (a new one if this is a prototype bean) from this bean definition">
+	<cffunction name="getBeanInstance" access="public" output="false" returntype="any" 
+				hint="I retrieve the the actual bean instance (a new one if this is a prototype bean) from this bean definition - or the result of a factory-method invocation">
 		<cfset var factoryBean = 0 />
 		<cfset var constructorArgs = getConstructorArgs()>
 		<cfset var argname = "">
@@ -333,7 +333,7 @@
 			</cfinvoke>
 		</cfif>
 
-		<cfif isSingleton()>
+		<cfif isSingleton() or getFactoryBean() neq "">
 			<cfreturn variables.beanInstance />
 		<cfelse>
 			<cfreturn createObject("component", getBeanClass())/>

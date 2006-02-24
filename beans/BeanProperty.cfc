@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.11 2005/11/16 16:16:11 rossd Exp $
+ $Id: BeanProperty.cfc,v 1.12 2006/02/24 16:05:34 rossd Exp $
 
 ---> 
 
@@ -68,6 +68,9 @@
 		
 		<cfset var child = arguments.childNode />
 		<cfset var initMethod = ""/>
+		<cfset var entryClass = ""/>
+		<cfset var entryFactoryMethod = ""/>
+		<cfset var entryFactoryBean = ""/>				
 		
 		<!--- based on the type of property
 			perhaps we should switch on #getType()# instead? --->
@@ -85,8 +88,14 @@
 					  note that inner-beans are "anonymous" prototypes, they are not available to be retrieved from the bean factory
 					  this is done via obscurity: we register the bean by a UUID				
 				--->								
-				<cfif not (StructKeyExists(child.XmlAttributes,'class'))>
-					<cfthrow type="coldspring.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute!">
+				<cfif not (StructKeyExists(child.XmlAttributes,'class'))
+					  and not
+					  	(
+					  		StructKeyExists(child.XmlAttributes,'factory-bean')
+					  	and
+					  		StructKeyExists(child.XmlAttributes,'factory-method')
+					  	)  >
+					<cfthrow type="coldspring.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute or 'factory-bean'/'factory-method' attributes!">
 				</cfif>
 				
 				<!--- check for an init-method --->
@@ -96,6 +105,22 @@
 					<cfset initMethod = ""/>
 				</cfif>
 				
+				<!--- since the inner bean may be created via. factory-method, it might not have a class --->
+				<cfif StructKeyExists(child.XmlAttributes,'class') and len(child.XmlAttributes['class'])>
+					<cfset entryClass = child.XmlAttributes['class'] />
+				<cfelse>
+					<cfset entryClass = ""/>
+				</cfif>
+				
+				<cfif StructKeyExists(child.XmlAttributes,'factory-method') and len(child.XmlAttributes['factory-method'])>
+					<cfset entryFactoryMethod = child.XmlAttributes['factory-method'] />
+					<cfset entryFactoryBean = child.XmlAttributes['factory-bean'] />						
+				<cfelse>
+					<cfset entryFactoryMethod = ""/>
+					<cfset entryFactoryBean = ""/>						
+				</cfif>					
+
+				
 				<!--- create uid for new Bean, store as value for lookup --->
 				<cfset beanUID = CreateUUID() />
 				
@@ -103,7 +128,7 @@
 				<cfset setValue(beanUID) />
 				
 				<!--- create the new bean definition via the beanFactory (see createInnerBeanDefinition) --->
-				<cfset createInnerBeanDefinition(beanUID, child.XmlAttributes.class, child.XmlChildren, initMethod) />
+				<cfset createInnerBeanDefinition(beanUID, entryClass, child.XmlChildren, initMethod,entryFactoryBean, entryFactoryMethod) />
 				
 				<!--- and of course, add it to the dependency list for my parent definition --->
 				<cfset addParentDefinitionDependency(beanUID) />
@@ -152,6 +177,10 @@
 		<cfset var entryKey = 0/>
 		<cfset var entryBeanID = 0/>
 		<cfset var initMethod = ""/>
+		<cfset var entryClass = ""/>
+		<cfset var entryFactoryMethod = ""/>
+		<cfset var entryFactoryBean = ""/>		
+		
 	
 		<!--- what are we gonna return, a struct or an array (e.g. are we parsing a <map/> or a <list/> --->
 		<cfif returnType eq 'map'>
@@ -212,22 +241,44 @@
 				
 				<cfcase value="bean">
 					<!--- we gotta do the inner bean creation thing again. See parseChildNode above to figure out what's going on here --->
-					<cfif not (StructKeyExists(entryChild.XmlAttributes,'class'))>
-						<cfthrow type="coldspring.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute!">
+					<cfif not (StructKeyExists(entryChild.XmlAttributes,'class'))
+						and not
+					  	(
+					  		StructKeyExists(child.XmlAttributes,'factory-bean')
+					  	and
+					  		StructKeyExists(child.XmlAttributes,'factory-method')
+					  	)  >
+						<cfthrow type="coldspring.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute or 'factory-bean'/'factory-method' attributes!">
 					</cfif>
 					<!--- create uid for new Bean, store as value for lookup --->
 					<cfset entryBeanID = CreateUUID() />
 					<cfset rtn[entryKey] = createObject("component","coldspring.beans.BeanReference").init(
 																									entryBeanID
 																										)/>
+					
 					<cfif StructKeyExists(entryChild.XmlAttributes,'init-method') and len(entryChild.XmlAttributes['init-method'])>
 						<cfset initMethod = entryChild.XmlAttributes['init-method'] />
 					<cfelse>
 						<cfset initMethod = ""/>
 					</cfif>
 					
+					<!--- since the inner bean may be created via. factory-method, it might not have a class --->
+					<cfif StructKeyExists(entryChild.XmlAttributes,'class') and len(entryChild.XmlAttributes['class'])>
+						<cfset entryClass = entryChild.XmlAttributes['class'] />
+					<cfelse>
+						<cfset entryClass = ""/>
+					</cfif>
+					
+					<cfif StructKeyExists(entryChild.XmlAttributes,'factory-method') and len(entryChild.XmlAttributes['factory-method'])>
+						<cfset entryFactoryMethod = entryChild.XmlAttributes['factory-method'] />
+						<cfset entryFactoryBean = entryChild.XmlAttributes['factory-bean'] />						
+					<cfelse>
+						<cfset entryFactoryMethod = ""/>
+						<cfset entryFactoryBean = ""/>						
+					</cfif>					
+					
 					<!--- set flag to create bean definition and add to store --->
-					<cfset createInnerBeanDefinition(entryBeanID, entryChild.XmlAttributes.class, entryChild.XmlChildren, initMethod) />
+					<cfset createInnerBeanDefinition(entryBeanID, entryClass, entryChild.XmlChildren, initMethod,entryFactoryBean,entryFactoryMethod) />
 					<cfset addParentDefinitionDependency(entryBeanID) />
 				</cfcase>					
 				
@@ -265,8 +316,11 @@
 		<cfargument name="beanClass" type="string" required="true" />
 		<cfargument name="children" type="any" required="true" />
 		<cfargument name="initMethod" type="string" default="" required="false" />
+		<cfargument name="factoryBean" type="string" default="" required="false" />
+		<cfargument name="factoryMethod" type="string" default="" required="false" />
+		
 		<!--- call parent's bean factory to create new bean definition --->
-		<cfset getParentBeanDefinition().getBeanFactory().createBeanDefinition(arguments.beanID, arguments.beanClass, arguments.children, false, true, arguments.initMethod) />
+		<cfset getParentBeanDefinition().getBeanFactory().createBeanDefinition(arguments.beanID, arguments.beanClass, arguments.children, false, true, arguments.initMethod,arguments.factoryBean,arguments.factoryMethod) />
 	</cffunction>
 	
 	<cffunction name="getName" access="public" output="false" returntype="string" hint="I retrieve the Name from this instance's data">
