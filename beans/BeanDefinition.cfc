@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.17 2006/02/24 16:05:34 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.18 2006/02/24 17:01:53 rossd Exp $
 
 --->
 
@@ -102,7 +102,7 @@
 			<cfreturn variables.instanceData.constructorArgs[arguments.constructorArgName] />
 		<cfelse>
 			<cfthrow type="coldspring.beanDefException" 
-					 detail="constructor-arg requested does not exist for bean: #getBeanID()# "/>
+					 message="constructor-arg requested does not exist for bean: #getBeanID()# "/>
 		</cfif>
 	</cffunction>
 	
@@ -130,7 +130,7 @@
 			<cfreturn variables.instanceData.properties[arguments.propertyName] />
 		<cfelse>
 			<cfthrow type="coldspring.beanDefException" 
-					 detail="property requested does not exist for bean: #getBeanID()# "/>
+					 message="property requested does not exist for bean: #getBeanID()# "/>
 		</cfif>
 	</cffunction>
 	
