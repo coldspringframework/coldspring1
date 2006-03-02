@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.12 2006/02/24 16:05:34 rossd Exp $
+ $Id: BeanProperty.cfc,v 1.13 2006/03/02 16:23:57 rossd Exp $
 
 ---> 
 
@@ -51,8 +51,13 @@
 		<!--- the only things we need to know at this level is the name of the property... --->
 		<cfset setName(propertyDef.XmlAttributes.name) />
 		
-		<!--- the should only be one child node --->
-		<cfset child = arguments.propertyDef.XmlChildren[1] />
+		<cftry>
+			<!--- the should only be one child node --->
+			<cfset child = arguments.propertyDef.XmlChildren[1] />
+			<cfcatch>
+				<cfthrow type="coldspring.MalformedPropertyException"  message="properties/constructor-args must contain a child element!">
+			</cfcatch>			
+		</cftry>
 		
 		<!--- and we also need to know what "type" of property it is (e.g. <value/>,<list/>,<bean/> etc etc) --->
 		<cfset setType(child.XmlName) />
