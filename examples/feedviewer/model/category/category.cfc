@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: category.cfc,v 1.3 2005/11/17 19:28:29 rossd Exp $
+ $Id: category.cfc,v 1.4 2006/03/02 03:23:38 wiersma Exp $
 
 --->
 
@@ -43,10 +43,6 @@
 	</cffunction>
 
 	<cffunction name="getInstanceData" access="public" output="false" returntype="struct">		
-		<cfreturn variables.instanceData/>	
-	</cffunction>
-
-	<cffunction name="getTO" access="public" output="false" returntype="struct">		
 		<cfreturn variables.instanceData/>	
 	</cffunction>
 		

@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: flashUtilityService.cfc,v 1.4 2006/02/11 22:56:47 wiersma Exp $
+ $Id: flashUtilityService.cfc,v 1.5 2006/03/02 03:23:38 wiersma Exp $
 
 --->
 
@@ -29,7 +29,8 @@
 	<cffunction name="addMapping" access="public" returntype="void" output="false">
 		<cfargument name="cfcType" type="string" required="true">
 		<cfargument name="flashType" type="string" required="true">	
-		<cfset variables.mappings.addMapping(arguments.cfcType,arguments.flashType)>
+		<cfargument name="toMethodName" type="string" required="false" default="getTO">	
+		<cfset variables.mappings.addMapping(arguments.cfcType,arguments.flashType,arguments.toMethodName)>
 	</cffunction>
 	
 	<cffunction name="processServiceMethodResult" returntype="any" access="public" output="false" hint="">
@@ -46,9 +47,10 @@
 	<cffunction name="mapToASObject" returntype="struct" access="private" output="false">
 		<cfargument name="result" type="any" required="true" />
 		<cfset var asObject = CreateObject("java", "flashgateway.io.ASObject").init()>
-		<cfset var props = result.getTO()>
+		<cfset var props = 0>
 		<cfset var prop = 0>
 		<cfset var i = 0>
+		<cfinvoke component="arguments.result" method="##" returnvariable="props">
 		<cfloop list="#structKeyList(props)#" index="prop">
 			<cfif isObject(evaluate('props.#prop#'))>
 				<cfset asObject["#prop#"] = mapToASObject(evaluate('props.#prop#'))>

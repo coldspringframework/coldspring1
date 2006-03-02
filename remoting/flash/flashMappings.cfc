@@ -15,13 +15,13 @@
   limitations under the License.
 		
 			
- $Id: flashMappings.cfc,v 1.2 2005/11/16 16:16:11 rossd Exp $
+ $Id: flashMappings.cfc,v 1.3 2006/03/02 03:23:38 wiersma Exp $
 
 --->
 
 <cfcomponent>
 	<cfset variables.instance = structNew()>
-	<cfset variables.instance.mappings = queryNew("cfcType,flashType")>
+	<cfset variables.instance.mappings = queryNew("cfcType,flashType,toMethodName")>
 	
 	<cffunction name="init" access="public" returntype="any" output="false">
 		<cfargument name="mappings" type="array" required="false" default="#arryNew(1)#">
@@ -34,10 +34,12 @@
 	
 	<cffunction name="addMapping" access="public" returntype="void" output="false">
 		<cfargument name="cfcType" type="string" required="true">
-		<cfargument name="flashType" type="string" required="true">	
+		<cfargument name="flashType" type="string" required="true">
+		<cfargument name="toMethodName" type="string" required="false" default="getTO">		
 		<cfset queryAddRow(variables.instance.mappings)>
 		<cfset querySetCell(variables.instance.mappings, "cfcType", arguments.cfcType)>
 		<cfset querySetCell(variables.instance.mappings, "flashType", arguments.flashType)>
+		<cfset querySetCell(variables.instance.mappings, "toMethodName", arguments.toMethodName)>
 	</cffunction>
 	
 	<cffunction name="getCFCType" access="public" returntype="string" output="false">
@@ -62,6 +64,18 @@
 		</cfquery>
 		<cfset flashType = findType.flashType>
 		<cfreturn flashType>
+	</cffunction>
+	
+	<cffunction name="getTOMethodName" access="public" returntype="string" output="false">
+		<cfargument name="cfcType" type="string" required="true">	
+		<cfset var toMethodName = "">
+		<cfset var findType = 0>
+		<cfquery name="findType" dbtype="query">
+		SELECT * FROM variables.instance.mappings 
+		WHERE cfcType = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.cfcType#">
+		</cfquery>
+		<cfset toMethodName = findType.toMethodName>
+		<cfreturn toMethodName>
 	</cffunction>
 	
 </cfcomponent>
