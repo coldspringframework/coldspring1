@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.18 2006/02/24 17:01:53 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.19 2006/03/03 18:45:32 rossd Exp $
 
 --->
 
@@ -37,6 +37,9 @@
 	<cfset variables.instanceData.Factory = false />
 	<!--- name of an init-method to call on this bean once all dependencies are set: --->
 	<cfset variables.instanceData.initMethod = ''/>
+	<!--- if the init-method exists, whether it has been called --->
+	<cfset variables.instanceData.initMethodWasCalled = false/>	
+	
 	<!--- whether this bean should be constructed imeediately upon the beanFactory receiving its definition
 			OR should the factory wait until someone asks for the bean: --->
 	<cfset variables.instanceData.lazyInit = true />
@@ -416,6 +419,15 @@
 	
 	<cffunction name="hasInitMethod" access="public" output="false" returntype="boolean" hint="I retrieve whether this bean def contains an init-method attibute, meaning a method that will be called after bean construction and dep. injection (confusiong because 'init()' is the constructor in CF)">
 		<cfreturn structKeyExists(variables.instanceData,"initMethod") and len(variables.instanceData.initMethod)/>
+	</cffunction>
+	
+	<cffunction name="setInitMethodWasCalled" access="public" output="false" returntype="void" hint="I set the InitMethod in this instance">
+		<cfargument name="InitMethodWasCalled" type="boolean" required="true" />
+		<cfset variables.instanceData.initMethodWasCalled = arguments.InitMethodWasCalled />
+	</cffunction>
+
+	<cffunction name="getInitMethodWasCalled" access="public" output="false" returntype="boolean" hint="I retrieve the InitMethod from this instance">
+		<cfreturn variables.instanceData.initMethodWasCalled/>
 	</cffunction>
 	
 	<cffunction name="getInstance" access="public" output="false" returntype="any" hint="I retrieve the Instance from this instance's data">

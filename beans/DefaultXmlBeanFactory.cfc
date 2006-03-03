@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.19 2006/02/24 19:51:08 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.20 2006/03/03 18:45:32 rossd Exp $
 
 ---> 
 
@@ -524,10 +524,14 @@
 			</cfif>
 			
 			<!--- now call an init-method if it's defined --->
-			<cfif beanDef.hasInitMethod()>
+			<cfif beanDef.hasInitMethod() and not beanDef.getInitMethodWasCalled()>
 								
 				<cfinvoke component="#beanInstance#"
 						  method="#beanDef.getInitMethod()#"/>
+				
+				<!--- make sure it only gets called once --->
+				<cfset beanDef.setInitMethodWasCalled(true) />
+						  
 			</cfif>
 			
 		</cfloop>
