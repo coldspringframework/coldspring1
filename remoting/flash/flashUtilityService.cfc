@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: flashUtilityService.cfc,v 1.5 2006/03/02 03:23:38 wiersma Exp $
+ $Id: flashUtilityService.cfc,v 1.6 2006/03/03 02:00:56 wiersma Exp $
 
 --->
 
@@ -50,7 +50,9 @@
 		<cfset var props = 0>
 		<cfset var prop = 0>
 		<cfset var i = 0>
-		<cfinvoke component="arguments.result" method="##" returnvariable="props">
+		<cfset var cfcType = getMetaData(arguments.result).name>
+		<cfinvoke component="arguments.result" method="#mappings.getTOMethodName(cfcType)#"
+			returnvariable="props">
 		<cfloop list="#structKeyList(props)#" index="prop">
 			<cfif isObject(evaluate('props.#prop#'))>
 				<cfset asObject["#prop#"] = mapToASObject(evaluate('props.#prop#'))>
@@ -68,8 +70,8 @@
 			</cfif>
 		</cfloop>
 		<!--- <cftrace text="getFlashType = #mappings.getFlashType(getMetaData(result).name)#, cfcType = #getMetaData(result).name#"> --->
-		 <cfset asObject["_REMOTECLASS"] = mappings.getFlashType(getMetaData(result).name) />
-		<cfset asObject.setType(mappings.getFlashType(getMetaData(result).name))>
+		 <cfset asObject["_REMOTECLASS"] = mappings.getFlashType(cfcType) />
+		<cfset asObject.setType(mappings.getFlashType(cfcType))>
 		<cfreturn asObject>
 	</cffunction>
 
