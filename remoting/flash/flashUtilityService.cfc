@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: flashUtilityService.cfc,v 1.6 2006/03/03 02:00:56 wiersma Exp $
+ $Id: flashUtilityService.cfc,v 1.7 2006/03/04 17:41:46 wiersma Exp $
 
 --->
 
@@ -29,8 +29,8 @@
 	<cffunction name="addMapping" access="public" returntype="void" output="false">
 		<cfargument name="cfcType" type="string" required="true">
 		<cfargument name="flashType" type="string" required="true">	
-		<cfargument name="toMethodName" type="string" required="false" default="getTO">	
-		<cfset variables.mappings.addMapping(arguments.cfcType,arguments.flashType,arguments.toMethodName)>
+		<cfargument name="instanceDataMethod" type="string" required="false" default="getTO">	
+		<cfset variables.mappings.addMapping(arguments.cfcType,arguments.flashType,arguments.instanceDataMethod)>
 	</cffunction>
 	
 	<cffunction name="processServiceMethodResult" returntype="any" access="public" output="false" hint="">
@@ -51,7 +51,7 @@
 		<cfset var prop = 0>
 		<cfset var i = 0>
 		<cfset var cfcType = getMetaData(arguments.result).name>
-		<cfinvoke component="arguments.result" method="#mappings.getTOMethodName(cfcType)#"
+		<cfinvoke component="arguments.result" method="#mappings.getInstanceDataMethod(cfcType)#"
 			returnvariable="props">
 		<cfloop list="#structKeyList(props)#" index="prop">
 			<cfif isObject(evaluate('props.#prop#'))>

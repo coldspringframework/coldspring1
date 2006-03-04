@@ -15,19 +15,19 @@
   limitations under the License.
 		
 			
- $Id: flashMappings.cfc,v 1.3 2006/03/02 03:23:38 wiersma Exp $
+ $Id: flashMappings.cfc,v 1.4 2006/03/04 17:41:46 wiersma Exp $
 
 --->
 
 <cfcomponent>
 	<cfset variables.instance = structNew()>
-	<cfset variables.instance.mappings = queryNew("cfcType,flashType,toMethodName")>
+	<cfset variables.instance.mappings = queryNew("cfcType,flashType,instanceDataMethod")>
 	
 	<cffunction name="init" access="public" returntype="any" output="false">
 		<cfargument name="mappings" type="array" required="false" default="#arryNew(1)#">
 		<cfset var i = 0>
 		<cfloop from="1" to="#arrayLen(arguments.mappings)#" index="i">
-			<cfset addMapping(arguments.mappings[i].cfcType, arguments.mappings[i].asType)>
+			<cfset addMapping(arguments.mappings[i].cfcType, arguments.mappings[i].asType, arguments.mappings[i].instanceDataMethod)>
 		</cfloop>
 		<cfreturn this>
 	</cffunction>
@@ -35,11 +35,11 @@
 	<cffunction name="addMapping" access="public" returntype="void" output="false">
 		<cfargument name="cfcType" type="string" required="true">
 		<cfargument name="flashType" type="string" required="true">
-		<cfargument name="toMethodName" type="string" required="false" default="getTO">		
+		<cfargument name="instanceDataMethod" type="string" required="false" default="getTO">		
 		<cfset queryAddRow(variables.instance.mappings)>
 		<cfset querySetCell(variables.instance.mappings, "cfcType", arguments.cfcType)>
 		<cfset querySetCell(variables.instance.mappings, "flashType", arguments.flashType)>
-		<cfset querySetCell(variables.instance.mappings, "toMethodName", arguments.toMethodName)>
+		<cfset querySetCell(variables.instance.mappings, "instanceDataMethod", arguments.instanceDataMethoddName)>
 	</cffunction>
 	
 	<cffunction name="getCFCType" access="public" returntype="string" output="false">
@@ -66,16 +66,16 @@
 		<cfreturn flashType>
 	</cffunction>
 	
-	<cffunction name="getTOMethodName" access="public" returntype="string" output="false">
+	<cffunction name="getInstanceDataMethod" access="public" returntype="string" output="false">
 		<cfargument name="cfcType" type="string" required="true">	
-		<cfset var toMethodName = "">
+		<cfset var instanceDataMethod = "">
 		<cfset var findType = 0>
 		<cfquery name="findType" dbtype="query">
 		SELECT * FROM variables.instance.mappings 
 		WHERE cfcType = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.cfcType#">
 		</cfquery>
-		<cfset toMethodName = findType.toMethodName>
-		<cfreturn toMethodName>
+		<cfset instanceDataMethod = findType.instanceDataMethod>
+		<cfreturn instanceDataMethod>
 	</cffunction>
 	
 </cfcomponent>

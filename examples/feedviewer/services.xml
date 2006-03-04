@@ -17,7 +17,7 @@
     limitations under the License.
     
     
-    $Id: services.xml,v 1.5 2006/03/02 03:23:43 wiersma Exp $
+    $Id: services.xml,v 1.6 2006/03/04 17:41:46 wiersma Exp $
     
 -->
 
@@ -192,12 +192,12 @@
 				<map>
 					<entry key="cfcType"><value>coldspring.examples.feedviewer.model.category.category</value></entry>
 					<entry key="asType"><value>CategoryVO</value></entry>
-					<entry key="toMethodName"><value>getInstanceData</value></entry>
+					<entry key="instanceDataMethod"><value>getInstanceData</value></entry>
 				</map>	
 				<map>
 					<entry key="cfcType"><value>coldspring.examples.feedviewer.model.channel.channel</value></entry>
 					<entry key="asType"><value>ChannelVO</value></entry>
-					<entry key="toMethodName"><value>getInstanceData</value></entry>
+					<entry key="instanceDataMethod"><value>getInstanceData</value></entry>
 				</map>				
 			</list>
 		</constructor-arg>		
