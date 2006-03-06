@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: ColdspringPlugin.cfc,v 1.5 2006/01/28 21:33:42 scottc Exp $
+ $Id: ColdspringPlugin.cfc,v 1.6 2006/03/06 01:27:05 scorfield Exp $
 
 --->
 
@@ -136,7 +136,6 @@
 		<cfset var functionIndex = 0 />
 		
 		<cfset var setterName = '' />
-		<cfset var setterType = '' />
 		<cfset var beanName = '' />
 		
 
@@ -156,12 +155,11 @@
 						  and arraylen(md.functions[functionIndex].parameters) eq 1>
 					<!--- look for a bean in the factory of the params's type --->	  
 					<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3) />
-					<cfset setterType = md.functions[functionIndex].parameters[1].type />	
 					
 					<cfif beanFactory.containsBean(setterName)>
 						<cfset beanName = setterName />
 					<cfelse>
-						<cfset beanName = beanFactory.findBeanNameByType(setterType) />
+						<cfset beanName = beanFactory.findBeanNameByType(md.functions[functionIndex].parameters[1].type) />
 					</cfif>
 					<!--- if we found a bean, call the target object's setter --->
 					<cfif len(beanName)>

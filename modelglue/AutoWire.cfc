@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: AutoWire.cfc,v 1.3 2005/11/16 16:16:11 rossd Exp $
+ $Id: AutoWire.cfc,v 1.4 2006/03/06 01:27:05 scorfield Exp $
 
 --->
 
@@ -38,7 +38,6 @@
 		<cfset var funcIdx = 0 />
 		<cfset var method = 0 />
 		<cfset var setterName = "" />
-		<cfset var setterType = "" />
 		<cfset var beanFactory = variables.getBeanFactory().getBeanFactory() />
 		<cfset var beanName = "" />
 		
@@ -55,12 +54,11 @@
 						left(method.name,3) is "set" and
 						arrayLen(method.parameters) eq 1>
 					<cfset setterName = right(method.name,len(method.name)-3) />
-					<cfset setterType = method.parameters[1].type />
 					
 					<cfif beanFactory.containsBean(setterName)>
 						<cfset beanName = setterName />
 					<cfelse>
-						<cfset beanName = beanFactory.findBeanNameByType(setterType) />
+						<cfset beanName = beanFactory.findBeanNameByType(method.parameters[1].type) />
 					</cfif>
 					
 					<!--- if we found a bean, call the target object's setter --->
