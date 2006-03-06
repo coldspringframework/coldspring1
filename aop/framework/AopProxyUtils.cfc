@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.11 2006/01/28 21:44:14 scottc Exp $
+ $Id: AopProxyUtils.cfc,v 1.12 2006/03/06 01:23:43 scorfield Exp $
  $Log: AopProxyUtils.cfc,v $
+ Revision 1.12  2006/03/06 01:23:43  scorfield
+ Allowed for returntype= to be omitted now that duck typing is gaining popularity.
+
  Revision 1.11  2006/01/28 21:44:14  scottc
  Another slight tweek, everything refers to beanFactory, not context
 
@@ -270,7 +273,8 @@
 		<cfelseif StructKeyExists(metaData,'returntype')>
 			<cfset function = function & " returntype=""" & metaData.returntype & """" />
 		<cfelse>
-			<cfthrow type="coldspring.aop.BadProgrammingError" message="Not including a return type in cfc method declarations is considered bad practice and is not allowed by coldspring.aop !!" />
+			<!--- Sean 3/5/2006: duck typing means we should support omitting returntype= --->
+			<cfset function = function & " returntype=""any""" />
 		</cfif>
 		<cfif StructKeyExists(metaData,'output')>
 			<cfset function = function & " output=""" & metaData.output & """" />
@@ -297,7 +301,8 @@
 		<cfset function = function & "<cfset var rtn = callMethod('" & metaData.name & "', arguments) />" & Chr(10) />
 		
 		<!--- return a value if we need to --->
-		<cfif not FindNoCase('void',metaData.returnType)>
+		<!--- Sean 3/5/2006: need to allow for missing returntype= and treat it as non-void --->
+		<cfif structKeyExists(metaData,'returnType') and not FindNoCase('void',metaData.returnType)>
 			<cfset function = function & "<cfif isDefined('rtn')><cfreturn rtn /></cfif>" & Chr(10) />
 		</cfif>
 		<!--- close function --->
