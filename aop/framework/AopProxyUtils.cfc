@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.12 2006/03/06 01:23:43 scorfield Exp $
+ $Id: AopProxyUtils.cfc,v 1.13 2006/03/06 02:44:16 scorfield Exp $
  $Log: AopProxyUtils.cfc,v $
+ Revision 1.13  2006/03/06 02:44:16  scorfield
+ Chris spotted my condition on whether to attempt to return a value from the generated function, whilst safe, was not correct for the omitted returntype case.
+
  Revision 1.12  2006/03/06 01:23:43  scorfield
  Allowed for returntype= to be omitted now that duck typing is gaining popularity.
 
@@ -302,7 +305,7 @@
 		
 		<!--- return a value if we need to --->
 		<!--- Sean 3/5/2006: need to allow for missing returntype= and treat it as non-void --->
-		<cfif structKeyExists(metaData,'returnType') and not FindNoCase('void',metaData.returnType)>
+		<cfif not structKeyExists(metaData,'returnType') or metaData.returnType is not "void">
 			<cfset function = function & "<cfif isDefined('rtn')><cfreturn rtn /></cfif>" & Chr(10) />
 		</cfif>
 		<!--- close function --->
