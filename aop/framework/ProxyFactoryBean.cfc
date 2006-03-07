@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.9 2006/02/14 21:03:29 scottc Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.10 2006/03/07 07:50:10 scorfield Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.10  2006/03/07 07:50:10  scorfield
+  In order to proxy complex objects, such as Reactor-generated objects, we need to walk the inheritance hierarchy to find methods rather than just the most-derived CFC.
+
   Revision 1.9  2006/02/14 21:03:29  scottc
   Little fix Simeon found with naming of AopProxyUtils in create object, not linux compatible, oops!
 
@@ -122,6 +125,7 @@
 	<cffunction name="createProxyInstance" access="private" returntype="any" output="true">
 		<cfset var methodAdviceChains = StructNew() />
 		<cfset var md = getMetaData(variables.target)/>
+		<cfset var functionSeen = structNew() />
 		<cfset var functionIx = 0 />
 		<cfset var functionName = '' />
 		<cfset var advisorIx = 0 />
@@ -133,32 +137,43 @@
 		<!--- first we need to build the advisor chain to search for pointcut matches --->
 		<cfset buildAdvisorChain() />
 		
-		<!--- now we'll loop through the target's methods and search for advice to add to the advice chain --->
-		<cfloop from="1" to="#arraylen(md.functions)#" index="functionIx">
-		
-			<cfset functionName = md.functions[functionIx].name />
-			
-			<cfif not ListFindNoCase('init', functionName)>
-				<cfloop from="1" to="#ArrayLen(variables.advisorChain)#" index="advisorIx">
-					<cfif variables.advisorChain[advisorIx].matches(functionName)>
-						<!--- if we found a mathing pointcut in an advisor, make sure this method has an adviceChain started --->
-						<cfif not StructKeyExists(methodAdviceChains, functionName)>
-							<cfset methodAdviceChains[functionName] = CreateObject('component','coldspring.aop.AdviceChain').init() />
+		<cfloop condition="structKeyExists(md,'extends')">
+			<cfif structKeyExists(md,'functions')>
+				<!--- now we'll loop through the target's methods and search for advice to add to the advice chain --->
+				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIx">
+				
+					<cfset functionName = md.functions[functionIx].name />
+					
+					<cfif not structKeyExists(functionSeen,functionName)>
+
+						<cfset functionSeen[functionName] = true />
+
+						<cfif not ListFindNoCase('init', functionName)>
+							<cfloop from="1" to="#ArrayLen(variables.advisorChain)#" index="advisorIx">
+								<cfif variables.advisorChain[advisorIx].matches(functionName)>
+									<!--- if we found a mathing pointcut in an advisor, make sure this method has an adviceChain started --->
+									<cfif not StructKeyExists(methodAdviceChains, functionName)>
+										<cfset methodAdviceChains[functionName] = CreateObject('component','coldspring.aop.AdviceChain').init() />
+									</cfif>
+									<cfset advice = variables.advisorChain[advisorIx].getAdvice() />
+									<!--- and duplicate the advice to this method's advice chain
+									<cfset methodAdviceChains[functionName].addAdvice(
+										   variables.aopProxyUtils.clone(variables.advisorChain[advisorIx].getAdvice()) ) /> --->
+									<!--- add the advice to this method's advice chain' --->
+									<cfset methodAdviceChains[functionName].addAdvice(advice) />
+								</cfif>
+							</cfloop>
+							<!--- now freeze the method invocation chain for this method
+							<cfset methodAdviceChains[functionName].buildInterceptorChain() /> --->
+							<!--- so here's where we'll inject intercept methods --->
+							<cfset variables.aopProxyUtils.createUDF(md.functions[functionIx], aopProxyBean) />
 						</cfif>
-						<cfset advice = variables.advisorChain[advisorIx].getAdvice() />
-						<!--- and duplicate the advice to this method's advice chain
-						<cfset methodAdviceChains[functionName].addAdvice(
-							   variables.aopProxyUtils.clone(variables.advisorChain[advisorIx].getAdvice()) ) /> --->
-						<!--- add the advice to this method's advice chain' --->
-						<cfset methodAdviceChains[functionName].addAdvice(advice) />
+
 					</cfif>
+									
 				</cfloop>
-				<!--- now freeze the method invocation chain for this method
-				<cfset methodAdviceChains[functionName].buildInterceptorChain() /> --->
-				<!--- so here's where we'll inject intercept methods --->
-				<cfset variables.aopProxyUtils.createUDF(md.functions[functionIx], aopProxyBean) />
 			</cfif>
-			
+			<cfset md = md.extends />
 		</cfloop>
 		
 		<!--- now give the proxy object the advice chains --->
