@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.20 2006/03/03 18:45:32 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.21 2006/03/08 02:31:29 scottc Exp $
 
 ---> 
 
@@ -571,7 +571,7 @@
 		<cflock name="SingletonCache" type="readonly" timeout="5">
 			<cfset objExists = StructKeyExists(variables.singletonCache, beanName) />
 		</cflock>
-		<cfif objExists AND isObject(parent)>
+		<cfif not(objExists) AND isObject(parent)>
 			<cfset objExists = parent.singletonCacheContainsBean(arguments.beanName)>
 		</cfif>
 		<cfreturn objExists />
@@ -580,22 +580,24 @@
 	<cffunction name="getBeanFromSingletonCache" access="public" returntype="any" output="false">
 		<cfargument name="beanName" type="string" required="true" />
 		<cfset var objRef = 0 />
-		<cfset var error = false />
+		<cfset var objExists = true />
 		<cflock name="SingletonCache" type="readonly" timeout="5">
 			<cfif StructKeyExists(variables.singletonCache, beanName)>
 				<cfset objRef = variables.singletonCache[beanName] />
-			<cfelseif isObject(parent)>
-				<cfset objRef = variables.parent.getBeanFromSingletonCache(arguments.beanName)>
 			<cfelse>
-				<cfset error = true />
+				<cfset objExists = true />
 			</cfif>
 		</cflock>
 		
-		<cfif error>
-			<cfthrow message="Cache error, #beanName# does not exists">
-		<cfelse>
-			<cfreturn objRef />
+		<cfif not(objExists)>
+			<cfif isObject(parent)>
+				<cfset objRef = variables.parent.getBeanFromSingletonCache(arguments.beanName)>
+			<cfelse>
+				<cfthrow message="Cache error, #beanName# does not exists">
+			</cfif>
 		</cfif>
+		
+		<cfreturn objRef />
 	</cffunction>
 	
 	<cffunction name="addBeanToSingletonCache" access="public" returntype="any" output="false">
