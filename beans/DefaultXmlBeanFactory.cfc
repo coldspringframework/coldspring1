@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.21 2006/03/08 02:31:29 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.22 2006/03/08 13:14:56 scottc Exp $
 
 ---> 
 
@@ -27,6 +27,9 @@
 			
 	<!--- local struct to hold bean definitions --->
 	<cfset variables.beanDefs = structnew()/>
+	
+	<!--- local bean factory id --->
+	<cfset variables.beanFactoryId = CreateUUId() />
 	
 	<!--- Optional parent bean factory --->
 	<cfset variables.parent = 0>
@@ -568,7 +571,7 @@
 	<cffunction name="singletonCacheContainsBean" access="public" returntype="boolean" output="false">
 		<cfargument name="beanName" type="string" required="true" />
 		<cfset var objExists = 0 />
-		<cflock name="SingletonCache" type="readonly" timeout="5">
+		<cflock name="bf_#variables.beanFactoryId#.SingletonCache" type="readonly" timeout="5">
 			<cfset objExists = StructKeyExists(variables.singletonCache, beanName) />
 		</cflock>
 		<cfif not(objExists) AND isObject(parent)>
@@ -581,7 +584,7 @@
 		<cfargument name="beanName" type="string" required="true" />
 		<cfset var objRef = 0 />
 		<cfset var objExists = true />
-		<cflock name="SingletonCache" type="readonly" timeout="5">
+		<cflock name="bf_#variables.beanFactoryId#.SingletonCache" type="readonly" timeout="5">
 			<cfif StructKeyExists(variables.singletonCache, beanName)>
 				<cfset objRef = variables.singletonCache[beanName] />
 			<cfelse>
@@ -605,7 +608,7 @@
 		<cfargument name="beanObject" type="any" required="true" />
 		<cfset var error = false />
 		
-		<cflock name="SingletonCache" type="exclusive" timeout="5">
+		<cflock name="bf_#variables.beanFactoryId#.SingletonCache" type="exclusive" timeout="5">
 			<cfif StructKeyExists(variables.singletonCache, beanName)>
 				<cfset error = true />
 			<cfelse>
