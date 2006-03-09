@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: RemoteFactoryBean.cfc,v 1.2 2006/01/28 21:33:41 scottc Exp $
+  $Id: RemoteFactoryBean.cfc,v 1.3 2006/03/09 06:09:39 scorfield Exp $
   $Log: RemoteFactoryBean.cfc,v $
+  Revision 1.3  2006/03/09 06:09:39  scorfield
+  In order to proxy complex objects, such as Reactor-generated objects, we need to walk the inheritance hierarchy to find methods rather than just the most-derived CFC.
+
   Revision 1.2  2006/01/28 21:33:41  scottc
   Changed machii.ColdspringPlugin back to using beanFactory instead of applicationContext. Created a beanFactoryUtil class just like the appContextUtils to serve the same function and used in the plugin. Also updated the remoteFactoryBean to use absolute and relative paths for writing the proxied remote service
 
@@ -157,33 +160,38 @@
 			<cfset addAdviceWithDefaultAdvisor(flashMappingsInterceptor) />
 		</cfif>
 		
-		<!--- now we'll loop through the target's methods and write remote methods for any matched ones --->
-		<cfloop from="1" to="#arraylen(md.functions)#" index="functionIx">
-			<cfset functionName = md.functions[functionIx].name />
-			<cfif not ListFindNoCase('init', functionName)>
-				<cfif methodPointcutAdvisor.matches(functionName)>
-				
-					<!--- this type of proxy will be limited to remote methods, so 
-						  now we need to look for any advisors to add for this method --->
-					<cfloop from="1" to="#ArrayLen(variables.advisorChain)#" index="advisorIx">
-						<cfif variables.advisorChain[advisorIx].matches(functionName)>
-							<!--- if we found a mathing pointcut in an advisor, make sure this method 
-								  has an adviceChain started --->
-							<cfif not StructKeyExists(methodAdviceChains, functionName)>
-								<cfset methodAdviceChains[functionName] = 
-									   CreateObject('component','coldspring.aop.AdviceChain').init() />
-							</cfif>
-							<cfset advice = variables.advisorChain[advisorIx].getAdvice() />
-							<cfset methodAdviceChains[functionName].addAdvice(advice) />
+		<cfloop condition="structKeyExists(md,'extends')">
+			<cfif structKeyExists(md,'extends')>
+				<!--- now we'll loop through the target's methods and write remote methods for any matched ones --->
+				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIx">
+					<cfset functionName = md.functions[functionIx].name />
+					<cfif not ListFindNoCase('init', functionName)>
+						<cfif methodPointcutAdvisor.matches(functionName)>
+						
+							<!--- this type of proxy will be limited to remote methods, so 
+								  now we need to look for any advisors to add for this method --->
+							<cfloop from="1" to="#ArrayLen(variables.advisorChain)#" index="advisorIx">
+								<cfif variables.advisorChain[advisorIx].matches(functionName)>
+									<!--- if we found a mathing pointcut in an advisor, make sure this method 
+										  has an adviceChain started --->
+									<cfif not StructKeyExists(methodAdviceChains, functionName)>
+										<cfset methodAdviceChains[functionName] = 
+											   CreateObject('component','coldspring.aop.AdviceChain').init() />
+									</cfif>
+									<cfset advice = variables.advisorChain[advisorIx].getAdvice() />
+									<cfset methodAdviceChains[functionName].addAdvice(advice) />
+								</cfif>
+							</cfloop>
+							
+							<!--- now we need to generate a remote method --->
+							<cfset functionString = functionString & 
+								   variables.aopProxyUtils.createRemoteMethod(md.functions[functionIx], functionName, 'remote')  & Chr(10) & Chr(10) />
+							
 						</cfif>
-					</cfloop>
-					
-					<!--- now we need to generate a remote method --->
-					<cfset functionString = functionString & 
-						   variables.aopProxyUtils.createRemoteMethod(md.functions[functionIx], functionName, 'remote')  & Chr(10) & Chr(10) />
-					
-				</cfif>
+					</cfif>
+				</cfloop>
 			</cfif>
+			<cfset md = md.extends />
 		</cfloop>
 		
 		<!--- instead of giving the proxy object the advice chains, 
