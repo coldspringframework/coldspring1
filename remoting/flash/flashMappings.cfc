@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: flashMappings.cfc,v 1.4 2006/03/04 17:41:46 wiersma Exp $
+ $Id: flashMappings.cfc,v 1.5 2006/04/04 04:19:03 simb Exp $
 
 --->
 
@@ -27,7 +27,11 @@
 		<cfargument name="mappings" type="array" required="false" default="#arryNew(1)#">
 		<cfset var i = 0>
 		<cfloop from="1" to="#arrayLen(arguments.mappings)#" index="i">
-			<cfset addMapping(arguments.mappings[i].cfcType, arguments.mappings[i].asType, arguments.mappings[i].instanceDataMethod)>
+			<cfif structKeyExists(arguments.mappings[i], "instanceDataMethod") >
+				<cfset addMapping(arguments.mappings[i].cfcType, arguments.mappings[i].asType, arguments.mappings[i].instanceDataMethod) />
+			<cfelse>
+				<cfset addMapping(arguments.mappings[i].cfcType, arguments.mappings[i].asType) />
+			</cfif>
 		</cfloop>
 		<cfreturn this>
 	</cffunction>
@@ -39,7 +43,7 @@
 		<cfset queryAddRow(variables.instance.mappings)>
 		<cfset querySetCell(variables.instance.mappings, "cfcType", arguments.cfcType)>
 		<cfset querySetCell(variables.instance.mappings, "flashType", arguments.flashType)>
-		<cfset querySetCell(variables.instance.mappings, "instanceDataMethod", arguments.instanceDataMethoddName)>
+		<cfset querySetCell(variables.instance.mappings, "instanceDataMethod", arguments.instanceDataMethod)>
 	</cffunction>
 	
 	<cffunction name="getCFCType" access="public" returntype="string" output="false">
