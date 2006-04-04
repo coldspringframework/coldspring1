@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: flashUtilityService.cfc,v 1.7 2006/03/04 17:41:46 wiersma Exp $
+ $Id: flashUtilityService.cfc,v 1.8 2006/04/04 04:23:02 simb Exp $
 
 --->
 
@@ -51,8 +51,7 @@
 		<cfset var prop = 0>
 		<cfset var i = 0>
 		<cfset var cfcType = getMetaData(arguments.result).name>
-		<cfinvoke component="arguments.result" method="#mappings.getInstanceDataMethod(cfcType)#"
-			returnvariable="props">
+		<cfinvoke component="#arguments.result#" method="#mappings.getInstanceDataMethod(cfcType)#" returnvariable="props" />
 		<cfloop list="#structKeyList(props)#" index="prop">
 			<cfif isObject(evaluate('props.#prop#'))>
 				<cfset asObject["#prop#"] = mapToASObject(evaluate('props.#prop#'))>
