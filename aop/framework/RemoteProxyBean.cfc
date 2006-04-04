@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: RemoteProxyBean.cfc,v 1.3 2006/01/28 21:44:13 scottc Exp $
+ $Id: RemoteProxyBean.cfc,v 1.4 2006/04/04 03:51:27 simb Exp $
  $Log: RemoteProxyBean.cfc,v $
+ Revision 1.4  2006/04/04 03:51:27  simb
+ removed duplicate local var bfUtils
+
  Revision 1.3  2006/01/28 21:44:13  scottc
  Another slight tweek, everything refers to beanFactory, not context
 
@@ -41,7 +44,6 @@
 	<cffunction name="setup" access="public" returntype="void">
 		<cfset var bfUtils = 0 />
 		<cfset var bf = 0 />
-		<cfset var bfUtils = 0 />
 		<!--- make sure scope is setup (could have been set to '', meaning application, default) --->
 		<cfif not len(variables.beanFactoryScope)>
 			<cfset variables.beanFactoryScope = 'application' />
