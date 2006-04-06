@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.22 2006/03/08 13:14:56 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.23 2006/04/06 01:38:05 scottc Exp $
 
 ---> 
 
@@ -123,6 +123,7 @@
 		<cfset var isSingleton = true />
 		<cfset var factoryBean = "" />
 		<cfset var factoryMethod = "" />
+		<cfset var autowire = "true" />
 	
 		<!--- make sure some beans exist --->
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
@@ -170,6 +171,11 @@
 				<cfset initMethod = ""/>
 			</cfif>
 			
+			<!--- look for an autowire attribute for this bean def --->
+			<cfif StructKeyExists(beanAttributes,'autowire') and len(beanAttributes['autowire'])>
+				<cfset autowire = beanAttributes['autowire'] />
+			</cfif>
+			
 			<!--- call function to create bean definition and add to store --->
 			<cfif not structKeyExists(beanAttributes, "factory-bean")> 
 				<cfset createBeanDefinition(beanAttributes.id, 
@@ -179,7 +185,8 @@
 										false,
 										initMethod,
 										factoryBean, 
-										factoryMethod) />
+										factoryMethod,
+										autowire) />
 			<cfelse>
 				<cfset createBeanDefinition(beanAttributes.id, 
 										"", 
@@ -188,7 +195,8 @@
 										false,
 										initMethod,
 										factoryBean, 
-										factoryMethod) />
+										factoryMethod,
+										autowire) />
 			</cfif>
 		
 		</cfloop>
@@ -207,6 +215,7 @@
 		<cfargument name="initMethod" type="string" default="" required="false" />
 		<cfargument name="factoryBean" type="string" default="" required="false" />
 		<cfargument name="factoryMethod" type="string" default="" required="false" />
+		<cfargument name="autowire" type="string" default="true" required="false" />
 		
 		<cfset var childIx = 0 />
 		<cfset var child = '' />
@@ -221,6 +230,7 @@
 		<cfset variables.beanDefs[arguments.beanID].setInnerBean(arguments.isInnerBean) />
 		<cfset variables.beanDefs[arguments.beanID].setFactoryBean(arguments.factoryBean) />
 		<cfset variables.beanDefs[arguments.beanID].setFactoryMethod(arguments.factoryMethod) />
+		<cfset variables.beanDefs[arguments.beanID].setAutowire(arguments.autowire) />
 		
 		<cfif len(arguments.initMethod)>
 			
@@ -561,6 +571,20 @@
 			</cfif>
 		<cfelse>
 			<cfreturn variables.beanDefs[arguments.beanName] />
+		</cfif>
+	</cffunction>
+	
+	<cffunction name="beanDefinitionExists" access="public" returntype="boolean" output="false"
+				hint="searches all known factories (parents) to see if bean definition for the specified bean exists">
+		<cfargument name="beanName" type="string" required="true" />
+		<cfif StructKeyExists(variables.beanDefs, beanName)>
+			<cfreturn true />
+		<cfelse>
+			<cfif isObject(parent)>
+				<cfreturn parent.beanDefinitionExists(arguments.beanName)>
+			<cfelse>
+				<cfreturn false />
+			</cfif>
 		</cfif>
 	</cffunction>
 	

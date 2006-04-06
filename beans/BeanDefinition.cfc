@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.20 2006/04/06 00:33:18 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.21 2006/04/06 01:38:06 scottc Exp $
 
 --->
 
@@ -49,6 +49,8 @@
 	<cfset variables.instanceData.factoryBean = ''>
 	<!--- factory method to use on the factory bean to get this bean --->
 	<cfset variables.instanceData.factoryMethod = ''>
+	<!--- autowire method, defaults to true (a string) --->
+	<cfset variables.instanceData.autowire = ''>
 	
 	
 	<cffunction name="init" returntype="coldspring.beans.BeanDefinition" output="false"
@@ -184,6 +186,7 @@
 					<cfelse>
 						<cfset access = 'public' />
 					</cfif>
+					
 					<!--- look for init (constructor) --->
 					<!--- todo: respect how we are told to autowire (byName|byType) --->
 					<cfif md.functions[functionIndex].name eq "init" 
@@ -197,7 +200,8 @@
 									then it's a dependency --->
 							<cfif not structKeyExists(variables.instanceData.constructorArgs, autoArg.name)
 								and getBeanFactory().containsBean(autoArg.name)
-								and getBeanFactory().getBeanDefinition(autoArg.name).getBeanClass() eq autoArg.type>
+								and getBeanFactory().getBeanDefinition(autoArg.name).getBeanClass() eq autoArg.type
+								and not (ListFindNoCase("no,false",getAutowire()))>
 								
 								<!--- we are going to add the constructor arg as if it had been defined in the xml --->
 								<cfset temp_xml = xmlnew()/>
@@ -254,6 +258,7 @@
 							  and the beanFactory knows it by name or by type
 							  well, let's inject it! --->
 						<cfif not structKeyExists(variables.instanceData.properties, setterName)
+							and not (ListFindNoCase("no,false",getAutowire()))
 								and (
 										(
 										 getBeanFactory().containsBean(setterName)
@@ -415,6 +420,24 @@
 		<cfargument name="Factory" type="boolean" required="true"/>
 		<cfset variables.instanceData.Factory = arguments.Factory/>
 	</cffunction>
+	
+	
+	
+	
+	
+	<cffunction name="getAutowire" access="public" output="false" returntype="string" 
+				hint="I retrieve the autowire method from instance's data">
+		<cfreturn variables.instanceData.autowire />
+	</cffunction>
+
+	<cffunction name="setAutowire" access="public" output="false" returntype="void"  
+				hint="I set the the autowire method in this instance's data">
+		<cfargument name="autowire" type="string" required="true"/>
+		<cfset variables.instanceData.autowire = arguments.autowire/>
+	</cffunction>
+	
+	
+	
 		
 	<cffunction name="setInitMethod" access="public" output="false" returntype="void" hint="I set the InitMethod in this instance">
 		<cfargument name="InitMethod" type="string" required="true" />
