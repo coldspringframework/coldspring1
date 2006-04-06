@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.19 2006/03/03 18:45:32 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.20 2006/04/06 00:33:18 scottc Exp $
 
 --->
 
@@ -165,6 +165,7 @@
 		<cfset var prop = 0/>
 		<cfset var argumentName = 0/>
 		<cfset var tempProps = arraynew(1)/>		
+		<cfset var access = '' />
 		
 		<cfif getFactoryBean() neq "">
 			<cfset arguments.dependencyList = ListAppend(arguments.dependencyList, getFactoryBean())>
@@ -177,6 +178,12 @@
 			<cfset md = getMetaData(beanInstance) />
 			<cfif structKeyExists(md,"functions")>
 				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
+					<!--- for setters, we're getting the access type --->
+					<cfif structKeyExists(md.functions[functionIndex],'access')>
+						<cfset access = md.functions[functionIndex].access />
+					<cfelse>
+						<cfset access = 'public' />
+					</cfif>
 					<!--- look for init (constructor) --->
 					<!--- todo: respect how we are told to autowire (byName|byType) --->
 					<cfif md.functions[functionIndex].name eq "init" 
@@ -215,7 +222,8 @@
 						</cfloop>
 					<cfelseif left(md.functions[functionIndex].name,3) eq "set" 
 							and not structKeyExists(variables.instanceData.properties, mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3))
-							and arraylen(md.functions[functionIndex].parameters) eq 1>
+							and arraylen(md.functions[functionIndex].parameters) eq 1 
+							and (access is not 'private')>
 			
 						<!--- look for setters (same as above for constructor-args) --->
 						<!--- todo:
