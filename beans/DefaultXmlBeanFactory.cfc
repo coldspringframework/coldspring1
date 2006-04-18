@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.23 2006/04/06 01:38:05 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.24 2006/04/18 00:39:37 scottc Exp $
 
 ---> 
 
@@ -353,20 +353,18 @@
 		<!--- new, for faster factoryBean lookup --->
 		<cfset var searchMd = '' />
 		<cfset var instanceType = '' />
+		<cfset var factoryBeanDef = '' />
 		<cfset var factoryBean = 0>
 		
 		<!--- put them all in an array, and while we're at it, make sure they're in the singleton cache, or the localbean cache --->
 		<cfloop from="1" to="#ListLen(dependentBeanNames)#" index="beanDefIx">
 			<cfset beanDef = getBeanDefinition(ListGetAt(dependentBeanNames,beanDefIx)) />
 			<cfset ArrayAppend(dependentBeanDefs,beanDef) />
+			
 			<cfif beanDef.getFactoryBean() eq "">
-				<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
-					<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) /> <!--- CreateObject('component', beanDef.getBeanClass())) /> --->
-				<cfelse>
-					<cfset localBeanCache[beanDef.getBeanID()] = beanDef.getBeanInstance() /> <!--- CreateObject('component', beanDef.getBeanClass()) /> --->
-				</cfif>
-			<cfelse>
-				<!--- Since this bean comes from a factory bean we need to initialize it specially --->
+				<!--- Factory beans are a special situation, and we actually don't want to create them in this way, because
+					their constructor args may be dependencies, so we will create them in the NEXT loop, along with
+					init methods --->
 				<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
 					<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) />
 				<cfelse>
@@ -374,25 +372,70 @@
 				</cfif>
 			</cfif>
 		</cfloop>
-		
-		
 	
 		<!--- now resolve all dependencies by looping through list backwards, causing the "most dependent" beans to get created first  --->
 		<cfloop from="#ArrayLen(dependentBeanDefs)#" to="1" index="beanDefIx" step="-1">
 			<cfset beanDef = dependentBeanDefs[beanDefIx] />
 		
-			<cfif not beanDef.isConstructed() AND beanDef.getFactoryBean() eq "">
-				<cfif beanDef.isSingleton()>
-					<cfset beanInstance = getBeanFromSingletonCache(beanDef.getBeanID())>
-				<cfelse>
-					<cfset beanInstance = localBeanCache[beanDef.getBeanID()] />
-				</cfif>
-				
+			<cfif not beanDef.isConstructed()>
+			
 				<cfset argDefs = beanDef.getConstructorArgs()/>
-				
 				<cfset propDefs = beanDef.getProperties()/>
 				
-				<cfset md = getMetaData(beanInstance)/>
+				<!--- if this is a 'normal' bean, we can just get the created reference
+					but if it's a factory bean, we have to create it now --->
+				<cfif beanDef.getFactoryBean() eq "">
+				
+					<cfif beanDef.isSingleton()>
+						<cfset beanInstance = getBeanFromSingletonCache(beanDef.getBeanID())>
+					<cfelse>
+						<cfset beanInstance = localBeanCache[beanDef.getBeanID()] />
+					</cfif>
+					<cfset md = getMetaData(beanInstance)/>
+					
+				<cfelse>
+					
+					<!--- retrieve the factoryBeanDef, then the factory bean --->
+					<cfset factoryBeanDef = getBeanDefinition(beanDef.getFactoryBean()) />
+					
+					<cfif factoryBeanDef.isSingleton()>
+						<cfset factoryBean = factoryBeanDef.getInstance() />
+					<cfelse>
+						<cfif factoryBeanDef.isFactory()>
+							<cfset factoryBean = localBeanCache[factoryBeanDef.getBeanID()].getObject() />
+						<cfelse>
+							<cfset factoryBean = localBeanCache[factoryBeanDef.getBeanID()] />
+						</cfif>
+					</cfif>
+					
+					<!--- now call the 'constructor' to generate the bean, which is the factoryMethod --->
+					<cfinvoke component="#factoryBean#" method="#beanDef.getFactoryMethod()#" 
+						returnvariable="beanInstance">
+						<!--- loop over constructor-args and pass them into the factoryMethod --->
+						<cfloop collection="#argDefs#" item="arg">
+							<cfswitch expression="#argDefs[arg].getType()#">
+								<cfcase value="value">
+									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#argDefs[arg].getValue()#"/>
+								</cfcase>
+								<cfcase value="list,map">
+									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
+								</cfcase>
+								<cfcase value="ref,bean">
+									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#getBean(argDefs[arg].getValue())#"/>
+								</cfcase>								  
+							</cfswitch> 				  								
+						</cfloop>
+					</cfinvoke>
+					
+					<!--- since we skipped factory beans in the bean creation loop, we need to store a reference to the bean now --->
+					<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
+						<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanInstance ) />
+					<cfelse>
+						<cfset localBeanCache[beanDef.getBeanID()] = beanInstance /> 
+					</cfif>
+					<cfset md = getMetaData(beanInstance)/>
+				
+				</cfif>
 				
 				<cfif structKeyExists(md, "functions")>
 					<!--- we need to call init method if it exists --->
@@ -508,15 +551,6 @@
 					</cfswitch>
 				
 				</cfloop>
-			
-			
-				<!--- now call an init-method if it's defined
-					actually we need a separate loop for this.
-				<cfif beanDef.hasInitMethod()>
-									
-					<cfinvoke component="#beanInstance#"
-							  method="#beanDef.getInitMethod()#"/>
-				</cfif> --->
 					
 				<cfif beanDef.isSingleton()>
 					<cfset beanDef.setIsConstructed(true)/>
