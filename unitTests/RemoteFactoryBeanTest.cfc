@@ -12,14 +12,13 @@
 	
 		<cfset variables.sys.out.println("Loading bean factory...") />
 		<!--- set up the bean factory --->
-		<cfset acu = createObject("component","coldspring.context.util.ApplicationContextUtils").init() />
-		<!--- create a new bean factory and appContext --->
+		<cfset bfu = createObject("component","coldspring.beans.util.BeanFactoryUtils").init() />
+		<!--- create a new bean factory --->
 		<cfset bf = createObject("component","coldspring.beans.DefaultXmlBeanFactory").init()/>
-		<cfset ac = createObject("component","coldspring.context.DefaultApplicationContext").init(bf)/>
 		<!--- load the bean defs --->
 		<cfset bf.loadBeansFromXmlFile(path&'/klondike-services.xml')/>
 		<!--- store in app context --->
-		<cfset acu.setDefaultApplicationContext('application',ac)>
+		<cfset bfu.setDefaultFactory('application',bf)>
 		
 		<cfset variables.sys.out.println("Stored default bean factory") />
 		
@@ -28,15 +27,15 @@
 	
 	<cffunction name="testRemoteFactory" access="public" returntype="void" output="false">
 		<!--- OK, let's try to get the remoteStub generated --->
-		<cfset var appContextUtils = createObject("component","coldspring.context.util.ApplicationContextUtils").init() />
-		<cfset var appContext = appContextUtils.getDefaultApplicationContext('application') />
+		<cfset var bfu = createObject("component","coldspring.beans.util.BeanFactoryUtils").init() />
+		<cfset var bf = bfu.getDefaultFactory('application') />
 		
 		<cfset variables.sys.out.println("Retrieved bean factory") />
 		
 		<!--- should be the target service returned form the remote factory --->
-		<cfset myTarget = appContext.getBean('remoteCatalogService') />
+		<cfset myTarget = bf.getBean('remoteCatalogService') />
 		<!--- should be the remote factory itself --->
-		<cfset myFactory = appContext.getBean('&remoteCatalogService') />
+		<cfset myFactory = bf.getBean('&remoteCatalogService') />
 		
 		<!--- now load up the remote service object --->
 		<cfset myService = createObject("component","klondike.machii.remoting.RemoteCatalogService") />

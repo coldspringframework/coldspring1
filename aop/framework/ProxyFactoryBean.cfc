@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.10 2006/03/07 07:50:10 scorfield Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.11 2006/04/18 00:49:15 scottc Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.11  2006/04/18 00:49:15  scottc
+  CSP-48 - Fixed the issue with aop retrieving the advisors through getBean, but we still have an issue with non-singleton beans now, at least when used as advisors. Right now, that doesn't work
+
   Revision 1.10  2006/03/07 07:50:10  scorfield
   In order to proxy complex objects, such as Reactor-generated objects, we need to walk the inheritance hierarchy to find methods rather than just the most-derived CFC.
 
@@ -197,7 +200,11 @@
 				</cfif>
 				<!--- new update, now we'll try to add as type advisor, if that fails
 					  we'll try to create a new default advisor and add as an avice --->
-				<cfset advisorBean = getBeanFactory().getBean(variables.interceptorNames[ix]) />
+				<!--- <cfset advisorBean = getBeanFactory().getBean(variables.interceptorNames[ix]) /> --->
+				<!--- 4/2/6: ok, we are going to try to get the advisor from the singleton cache, but a big problem is, what if it's
+					  a singleton?? How would he get the localBeanCache from the constructBean() method which is actually creating
+					  this object?? --->
+				<cfset advisorBean = getBeanFactory().getBeanFromSingletonCache(variables.interceptorNames[ix]) />
 				<cftry>
 					<cfset addAdvisor(advisorBean) />
 					<cfcatch>
