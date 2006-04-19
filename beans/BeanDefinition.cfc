@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.22 2006/04/18 00:39:37 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.23 2006/04/19 00:20:31 scottc Exp $
 
 --->
 
@@ -197,6 +197,8 @@
 		<cfset var tempProps = arraynew(1)/>		
 		<cfset var tempInterceptors = 0 />
 		<cfset var access = '' />
+		<cfset var currIx = '' />
+		<cfset var dependIx = '' />
 				
 		<!--- this is where the bean is actually created if it hasn't been --->
 		<cfif not autoWireChecked()>
@@ -357,8 +359,6 @@
 						<cfset variables.instanceData.Dependencies = 
 								ListAppend(variables.instanceData.Dependencies,ArrayToList(tempInterceptors)) />
 					</cfif>
-					
-					<cfdump var="#variables.instanceData.Dependencies#" label="PROXY DEPENDENCIES" />
 				</cfif>	
 					
 			</cfif>
@@ -370,9 +370,17 @@
 			  that list to get every single possible dependency --->
 		
 		<cfloop list="#variables.instanceData.Dependencies#" index="refName">
-			<cfif ListFindNoCase(arguments.dependencyList, refName) LT 1>
+			<cfset dependIx = ListFindNoCase(arguments.dependencyList, refName) />
+			<cfif dependIx LT 1>
+				<!--- so, if this a dependency of this bean is not in the list, add it, and get that bean's dependencies --->
 				<cfset arguments.dependencyList = ListAppend(arguments.dependencyList,refName) />
 				<cfset arguments.dependencyList = getBeanFactory().getBeanDefinition(refName).getDependencies(arguments.dependencyList) />
+			<cfelse>
+				<!--- but if that dependency IS in the list, it must be created before this bean, so we need to be added
+					to the list BEFORE that bean --->
+				<cfset arguments.dependencyList = ListDeleteAt(arguments.dependencyList, ListFindNoCase(arguments.dependencyList, getBeanID())) />
+				<cfset dependIx = ListFindNoCase(arguments.dependencyList, refName) />
+				<cfset arguments.dependencyList = ListInsertAt(arguments.dependencyList, dependIx, getBeanID()) /> 
 			</cfif>
 		</cfloop>
 		<cfreturn arguments.dependencyList />
