@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.23 2006/04/19 00:20:31 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.24 2006/04/19 11:26:56 scottc Exp $
 
 --->
 
@@ -377,10 +377,13 @@
 				<cfset arguments.dependencyList = getBeanFactory().getBeanDefinition(refName).getDependencies(arguments.dependencyList) />
 			<cfelse>
 				<!--- but if that dependency IS in the list, it must be created before this bean, so we need to be added
-					to the list BEFORE that bean --->
-				<cfset arguments.dependencyList = ListDeleteAt(arguments.dependencyList, ListFindNoCase(arguments.dependencyList, getBeanID())) />
-				<cfset dependIx = ListFindNoCase(arguments.dependencyList, refName) />
-				<cfset arguments.dependencyList = ListInsertAt(arguments.dependencyList, dependIx, getBeanID()) /> 
+					to the list BEFORE that bean. However, only move the bean if it is currently AFTER the dependent bean --->
+				<cfset currIx = ListFindNoCase(arguments.dependencyList, getBeanID()) />
+				<cfif currIx GT dependIx>
+					<cfset arguments.dependencyList = ListDeleteAt(arguments.dependencyList, currIx) />
+					<cfset dependIx = ListFindNoCase(arguments.dependencyList, refName) />
+					<cfset arguments.dependencyList = ListInsertAt(arguments.dependencyList, dependIx, getBeanID()) /> 
+				</cfif>
 			</cfif>
 		</cfloop>
 		<cfreturn arguments.dependencyList />
