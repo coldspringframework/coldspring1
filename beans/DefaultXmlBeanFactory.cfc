@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.24 2006/04/18 00:39:37 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.25 2006/04/20 20:24:43 rossd Exp $
 
 ---> 
 
@@ -123,7 +123,8 @@
 		<cfset var isSingleton = true />
 		<cfset var factoryBean = "" />
 		<cfset var factoryMethod = "" />
-		<cfset var autowire = "true" />
+		<cfset var autowire = "no" />
+		<cfset var default_autowire = "no" />		
 	
 		<!--- make sure some beans exist --->
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
@@ -131,6 +132,13 @@
 		<cfelse>
 			<!--- no beans found, return without modding the factory at all --->
 			<cfreturn/>
+		</cfif>
+		
+		<!--- see if default-autowire is set to anything --->
+		<cfif structKeyExists(arguments.XmlBeanDefinitions.beans,'XmlAttributes')
+			and structKeyExists(arguments.XmlBeanDefinitions.beans.XmlAttributes,'default-autowire')
+			and listFind('byName,byType',arguments.XmlBeanDefinitions.beans.XmlAttributes['default-autowire'])>
+			<cfset default_autowire = arguments.XmlBeanDefinitions.beans.XmlAttributes['default-autowire']/>			
 		</cfif>
 		
 		<!--- create bean definition objects for each (top level) bean in the xml--->
@@ -171,8 +179,11 @@
 				<cfset initMethod = ""/>
 			</cfif>
 			
+			<!--- first set autowire to default-autowire --->
+			<cfset autowire = default_autowire />
+			
 			<!--- look for an autowire attribute for this bean def --->
-			<cfif StructKeyExists(beanAttributes,'autowire') and len(beanAttributes['autowire'])>
+			<cfif StructKeyExists(beanAttributes,'autowire') and listFind('byName,byType',beanAttributes['autowire'])>
 				<cfset autowire = beanAttributes['autowire'] />
 			</cfif>
 			
@@ -215,7 +226,7 @@
 		<cfargument name="initMethod" type="string" default="" required="false" />
 		<cfargument name="factoryBean" type="string" default="" required="false" />
 		<cfargument name="factoryMethod" type="string" default="" required="false" />
-		<cfargument name="autowire" type="string" default="true" required="false" />
+		<cfargument name="autowire" type="string" default="no" required="false" />
 		
 		<cfset var childIx = 0 />
 		<cfset var child = '' />

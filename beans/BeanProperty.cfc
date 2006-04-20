@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.13 2006/03/02 16:23:57 rossd Exp $
+ $Id: BeanProperty.cfc,v 1.14 2006/04/20 20:24:43 rossd Exp $
 
 ---> 
 
@@ -75,7 +75,8 @@
 		<cfset var initMethod = ""/>
 		<cfset var entryClass = ""/>
 		<cfset var entryFactoryMethod = ""/>
-		<cfset var entryFactoryBean = ""/>				
+		<cfset var entryFactoryBean = ""/>	
+		<cfset var entryAutowire = ""/>
 		
 		<!--- based on the type of property
 			perhaps we should switch on #getType()# instead? --->
@@ -125,6 +126,12 @@
 					<cfset entryFactoryBean = ""/>						
 				</cfif>					
 
+				<!--- look for an autowire attribute for this bean def --->
+				<cfif StructKeyExists(child.XmlAttributes,'autowire') and listFind('byName,byType',child.XmlAttributes['autowire'])>
+					<cfset entryAutowire = child.XmlAttributes['autowire'] />
+				<cfelse>
+					<cfset entryAutowire = '' />
+				</cfif>
 				
 				<!--- create uid for new Bean, store as value for lookup --->
 				<cfset beanUID = CreateUUID() />
@@ -133,7 +140,7 @@
 				<cfset setValue(beanUID) />
 				
 				<!--- create the new bean definition via the beanFactory (see createInnerBeanDefinition) --->
-				<cfset createInnerBeanDefinition(beanUID, entryClass, child.XmlChildren, initMethod,entryFactoryBean, entryFactoryMethod) />
+				<cfset createInnerBeanDefinition(beanUID, entryClass, child.XmlChildren, initMethod,entryFactoryBean, entryFactoryMethod, entryAutowire) />
 				
 				<!--- and of course, add it to the dependency list for my parent definition --->
 				<cfset addParentDefinitionDependency(beanUID) />
@@ -185,7 +192,7 @@
 		<cfset var entryClass = ""/>
 		<cfset var entryFactoryMethod = ""/>
 		<cfset var entryFactoryBean = ""/>		
-		
+		<cfset var entryAutowire = ""/>
 	
 		<!--- what are we gonna return, a struct or an array (e.g. are we parsing a <map/> or a <list/> --->
 		<cfif returnType eq 'map'>
@@ -281,9 +288,16 @@
 						<cfset entryFactoryMethod = ""/>
 						<cfset entryFactoryBean = ""/>						
 					</cfif>					
-					
+				
+					<!--- look for an autowire attribute for this bean def --->
+					<cfif StructKeyExists(entryChild.XmlAttributes,'autowire') and listFind('byName,byType',entryChild.XmlAttributes['autowire'])>
+						<cfset entryAutowire = entryChild.XmlAttributes['autowire'] />
+					<cfelse>
+						<cfset entryAutowire = '' />
+					</cfif>
+				
 					<!--- set flag to create bean definition and add to store --->
-					<cfset createInnerBeanDefinition(entryBeanID, entryClass, entryChild.XmlChildren, initMethod,entryFactoryBean,entryFactoryMethod) />
+					<cfset createInnerBeanDefinition(entryBeanID, entryClass, entryChild.XmlChildren, initMethod,entryFactoryBean,entryFactoryMethod,entryAutowire) />
 					<cfset addParentDefinitionDependency(entryBeanID) />
 				</cfcase>					
 				
@@ -323,9 +337,15 @@
 		<cfargument name="initMethod" type="string" default="" required="false" />
 		<cfargument name="factoryBean" type="string" default="" required="false" />
 		<cfargument name="factoryMethod" type="string" default="" required="false" />
+		<cfargument name="autoWire" type="string" default="" required="false" />
 		
-		<!--- call parent's bean factory to create new bean definition --->
-		<cfset getParentBeanDefinition().getBeanFactory().createBeanDefinition(arguments.beanID, arguments.beanClass, arguments.children, false, true, arguments.initMethod,arguments.factoryBean,arguments.factoryMethod) />
+		<!--- if autowire isn't defined then inherit from the parent beanDef --->
+		<cfif not len(arguments.autoWire)>
+			<cfset arguments.autoWire = getParentBeanDefinition().getAutoWire()/>
+		</cfif>
+		
+		<!--- call parent's bean factory to create new bean definition (inherit autowiring from it's parent for now)--->
+		<cfset getParentBeanDefinition().getBeanFactory().createBeanDefinition(arguments.beanID, arguments.beanClass, arguments.children, false, true, arguments.initMethod,arguments.factoryBean,arguments.factoryMethod,arguments.autoWire)/>
 	</cffunction>
 	
 	<cffunction name="getName" access="public" output="false" returntype="string" hint="I retrieve the Name from this instance's data">

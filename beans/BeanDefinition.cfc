@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.24 2006/04/19 11:26:56 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.25 2006/04/20 20:24:43 rossd Exp $
 
 --->
 
@@ -50,7 +50,7 @@
 	<!--- factory method to use on the factory bean to get this bean --->
 	<cfset variables.instanceData.factoryMethod = ''>
 	<!--- autowire method, defaults to true (a string) --->
-	<cfset variables.instanceData.autowire = ''>
+	<cfset variables.instanceData.autowire = 'no'>
 	
 	
 	<cffunction name="init" returntype="coldspring.beans.BeanDefinition" output="false"
@@ -228,13 +228,15 @@
 							<cfloop from="1" to="#arraylen(md.functions[functionIndex].parameters)#" index="argIndex">
 								<cfset autoArg = md.functions[functionIndex].parameters[argIndex]/>
 								<!--- is this arg not explicitly defined?
-										and the bean facotry knows it by name
-										and if so, *that* bean's class matches this type of arg 
+										and (autowiring is 'byName' and the beanFactory knows this bean by name)
+										or (autowiring is 'byType' and the beanFactory knows this bean by type)
 										then it's a dependency --->
 								<cfif not structKeyExists(variables.instanceData.constructorArgs, autoArg.name)
-									and getBeanFactory().containsBean(autoArg.name)
-									and getBeanFactory().getBeanDefinition(autoArg.name).getBeanClass() eq autoArg.type
-									and not (ListFindNoCase("no,false",getAutowire()))>
+									  and (
+											(getAutowire() eq "byName" and getBeanFactory().containsBean(autoArg.name))
+										or 
+											(getAutowire() eq "byType" and len(getBeanFactory().findBeanNameByType(autoArg.type)))
+										  )>
 									
 									<!--- we are going to add the constructor arg as if it had been defined in the xml --->
 									<cfset temp_xml = xmlnew()/>
@@ -267,68 +269,48 @@
 									respect how we are told to autowire (byName|byType) --->
 									
 							<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3)/>
-							<cfset setterNameToCall = setterName/>
 							
 							<!--- ensure a type was actually specified --->
 							<cfif structKeyExists(md.functions[functionIndex].parameters[1],"type")>
 								<cfset setterType = md.functions[functionIndex].parameters[1].type/>						
-							
-								<cfset beanByType = getBeanFactory().findBeanNameByType(setterType)/>	
-									
-								<!--- this should be refactored
-										basically if you register a bean with a name that matches the type we found here
-										currently we are autowiring in that situation --->
-								<cfif getBeanFactory().containsBean(setterType)>
-									<cfset setterName = setterType/>							
-								</cfif>
-									
 							<cfelse>
 								<cfset setterType = ""/>
-								<cfset beanByType = ""/>
 							</cfif>
 				
 							<!--- so, if we didn't already explicly set this property
-								  and the beanFactory knows it by name or by type
-								  well, let's inject it! --->
+								  and (autowiring is 'byName' and the beanFactory knows this bean by name)
+										or (autowiring is 'byType' and the beanFactory knows this bean by type)
+										then it's a dependency --->
+							
 							<cfif not structKeyExists(variables.instanceData.properties, setterName)
-								and not (ListFindNoCase("no,false",getAutowire()))
-									and (
-											(
-											 getBeanFactory().containsBean(setterName)
-											 )
-										or
-											(
-											len(beanByType)
-											)
-										)>
-									
-									
-									
+									  and (
+											(getAutowire() eq "byName" and getBeanFactory().containsBean(setterName))
+										or 
+											(getAutowire() eq "byType" and len(getBeanFactory().findBeanNameByType(setterType)))
+										  )>
+										  
 									<cfset temp_xml = xmlnew()/>							
 									<cfset temp_xml.xmlRoot = XmlElemNew(temp_xml,"property")/>
-									<cfset temp_xml.xmlRoot.xmlAttributes['name'] = setterNameToCall />
+									<cfset temp_xml.xmlRoot.xmlAttributes['name'] = setterName />
 									<cfset temp_xml.xmlRoot.xmlChildren[1] = XmlElemNew(temp_xml,"ref")/>
-																										
-									<!--- we are making sure the injection will happen if autowired by type
-											by overiding the properties name to what the setter wants
-											clean this up in the future --->
-									<cfif len(beanByType) and not getBeanFactory().containsBean(setterName)>								
-										<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = beanByType />					
-									<cfelse>
-										<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = setterName />	
-									</cfif>
 									
+
+									<cfif getAutowire() eq "byType">
+										<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = getBeanFactory().findBeanNameByType(setterType) />								
+									<cfelse>
+										<cfset temp_xml.xmlRoot.xmlChildren[1].xmlAttributes['bean'] = setterName />
+									</cfif>
 									
 									<cfset addProperty(createObject("component","coldspring.beans.BeanProperty").init(
 																								temp_xml.xmlRoot,this
 																								) ) >
-									
 														
 							</cfif>	
 								
 						</cfif>
 						
-						<!--- try set the argumentName on this property if it exists --->
+						<!--- try set the argumentName on this property if it exists so we can call the setter
+								(the argument name might not always be the name of the property) --->
 						<cfif left(md.functions[functionIndex].name,3) eq "set" 
 								and arraylen(md.functions[functionIndex].parameters) eq 1>
 							<cfset argumentName = md.functions[functionIndex].parameters[1].name />
