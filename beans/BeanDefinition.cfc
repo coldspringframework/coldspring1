@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.25 2006/04/20 20:24:43 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.26 2006/04/22 01:34:27 scottc Exp $
 
 --->
 
@@ -205,7 +205,7 @@
 		
 			<cfif getFactoryBean() neq "">
 				<cfset variables.instanceData.Dependencies = 
-							ListAppend(variables.instanceData.Dependencies, getFactoryBean()) />
+							ListPrepend(variables.instanceData.Dependencies, getFactoryBean()) />
 			<cfelse>	
 			
 				<cfset  beanInstance = getBeanInstance() />
@@ -337,7 +337,7 @@
 					</cftry>
 					<!--- todo: damn, another try/catch on retrieving properties, we need property exists! --->
 					 
-					<cfif ArrayLen(tempInterceptors)>
+					<cfif isArray(tempInterceptors) and ArrayLen(tempInterceptors)>
 						<cfset variables.instanceData.Dependencies = 
 								ListAppend(variables.instanceData.Dependencies,ArrayToList(tempInterceptors)) />
 					</cfif>
@@ -353,6 +353,7 @@
 		
 		<cfloop list="#variables.instanceData.Dependencies#" index="refName">
 			<cfset dependIx = ListFindNoCase(arguments.dependencyList, refName) />
+
 			<cfif dependIx LT 1>
 				<!--- so, if this a dependency of this bean is not in the list, add it, and get that bean's dependencies --->
 				<cfset arguments.dependencyList = ListAppend(arguments.dependencyList,refName) />
@@ -367,6 +368,7 @@
 					<cfset arguments.dependencyList = ListInsertAt(arguments.dependencyList, dependIx, getBeanID()) /> 
 				</cfif>
 			</cfif>
+			
 		</cfloop>
 		<cfreturn arguments.dependencyList />
 		

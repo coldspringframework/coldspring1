@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.25 2006/04/20 20:24:43 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.26 2006/04/22 01:34:27 scottc Exp $
 
 ---> 
 
@@ -419,6 +419,8 @@
 						</cfif>
 					</cfif>
 					
+					<cftry>
+					
 					<!--- now call the 'constructor' to generate the bean, which is the factoryMethod --->
 					<cfinvoke component="#factoryBean#" method="#beanDef.getFactoryMethod()#" 
 						returnvariable="beanInstance">
@@ -432,11 +434,37 @@
 									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
 								</cfcase>
 								<cfcase value="ref,bean">
-									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#getBean(argDefs[arg].getValue())#"/>
+									<cfset dependentBeanDef = getBeanDefinition(propDefs[prop].getValue()) />
+									<cfif dependentBeanDef.isSingleton()>\
+										<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
+									<cfelse>
+										<cfif dependentBeanDef.isFactory()>
+											<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
+										<cfelse>
+											<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+										</cfif>
+									</cfif>
+									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#dependentBeanInstance#"/>
 								</cfcase>								  
 							</cfswitch> 				  								
 						</cfloop>
 					</cfinvoke>
+					
+					<cfcatch>
+						<cfdump var="#getMetaData(factoryBean)#" label="CURRENT FACTORY (BEAN) METADATA" />
+						<cfdump var="#dependentBeanNames#" label="OBJECTS TO CREATE" />
+						
+						<cfloop collection="#argDefs#" item="arg">
+							
+							<cfdump var="#argDefs[arg].getArgumentName()#" label="ARG DEF" />
+							<cfdump var="#argDefs[arg].getValue()#" label="ARG VALUE" />
+							
+						</cfloop>
+						
+						<cfdump var="#cfcatch#" /><cfabort />
+					</cfcatch>
+					
+					</cftry>
 					
 					<!--- since we skipped factory beans in the bean creation loop, we need to store a reference to the bean now --->
 					<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
@@ -452,6 +480,9 @@
 					<!--- we need to call init method if it exists --->
 					<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
 						<cfif md.functions[functionIndex].name eq "init">
+							
+							<cftry>
+								
 							<cfinvoke component="#beanInstance#" method="init">
 								<!--- loop over any bean constructor-args and pass them into the init() --->
 								<cfloop collection="#argDefs#" item="arg">
@@ -487,7 +518,31 @@
 									</cfswitch> 				  								
 								</cfloop>
 							</cfinvoke>
-							<!--- <cfbreak /> --->
+							
+							
+							<cfcatch>
+								<cfdump var="#getMetaData(beanInstance)#" label="CURRENT OBJECT METADATA" />
+								<cfdump var="#md#" label="CURRENT METADATA" />
+								<cfdump var="#dependentBeanNames#" label="OBJECTS TO CREATE" />
+								
+								<cfloop collection="#argDefs#" item="arg">
+									
+									<cfdump var="#argDefs[arg].getArgumentName()#" label="ARG DEF" />
+									<cfdump var="#argDefs[arg].getValue()#" label="ARG VALUE" />
+									
+								</cfloop>
+								
+								<cfdump var="#cfcatch#" /><cfabort />
+							</cfcatch>
+							
+							</cftry>
+						
+						<cfelseif md.functions[functionIndex].name eq "setBeanFactory">
+							
+							<!--- OK, is the vote really for duck typing, Dave's gonna hate this!!!
+								This is the DuckTyping implementation of 'BeanFactoryAware' --->
+							<cfset beanInstance.setBeanFactory(this) />	
+							
 						</cfif>
 					</cfloop>
 				</cfif>				
@@ -505,7 +560,8 @@
 					</cfif>
 					<cfif searchMd.name IS 'coldspring.beans.factory.FactoryBean'>
 						<cfset beanDef.setIsFactory(true) />
-						<cfset beanInstance.setBeanFactory(this) />
+						<!--- SO, We did this already (duck typing, above)
+						<cfset beanInstance.setBeanFactory(this) /> --->
 						<cfbreak />
 					</cfif>
 				</cfloop>
@@ -530,18 +586,9 @@
 						</cfcase>
 						
 						<cfcase value="ref,bean">
-							
 					
 							<cfset dependentBeanDef = getBeanDefinition(propDefs[prop].getValue()) />
-							<cfif dependentBeanDef.isSingleton()>
-								<!--- we need to actually get the dependent bean object from it's beanDefinition
-									  because it's aware of the FactoryBean concept --->
-								<!--- <cfif dependentBeanDef.isFactory()>
-									<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID()).getObject() />
-								<cfelse>
-									<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID()) />
-								</cfif> --->
-								<!--- <cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())> --->
+							<cfif dependentBeanDef.isSingleton()>\
 								<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
 							<cfelse>
 								<cfif dependentBeanDef.isFactory()>
@@ -550,7 +597,6 @@
 									<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
 								</cfif>
 							</cfif>
-							
 							
 							<cfinvoke component="#beanInstance#"
 									  method="set#propDefs[prop].getName()#">
