@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.26 2006/04/22 01:34:27 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.27 2006/05/06 12:05:59 scottc Exp $
 
 --->
 
@@ -33,8 +33,10 @@
 	<cfset variables.instanceData.Singleton = true />
 	<!--- whether this bean's instance has actually been constructed by the beanFactory:--->
 	<cfset variables.instanceData.Constructed = false />
-	<!--- whether this bean is a factory bean: --->	
+	<!--- whether this bean is a factory: --->	
 	<cfset variables.instanceData.Factory = false />
+	<!--- whether this bean is a factory bean: --->	
+	<cfset variables.instanceData.isFactoryBean = false />
 	<!--- name of an init-method to call on this bean once all dependencies are set: --->
 	<cfset variables.instanceData.initMethod = ''/>
 	<!--- if the init-method exists, whether it has been called --->
@@ -175,9 +177,9 @@
 		</cfif>
 	</cffunction>
 	
-	<cffunction name="getDependencies" access="public" output="false" returntype="string"
+	<cffunction name="getDependencies" access="public" output="false" returntype="void"
 				hint="I retrieve the full list of dependencies for this bean definition. The BeanFactory will probably ask for this when I'm being constructed, so he can construct my dependencies first!">
-		<cfargument name="dependencyList" type="string" required="true" />
+		<cfargument name="dependentBeans" type="Struct" required="true" />
 		
 		<!--- local vars --->
 		<cfset var myDependencies = '' />
@@ -352,25 +354,31 @@
 			  that list to get every single possible dependency --->
 		
 		<cfloop list="#variables.instanceData.Dependencies#" index="refName">
-			<cfset dependIx = ListFindNoCase(arguments.dependencyList, refName) />
+			<cfset dependIx = ListFindNoCase(arguments.dependentBeans.allBeans, refName) />
 
 			<cfif dependIx LT 1>
-				<!--- so, if this a dependency of this bean is not in the list, add it, and get that bean's dependencies --->
+				<!--- so, if this a dependency of this bean is not in the list, add it, and get that bean's dependencies
 				<cfset arguments.dependencyList = ListAppend(arguments.dependencyList,refName) />
-				<cfset arguments.dependencyList = getBeanFactory().getBeanDefinition(refName).getDependencies(arguments.dependencyList) />
+				<cfset arguments.dependencyList = getBeanFactory().getBeanDefinition(refName).getDependencies(arguments.dependencyList) /> --->
+				<!--- <cfset arguments.dependencyList = ListPrepend(arguments.dependencyList,refName) /> --->
+				
+				
+				<cfset arguments.dependentBeans.allBeans = ListAppend(arguments.dependentBeans.allBeans, refName) />
+				<cfset getBeanFactory().getBeanDefinition(refName).getDependencies(arguments.dependentBeans) />
+				<cfset arguments.dependentBeans.orderedBeans = ListPrepend(arguments.dependentBeans.orderedBeans, refName) />
 			<cfelse>
 				<!--- but if that dependency IS in the list, it must be created before this bean, so we need to be added
-					to the list BEFORE that bean. However, only move the bean if it is currently AFTER the dependent bean --->
+					to the list BEFORE that bean. However, only move the bean if it is currently AFTER the dependent bean
 				<cfset currIx = ListFindNoCase(arguments.dependencyList, getBeanID()) />
 				<cfif currIx GT dependIx>
 					<cfset arguments.dependencyList = ListDeleteAt(arguments.dependencyList, currIx) />
 					<cfset dependIx = ListFindNoCase(arguments.dependencyList, refName) />
 					<cfset arguments.dependencyList = ListInsertAt(arguments.dependencyList, dependIx, getBeanID()) /> 
-				</cfif>
+				</cfif> --->
 			</cfif>
 			
 		</cfloop>
-		<cfreturn arguments.dependencyList />
+		<!--- <cfreturn arguments.dependencyList /> --->
 		
 	</cffunction>
 	
@@ -512,6 +520,14 @@
 				hint="I set the BeanID in this instance's data">
 		<cfargument name="factoryBean" type="string" required="true"/>
 		<cfset variables.instanceData.factoryBean = arguments.factoryBean />
+		<!--- adding a bit to check if this is a factory bean, 
+			  instead of having to check the length of factoryBean all the time --->
+		<cfset variables.instanceData.isFactoryBean = true />
+	</cffunction>
+	
+	<cffunction name="isFactoryBean" access="public" output="false" returntype="boolean" 
+				hint="I retrieve the Factory flag from this instance's data">
+		<cfreturn variables.instanceData.isFactoryBean />
 	</cffunction>
 
 	<cffunction name="getFactoryMethod" access="public" output="false" returntype="string" 

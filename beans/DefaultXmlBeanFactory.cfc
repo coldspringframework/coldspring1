@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.26 2006/04/22 01:34:27 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.27 2006/05/06 12:05:59 scottc Exp $
 
 ---> 
 
@@ -348,8 +348,8 @@
 					
 		<cfset var localBeanCache = StructNew() />
 		<cfset var dependentBeanDefs = ArrayNew(1) />
-		<!--- first get list of beans including this bean and it's dependencies --->
-		<cfset var dependentBeanNames = getBeanDefinition(arguments.beanName).getDependencies(arguments.beanName) />
+		<!--- first get list of beans including this bean and it's dependencies
+		<cfset var dependentBeanNames = getBeanDefinition(arguments.beanName).getDependencies(arguments.beanName) /> --->
 		<cfset var beanDefIx = 0 />
 		<cfset var beanDef = 0 />
 		<cfset var beanInstance = 0 />
@@ -366,6 +366,17 @@
 		<cfset var instanceType = '' />
 		<cfset var factoryBeanDef = '' />
 		<cfset var factoryBean = 0>
+		
+		<cfset var dependentBeanNames = "" />
+		<cfset var dependentBeans = StructNew() />
+		<cfset dependentBeans.allBeans = arguments.beanName />
+		<cfset dependentBeans.orderedBeans = "" />
+		<cfset getBeanDefinition(arguments.beanName).getDependencies(dependentBeans) />
+		<cfset dependentBeanNames = ListPrepend(dependentBeans.orderedBeans, arguments.beanName) />
+		
+		<!--- DEBUGGING DEP LIST
+		DEPENDECY LIST:<BR/>
+		<cfdump var="#dependentBeanNames#" label="DEPENDENCY LIST"/><cfabort/> --->
 		
 		<!--- put them all in an array, and while we're at it, make sure they're in the singleton cache, or the localbean cache --->
 		<cfloop from="1" to="#ListLen(dependentBeanNames)#" index="beanDefIx">
@@ -479,7 +490,8 @@
 				<cfif structKeyExists(md, "functions")>
 					<!--- we need to call init method if it exists --->
 					<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
-						<cfif md.functions[functionIndex].name eq "init">
+						<cfif md.functions[functionIndex].name eq "init"
+								and beanDef.getFactoryBean() eq "">
 							
 							<cftry>
 								
