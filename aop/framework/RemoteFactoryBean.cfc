@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: RemoteFactoryBean.cfc,v 1.3 2006/03/09 06:09:39 scorfield Exp $
+  $Id: RemoteFactoryBean.cfc,v 1.4 2006/05/14 19:47:10 scottc Exp $
   $Log: RemoteFactoryBean.cfc,v $
+  Revision 1.4  2006/05/14 19:47:10  scottc
+  Changed the way that the aop ProxyFactories build the advisor chains, the advisors are now supplied by the bean factory from inside the constructBean method, which handles nonSingletons correctly. Also a small tweek for CSP-52 where the beanFactory wasn't being given to the RemoteFactoryBean
+
   Revision 1.3  2006/03/09 06:09:39  scorfield
   In order to proxy complex objects, such as Reactor-generated objects, we need to walk the inheritance hierarchy to find methods rather than just the most-derived CFC.
 
@@ -154,7 +157,8 @@
 		<!--- NEW --->
 		<!--- first we need to build the advisor chain to search for 
 			  pointcut matches inside the methods selected as remote methods --->
-		<cfset buildAdvisorChain() />
+		<!--- <cfset buildAdvisorChain() /> --->
+		
 		<!--- now add the flashMappingsInterceptor above as the last around advice (if it was created) --->
 		<cfif isObject(flashMappingsInterceptor)>
 			<cfset addAdviceWithDefaultAdvisor(flashMappingsInterceptor) />

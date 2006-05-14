@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.11 2006/04/18 00:49:15 scottc Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.12 2006/05/14 19:47:10 scottc Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.12  2006/05/14 19:47:10  scottc
+  Changed the way that the aop ProxyFactories build the advisor chains, the advisors are now supplied by the bean factory from inside the constructBean method, which handles nonSingletons correctly. Also a small tweek for CSP-52 where the beanFactory wasn't being given to the RemoteFactoryBean
+
   Revision 1.11  2006/04/18 00:49:15  scottc
   CSP-48 - Fixed the issue with aop retrieving the advisors through getBean, but we still have an issue with non-singleton beans now, at least when used as advisors. Right now, that doesn't work
 
@@ -69,6 +72,10 @@
 	<cffunction name="setInterceptorNames" access="public" returntype="void" output="false">
 		<cfargument name="interceptorNames" type="array" required="true" />
 		<cfset variables.interceptorNames = arguments.interceptorNames />
+	</cffunction>
+	
+	<cffunction name="getInterceptorNames" access="public" returntype="array" output="false">
+		<cfreturn variables.interceptorNames />
 	</cffunction>
 	
 	<cffunction name="addAdvisor" access="public" returntype="string" output="false">
@@ -137,8 +144,8 @@
 		<cfset var aopProxyBean = variables.aopProxyUtils.createBaseProxyBean(variables.target) />
 		<!--- <cfset var aopProxyBean = CreateObject('component','coldspring.aop.framework.AopProxyBean').init(variables.target) /> --->
 		
-		<!--- first we need to build the advisor chain to search for pointcut matches --->
-		<cfset buildAdvisorChain() />
+		<!--- first we need to build the advisor chain to search for pointcut matches
+		<cfset buildAdvisorChain() /> --->
 		
 		<cfloop condition="structKeyExists(md,'extends')">
 			<cfif structKeyExists(md,'functions')>
@@ -190,7 +197,10 @@
 		
 	</cffunction>
 			
-	<cffunction name="buildAdvisorChain" access="private" returntype="void" output="false">
+	<cffunction name="buildAdvisorChain" access="public" returntype="void" output="false">
+		<cfargument name="localBeanCache" type="struct" required="true" hint="non singleton beans, local to constructBean method" />
+		<cfset var advisorBeanDef = 0 />
+		<cfset var advisorBean = 0 />
 		<cfset var advisor = 0 />
 		<cfset var ix = 0 />
 		<cfif isArray(variables.interceptorNames)>
@@ -203,8 +213,20 @@
 				<!--- <cfset advisorBean = getBeanFactory().getBean(variables.interceptorNames[ix]) /> --->
 				<!--- 4/2/6: ok, we are going to try to get the advisor from the singleton cache, but a big problem is, what if it's
 					  a singleton?? How would he get the localBeanCache from the constructBean() method which is actually creating
-					  this object?? --->
-				<cfset advisorBean = getBeanFactory().getBeanFromSingletonCache(variables.interceptorNames[ix]) />
+					  this object??
+				<cfset advisorBean = getBeanFactory().getBeanFromSingletonCache(variables.interceptorNames[ix]) /> --->
+				
+				
+				<!--- retrieve the advisor's bean def --->
+				<cfset advisorBeanDef = getBeanFactory().getBeanDefinition(variables.interceptorNames[ix]) />
+				
+				<cfif advisorBeanDef.isSingleton()>
+					<cfset advisorBean = advisorBeanDef.getInstance() />
+				<cfelse>
+					<cfset advisorBean = localBeanCache[variables.interceptorNames[ix]] />
+				</cfif>
+				
+				
 				<cftry>
 					<cfset addAdvisor(advisorBean) />
 					<cfcatch>

@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.27 2006/05/06 12:05:59 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.28 2006/05/14 19:47:10 scottc Exp $
 
 ---> 
 
@@ -446,7 +446,7 @@
 								</cfcase>
 								<cfcase value="ref,bean">
 									<cfset dependentBeanDef = getBeanDefinition(propDefs[prop].getValue()) />
-									<cfif dependentBeanDef.isSingleton()>\
+									<cfif dependentBeanDef.isSingleton()>
 										<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
 									<cfelse>
 										<cfif dependentBeanDef.isFactory()>
@@ -572,8 +572,8 @@
 					</cfif>
 					<cfif searchMd.name IS 'coldspring.beans.factory.FactoryBean'>
 						<cfset beanDef.setIsFactory(true) />
-						<!--- SO, We did this already (duck typing, above)
-						<cfset beanInstance.setBeanFactory(this) /> --->
+						<!--- SO, We did this already (duck typing, above) --->
+						<cfset beanInstance.setBeanFactory(this) />
 						<cfbreak />
 					</cfif>
 				</cfloop>
@@ -600,7 +600,7 @@
 						<cfcase value="ref,bean">
 					
 							<cfset dependentBeanDef = getBeanDefinition(propDefs[prop].getValue()) />
-							<cfif dependentBeanDef.isSingleton()>\
+							<cfif dependentBeanDef.isSingleton()>
 								<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
 							<cfelse>
 								<cfif dependentBeanDef.isFactory()>
@@ -620,6 +620,18 @@
 					</cfswitch>
 				
 				</cfloop>
+				
+				<!--- in order to inject the proper advisors into the aop proxy factories, we should do this now, 
+					  instead of letting them lookup their own objects --->
+				<cfif beanDef.isFactory()>
+					<cftry>
+						<cfset beanInstance.buildAdvisorChain(localBeanCache) />
+						<cfcatch>
+							<!--- may not be an AOP factory, that's ok --->
+							<cfdump var="#cfcatch#"><cfabort />
+						</cfcatch>
+					</cftry>
+				</cfif>
 					
 				<cfif beanDef.isSingleton()>
 					<cfset beanDef.setIsConstructed(true)/>
