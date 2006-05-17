@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.28 2006/05/14 19:47:10 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.29 2006/05/17 14:36:21 rossd Exp $
 
 ---> 
 
@@ -413,7 +413,7 @@
 					<cfelse>
 						<cfset beanInstance = localBeanCache[beanDef.getBeanID()] />
 					</cfif>
-					<cfset md = getMetaData(beanInstance)/>
+					<cfset md = flattenMetaData(getMetaData(beanInstance))/>
 					
 				<cfelse>
 					
@@ -430,7 +430,6 @@
 						</cfif>
 					</cfif>
 					
-					<cftry>
 					
 					<!--- now call the 'constructor' to generate the bean, which is the factoryMethod --->
 					<cfinvoke component="#factoryBean#" method="#beanDef.getFactoryMethod()#" 
@@ -460,22 +459,7 @@
 							</cfswitch> 				  								
 						</cfloop>
 					</cfinvoke>
-					
-					<cfcatch>
-						<cfdump var="#getMetaData(factoryBean)#" label="CURRENT FACTORY (BEAN) METADATA" />
-						<cfdump var="#dependentBeanNames#" label="OBJECTS TO CREATE" />
-						
-						<cfloop collection="#argDefs#" item="arg">
-							
-							<cfdump var="#argDefs[arg].getArgumentName()#" label="ARG DEF" />
-							<cfdump var="#argDefs[arg].getValue()#" label="ARG VALUE" />
-							
-						</cfloop>
-						
-						<cfdump var="#cfcatch#" /><cfabort />
-					</cfcatch>
-					
-					</cftry>
+				
 					
 					<!--- since we skipped factory beans in the bean creation loop, we need to store a reference to the bean now --->
 					<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
@@ -483,7 +467,7 @@
 					<cfelse>
 						<cfset localBeanCache[beanDef.getBeanID()] = beanInstance /> 
 					</cfif>
-					<cfset md = getMetaData(beanInstance)/>
+					<cfset md = flattenMetaData(getMetaData(beanInstance))/>
 				
 				</cfif>
 				
@@ -493,8 +477,7 @@
 						<cfif md.functions[functionIndex].name eq "init"
 								and beanDef.getFactoryBean() eq "">
 							
-							<cftry>
-								
+							
 							<cfinvoke component="#beanInstance#" method="init">
 								<!--- loop over any bean constructor-args and pass them into the init() --->
 								<cfloop collection="#argDefs#" item="arg">
@@ -530,29 +513,13 @@
 									</cfswitch> 				  								
 								</cfloop>
 							</cfinvoke>
-							
-							
-							<cfcatch>
-								<cfdump var="#getMetaData(beanInstance)#" label="CURRENT OBJECT METADATA" />
-								<cfdump var="#md#" label="CURRENT METADATA" />
-								<cfdump var="#dependentBeanNames#" label="OBJECTS TO CREATE" />
-								
-								<cfloop collection="#argDefs#" item="arg">
-									
-									<cfdump var="#argDefs[arg].getArgumentName()#" label="ARG DEF" />
-									<cfdump var="#argDefs[arg].getValue()#" label="ARG VALUE" />
-									
-								</cfloop>
-								
-								<cfdump var="#cfcatch#" /><cfabort />
-							</cfcatch>
-							
-							</cftry>
 						
-						<cfelseif md.functions[functionIndex].name eq "setBeanFactory">
-							
-							<!--- OK, is the vote really for duck typing, Dave's gonna hate this!!!
-								This is the DuckTyping implementation of 'BeanFactoryAware' --->
+						
+						<cfelseif md.functions[functionIndex].name eq "setBeanFactory"
+								  and arraylen(md.functions[functionIndex].parameters) eq 1
+								  and structKeyExists(md.functions[functionIndex].parameters[1],"type")
+								  and md.functions[functionIndex].parameters[1].type eq "coldspring.beans.BeanFactory">
+							<!--- call setBeanFactory() if it exists and is a beanFactory --->
 							<cfset beanInstance.setBeanFactory(this) />	
 							
 						</cfif>
@@ -834,6 +801,34 @@
 				<cfreturn arguments.ComplexProperty />
 			</cfcase>
 		</cfswitch>
+		
+	</cffunction>	
+	
+	
+	<cffunction name="flattenMetaData" access="public" output="false" hint="takes metadata, copies inherited methods into the top level function array, and returns it" returntype="struct">
+		<cfargument name="md" type="struct" required="true" />
+		<cfset var i = "" />
+		<cfset var flattenedMetaData = duplicate(arguments.md)/>
+		<cfset var foundFunctions = ""/>
+		<cfset flattenedMetaData.functions = arraynew(1)/>
+		
+		<cfloop condition="true">
+			<cfif structKeyExists(arguments.md, "functions")>
+				<cfloop from="1" to="#arrayLen(arguments.md.functions)#" index="i">
+					<cfif not listFind(foundFunctions,arguments.md.functions[i].name)>
+						<cfset arrayAppend(flattenedMetaData.functions,duplicate(arguments.md.functions[i]))/>
+						<cfset foundFunctions = listAppend(foundFunctions,arguments.md.functions[i].name)/>
+					</cfif>
+				</cfloop>
+			</cfif>
+			<cfif structKeyExists(arguments.md, "extends")>
+				<cfset arguments.md = arguments.md.extends />
+			<cfelse>
+				<cfbreak />
+			</cfif>
+		</cfloop>
+		
+		<cfreturn flattenedMetaData/>
 		
 	</cffunction>	
 	

@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.27 2006/05/06 12:05:59 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.28 2006/05/17 14:36:21 rossd Exp $
 
 --->
 
@@ -212,7 +212,8 @@
 			
 				<cfset  beanInstance = getBeanInstance() />
 				<!--- look for autowirable collaborators --->
-				<cfset md = getMetaData(beanInstance) />
+				<cfset md = getBeanFactory().flattenMetaData(getMetaData(beanInstance)) />
+
 				<cfif structKeyExists(md,"functions")>
 					<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
 						<!--- for setters, we're getting the access type --->
