@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.29 2006/05/17 14:36:21 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.30 2006/05/19 01:18:31 scottc Exp $
 
 ---> 
 
@@ -539,8 +539,8 @@
 					</cfif>
 					<cfif searchMd.name IS 'coldspring.beans.factory.FactoryBean'>
 						<cfset beanDef.setIsFactory(true) />
-						<!--- SO, We did this already (duck typing, above) --->
-						<cfset beanInstance.setBeanFactory(this) />
+						<!--- SO, We did this already (duck typing, above)
+						<cfset beanInstance.setBeanFactory(this) /> --->
 						<cfbreak />
 					</cfif>
 				</cfloop>
@@ -810,14 +810,24 @@
 		<cfset var i = "" />
 		<cfset var flattenedMetaData = duplicate(arguments.md)/>
 		<cfset var foundFunctions = ""/>
+		<cfset var access = "" />
+		
 		<cfset flattenedMetaData.functions = arraynew(1)/>
 		
 		<cfloop condition="true">
 			<cfif structKeyExists(arguments.md, "functions")>
 				<cfloop from="1" to="#arrayLen(arguments.md.functions)#" index="i">
+					<!--- get the access type, so we can skip private methods --->
+					<cfif structKeyExists(arguments.md.functions[i],'access')>
+						<cfset access = arguments.md.functions[i].access />
+					<cfelse>
+						<cfset access = 'public' />
+					</cfif>
 					<cfif not listFind(foundFunctions,arguments.md.functions[i].name)>
-						<cfset arrayAppend(flattenedMetaData.functions,duplicate(arguments.md.functions[i]))/>
 						<cfset foundFunctions = listAppend(foundFunctions,arguments.md.functions[i].name)/>
+						<cfif access is not 'private'>
+							<cfset arrayAppend(flattenedMetaData.functions,duplicate(arguments.md.functions[i]))/>
+						</cfif>
 					</cfif>
 				</cfloop>
 			</cfif>
@@ -827,7 +837,6 @@
 				<cfbreak />
 			</cfif>
 		</cfloop>
-		
 		<cfreturn flattenedMetaData/>
 		
 	</cffunction>	
