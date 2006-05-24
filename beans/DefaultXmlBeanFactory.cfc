@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.30 2006/05/19 01:18:31 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.31 2006/05/24 01:25:34 scottc Exp $
 
 ---> 
 
@@ -263,18 +263,27 @@
 	</cffunction>
 	
 
+	<cffunction name="localFactoryContainsBean" access="public" output="false" returntype="boolean"
+				hint="returns true if the BeanFactory contains a bean definition or bean instance that matches the given name">
+		<cfargument name="beanName" required="true" type="string" hint="name of bean to look for"/>
+		<cfreturn structKeyExists(variables.beanDefs, arguments.beanName)/>
+	</cffunction>
+	
+
 	<cffunction name="containsBean" access="public" output="false" returntype="boolean"
 				hint="returns true if the BeanFactory contains a bean definition or bean instance that matches the given name">
 		<cfargument name="beanName" required="true" type="string" hint="name of bean to look for"/>
-		<!--- <cfif NOT isObject(variables.parent)> --->
-			<cfreturn structKeyExists(variables.beanDefs, arguments.beanName)/>
-		<!--- <cfelse>
-			<cfif NOT structKeyExists(variables.beanDefs, arguments.beanName)>
-				<cfreturn variables.parent.containsBean(arguments.beanName) />
+		
+		<cfif structKeyExists(variables.beanDefs, arguments.beanName)>
+			<cfreturn true />
+		<cfelse>
+			<cfif isObject(variables.parent)>
+				<cfreturn variables.parent.containsBean(arguments.beanName)>
 			<cfelse>
-				<cfreturn true>
+				<cfreturn false />
 			</cfif>
-		</cfif> --->
+		</cfif>
+		
 	</cffunction>
 	
 	<!--- this exists for autowiring by type... could be cleaned up --->
@@ -288,8 +297,8 @@
 				<cfreturn bean />
 			</cfif>
 		</cfloop>
-		<cfif isObject(parent)>
-			<cfreturn parent.findBeanNameByType(arguments.typeName) />
+		<cfif isObject(variables.parent)>
+			<cfreturn variables.parent.findBeanNameByType(arguments.typeName) />
 		</cfif>
 		<cfreturn ""/>
 	</cffunction>	
@@ -297,10 +306,10 @@
 	<cffunction name="isSingleton" access="public" returntype="boolean" output="false"
 				hint="returns whether the bean with the specified name is a singleton">
 		<cfargument name="beanName" type="string" required="true" hint="the bean name to look for"/>
-		<cfif containsBean(arguments.beanName)>
+		<cfif localFactoryContainsBean(arguments.beanName)>
 			<cfreturn variables.beanDefs[arguments.beanName].isSingleton() />
-		<cfelseif isObject(parent) AND parent.containsBean(arguments.beanName)>
-			<cfreturn parent.isSingleton(arguments.beanName)>
+		<cfelseif isObject(variables.parent) AND variables.parent.localFactoryContainsBean(arguments.beanName)>
+			<cfreturn variables.parent.isSingleton(arguments.beanName)>
 		<cfelse>
 			<cfthrow type="coldspring.NoSuchBeanDefinitionException" detail="Bean definition for bean named: #arguments.beanName# could not be found."/>
 		</cfif>
@@ -313,7 +322,7 @@
 		<cfif returnFactory>
 			<cfset arguments.beanName = Right(arguments.beanName,Len(arguments.beanName)-1) />
 		</cfif>
-		<cfif containsBean(arguments.beanName)>
+		<cfif localFactoryContainsBean(arguments.beanName)>
 			<cfif variables.beanDefs[arguments.beanName].isSingleton()>
 				<cfif variables.beanDefs[arguments.beanName].isConstructed()>
 					<!--- <cfreturn getBeanFromSingletonCache(arguments.beanName) > --->
@@ -327,8 +336,8 @@
 				<!--- return a new instance of this bean def --->
 				<cfreturn constructBean(arguments.beanName,true)/>
 			</cfif>	
-		<cfelseif isObject(parent) AND parent.containsBean(arguments.beanName)>
-			<cfreturn parent.getBean(arguments.beanName)>			
+		<cfelseif isObject(variables.parent) AND variables.parent.localFactoryContainsBean(arguments.beanName)>
+			<cfreturn variables.parent.getBean(arguments.beanName)>			
 		<cfelse>
 			<cfthrow type="coldspring.NoSuchBeanDefinitionException" detail="Bean definition for bean named: #arguments.beanName# could not be found."/>
 		</cfif>		
@@ -646,8 +655,8 @@
 				hint="retrieves a bean definition for the specified bean">
 		<cfargument name="beanName" type="string" required="true" />
 		<cfif not StructKeyExists(variables.beanDefs, beanName)>
-			<cfif isObject(parent)>
-				<cfreturn parent.getBeanDefinition(arguments.beanName)>
+			<cfif isObject(variables.parent)>
+				<cfreturn variables.parent.getBeanDefinition(arguments.beanName)>
 			<cfelse>
 				<cfthrow type="coldspring.MissingBeanReference" message="There is no bean registered with the factory with the id #arguments.beanName#" />
 			</cfif>
@@ -662,8 +671,8 @@
 		<cfif StructKeyExists(variables.beanDefs, beanName)>
 			<cfreturn true />
 		<cfelse>
-			<cfif isObject(parent)>
-				<cfreturn parent.beanDefinitionExists(arguments.beanName)>
+			<cfif isObject(variables.parent)>
+				<cfreturn variables.parent.beanDefinitionExists(arguments.beanName)>
 			<cfelse>
 				<cfreturn false />
 			</cfif>
@@ -680,8 +689,8 @@
 		<cflock name="bf_#variables.beanFactoryId#.SingletonCache" type="readonly" timeout="5">
 			<cfset objExists = StructKeyExists(variables.singletonCache, beanName) />
 		</cflock>
-		<cfif not(objExists) AND isObject(parent)>
-			<cfset objExists = parent.singletonCacheContainsBean(arguments.beanName)>
+		<cfif not(objExists) AND isObject(variables.parent)>
+			<cfset objExists = variables.parent.singletonCacheContainsBean(arguments.beanName)>
 		</cfif>
 		<cfreturn objExists />
 	</cffunction>
@@ -694,12 +703,12 @@
 			<cfif StructKeyExists(variables.singletonCache, beanName)>
 				<cfset objRef = variables.singletonCache[beanName] />
 			<cfelse>
-				<cfset objExists = true />
+				<cfset objExists = false />
 			</cfif>
 		</cflock>
 		
 		<cfif not(objExists)>
-			<cfif isObject(parent)>
+			<cfif isObject(variables.parent)>
 				<cfset objRef = variables.parent.getBeanFromSingletonCache(arguments.beanName)>
 			<cfelse>
 				<cfthrow message="Cache error, #beanName# does not exists">
