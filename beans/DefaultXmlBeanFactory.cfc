@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.31 2006/05/24 01:25:34 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.32 2006/05/28 16:02:08 scottc Exp $
 
 ---> 
 
@@ -397,7 +397,7 @@
 					their constructor args may be dependencies, so we will create them in the NEXT loop, along with
 					init methods --->
 				<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
-					<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) />
+					<cfset beanDef.getBeanFactory().addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) />
 				<cfelse>
 					<cfset localBeanCache[beanDef.getBeanID()] = beanDef.getBeanInstance() /> 
 				</cfif>
@@ -472,7 +472,7 @@
 					
 					<!--- since we skipped factory beans in the bean creation loop, we need to store a reference to the bean now --->
 					<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
-						<cfset addBeanToSingletonCache(beanDef.getBeanID(), beanInstance ) />
+						<cfset beanDef.getBeanFactory().addBeanToSingletonCache(beanDef.getBeanID(), beanInstance ) />
 					<cfelse>
 						<cfset localBeanCache[beanDef.getBeanID()] = beanInstance /> 
 					</cfif>
