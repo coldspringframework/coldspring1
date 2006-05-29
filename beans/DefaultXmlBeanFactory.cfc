@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.32 2006/05/28 16:02:08 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.33 2006/05/29 17:02:41 scottc Exp $
 
 ---> 
 
@@ -529,7 +529,7 @@
 								  and structKeyExists(md.functions[functionIndex].parameters[1],"type")
 								  and md.functions[functionIndex].parameters[1].type eq "coldspring.beans.BeanFactory">
 							<!--- call setBeanFactory() if it exists and is a beanFactory --->
-							<cfset beanInstance.setBeanFactory(this) />	
+							<cfset beanInstance.setBeanFactory(beanDef.getBeanFactory()) />	
 							
 						</cfif>
 					</cfloop>
