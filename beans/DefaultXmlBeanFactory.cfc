@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.34 2006/06/02 00:19:26 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.35 2006/06/02 16:39:07 rossd Exp $
 
 ---> 
 
@@ -439,45 +439,55 @@
 						</cfif>
 					</cfif>
 					
-					
-					<!--- now call the 'constructor' to generate the bean, which is the factoryMethod --->
-					<cfinvoke component="#factoryBean#" method="#beanDef.getFactoryMethod()#" 
-						returnvariable="beanInstance">
-						<!--- loop over constructor-args and pass them into the factoryMethod --->
-						<cfloop collection="#argDefs#" item="arg">
-							<cfswitch expression="#argDefs[arg].getType()#">
-								<cfcase value="value">
-									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#argDefs[arg].getValue()#"/>
-								</cfcase>
-								<cfcase value="list,map">
-									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
-								</cfcase>
-								<cfcase value="ref,bean">
-									<cfset dependentBeanDef = getBeanDefinition(propDefs[prop].getValue()) />
-									<cfif dependentBeanDef.isSingleton()>
-										<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
-									<cfelse>
-										<cfif dependentBeanDef.isFactory()>
-											<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
+					<cftry>
+						<!--- now call the 'constructor' to generate the bean, which is the factoryMethod --->
+						<cfinvoke component="#factoryBean#" method="#beanDef.getFactoryMethod()#" 
+							returnvariable="beanInstance">
+							<!--- loop over constructor-args and pass them into the factoryMethod --->
+							<cfloop collection="#argDefs#" item="arg">
+								<cfswitch expression="#argDefs[arg].getType()#">
+									<cfcase value="value">
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#argDefs[arg].getValue()#"/>
+									</cfcase>
+									<cfcase value="list,map">
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
+									</cfcase>
+									<cfcase value="ref,bean">
+										<cfset dependentBeanDef = getBeanDefinition(propDefs[prop].getValue()) />
+										<cfif dependentBeanDef.isSingleton()>
+											<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
 										<cfelse>
-											<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+											<cfif dependentBeanDef.isFactory()>
+												<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
+											<cfelse>
+												<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+											</cfif>
 										</cfif>
-									</cfif>
-									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#dependentBeanInstance#"/>
-								</cfcase>								  
-							</cfswitch> 				  								
-						</cfloop>
-					</cfinvoke>
-				
-					
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#dependentBeanInstance#"/>
+									</cfcase>								  
+								</cfswitch> 				  								
+							</cfloop>
+						</cfinvoke>
+						<cfcatch type="any">
+							<cfthrow type="coldspring.beanCreationException" 
+								message="Bean creation exception during factory-method call (trying to call #beanDef.getFactoryMethod()# on #factoryBeanDef.getBeanClass()#)" 
+								detail="#cfcatch.message#">							
+						</cfcatch>						
+					</cftry>					
 					<!--- since we skipped factory beans in the bean creation loop, we need to store a reference to the bean now --->
 					<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
 						<cfset beanDef.getBeanFactory().addBeanToSingletonCache(beanDef.getBeanID(), beanInstance ) />
 					<cfelse>
 						<cfset localBeanCache[beanDef.getBeanID()] = beanInstance /> 
 					</cfif>
-					<cfset md = flattenMetaData(getMetaData(beanInstance))/>
-				
+					<!--- make sure the beanInstance is an object if we are gonna look at it
+						  (beanInstance could be anything returned from a factory-method call)  --->
+					<cfif isObject(beanInstance)>
+						<cfset md = flattenMetaData(getMetaData(beanInstance))/>
+					<cfelse>
+						<cfset md = structnew()/>
+						<cfset md.name = ""/>
+					</cfif>
 				</cfif>
 				
 				<cfif structKeyExists(md, "functions")>
@@ -486,7 +496,7 @@
 						<cfif md.functions[functionIndex].name eq "init"
 								and beanDef.getFactoryBean() eq "">
 							
-							
+							<cftry>
 							<cfinvoke component="#beanInstance#" method="init">
 								<!--- loop over any bean constructor-args and pass them into the init() --->
 								<cfloop collection="#argDefs#" item="arg">
@@ -522,7 +532,13 @@
 									</cfswitch> 				  								
 								</cfloop>
 							</cfinvoke>
-						
+							
+							<cfcatch type="any">
+								<cfthrow type="coldspring.beanCreationException" 
+									message="Bean creation exception during init() of #beanDef.getBeanClass()#" 
+									detail="#cfcatch.message#">
+							</cfcatch>
+						</cftry>
 						
 						<cfelseif md.functions[functionIndex].name eq "setBeanFactory"
 								  and arraylen(md.functions[functionIndex].parameters) eq 1
