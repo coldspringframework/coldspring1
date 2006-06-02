@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.28 2006/05/17 14:36:21 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.29 2006/06/02 00:22:19 scottc Exp $
 
 --->
 
@@ -85,8 +85,8 @@
 		<cfset variables.instanceData.BeanClass = arguments.BeanClass />
 	</cffunction>
 	
-	<!--- 4/3/6: adding instanceOf method to beanDefinition, there is probably a lot of
-		  areas that cna be refactored to use this method! --->
+	<!--- 4/3/6: adding instanceOf method to beanDefinition, there may bef
+		  areas that can be refactored to use this method! --->
 	<cffunction name="instanceOf" access="public" output="false" returntype="any"
 				hint="I look through bean metadata, extends to see if this class is an insance of or extends a class">
 		<cfargument name="className" type="string" required="true" />
@@ -358,44 +358,41 @@
 			<cfset dependIx = ListFindNoCase(arguments.dependentBeans.allBeans, refName) />
 
 			<cfif dependIx LT 1>
-				<!--- so, if this a dependency of this bean is not in the list, add it, and get that bean's dependencies
-				<cfset arguments.dependencyList = ListAppend(arguments.dependencyList,refName) />
-				<cfset arguments.dependencyList = getBeanFactory().getBeanDefinition(refName).getDependencies(arguments.dependencyList) /> --->
-				<!--- <cfset arguments.dependencyList = ListPrepend(arguments.dependencyList,refName) /> --->
-				
 				
 				<cfset arguments.dependentBeans.allBeans = ListAppend(arguments.dependentBeans.allBeans, refName) />
 				<cfset getBeanFactory().getBeanDefinition(refName).getDependencies(arguments.dependentBeans) />
 				<cfset arguments.dependentBeans.orderedBeans = ListPrepend(arguments.dependentBeans.orderedBeans, refName) />
-			<cfelse>
-				<!--- but if that dependency IS in the list, it must be created before this bean, so we need to be added
-					to the list BEFORE that bean. However, only move the bean if it is currently AFTER the dependent bean
-				<cfset currIx = ListFindNoCase(arguments.dependencyList, getBeanID()) />
-				<cfif currIx GT dependIx>
-					<cfset arguments.dependencyList = ListDeleteAt(arguments.dependencyList, currIx) />
-					<cfset dependIx = ListFindNoCase(arguments.dependencyList, refName) />
-					<cfset arguments.dependencyList = ListInsertAt(arguments.dependencyList, dependIx, getBeanID()) /> 
-				</cfif> --->
+
 			</cfif>
 			
 		</cfloop>
-		<!--- <cfreturn arguments.dependencyList /> --->
 		
 	</cffunction>
 	
 	<cffunction name="getBeanInstance" access="public" output="false" returntype="any" 
 				hint="I retrieve the the actual bean instance (a new one if this is a prototype bean) from this bean definition - or the result of a factory-method invocation">
 		
+		<cfset var bean = 0 />
 		<!--- create this if it doesn't exist --->
-		<cfif not structkeyexists(variables,"beanInstance")>
-			<cfset variables.beanInstance = createObject("component", getBeanClass()) />
-		</cfif>
+		<cftry>
+			<cfif not structkeyexists(variables,"beanInstance")>
+				<cfset variables.beanInstance = createObject("component", getBeanClass()) />
+			</cfif>
+			
+			<cfif isSingleton()>
+				<cfset bean = variables.beanInstance />
+			<cfelse>
+				<cfset bean = createObject("component", getBeanClass())/>
+			</cfif>
+			
+			<cfcatch type="any">
+				<cfthrow type="coldspring.beanCreationException" 
+					message="Bean creation exception in #getBeanClass()#" 
+					detail="#cfcatch.message#">
+			</cfcatch>
+		</cftry>
 		
-		<cfif isSingleton()>
-			<cfreturn variables.beanInstance />
-		<cfelse>
-			<cfreturn createObject("component", getBeanClass())/>
-		</cfif>
+		<cfreturn bean />
 		
 	</cffunction>
 	
