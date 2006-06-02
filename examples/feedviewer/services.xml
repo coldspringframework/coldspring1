@@ -17,11 +17,11 @@
     limitations under the License.
     
     
-    $Id: services.xml,v 1.6 2006/03/04 17:41:46 wiersma Exp $
+    $Id: services.xml,v 1.7 2006/06/02 16:43:58 rossd Exp $
     
 -->
 
-<beans>
+<beans default-autowire="byName">
     
     <!--first, we'll set up some basic services that will be used across a wide variety of other components -->
     <!-- how bout' a logging service? -->
