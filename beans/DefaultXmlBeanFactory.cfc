@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.33 2006/05/29 17:02:41 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.34 2006/06/02 00:19:26 scottc Exp $
 
 ---> 
 
@@ -336,7 +336,7 @@
 				<!--- return a new instance of this bean def --->
 				<cfreturn constructBean(arguments.beanName,true)/>
 			</cfif>	
-		<cfelseif isObject(variables.parent) AND variables.parent.localFactoryContainsBean(arguments.beanName)>
+		<cfelseif isObject(variables.parent)> <!--- AND variables.parent.containsBean(arguments.beanName)> --->
 			<cfreturn variables.parent.getBean(arguments.beanName)>			
 		<cfelse>
 			<cfthrow type="coldspring.NoSuchBeanDefinitionException" detail="Bean definition for bean named: #arguments.beanName# could not be found."/>
