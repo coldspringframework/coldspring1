@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: ColdspringPlugin.cfc,v 1.6 2006/03/06 01:27:05 scorfield Exp $
+ $Id: ColdspringPlugin.cfc,v 1.7 2006/06/05 02:33:16 rossd Exp $
 
 --->
 
@@ -148,29 +148,30 @@
 			<cfset targetObj = targets.data[targetIx] />
 			<!--- look for autowirable collaborators for any SETTERS --->
 			<cfset md = getMetaData(targetObj) />	
-
-			<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
-				<!--- if this is a 'real' setter --->
-				<cfif left(md.functions[functionIndex].name,3) eq "set" 
-						  and arraylen(md.functions[functionIndex].parameters) eq 1>
-					<!--- look for a bean in the factory of the params's type --->	  
-					<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3) />
-					
-					<cfif beanFactory.containsBean(setterName)>
-						<cfset beanName = setterName />
-					<cfelse>
-						<cfset beanName = beanFactory.findBeanNameByType(md.functions[functionIndex].parameters[1].type) />
+			<cfif StructKeyExists(md, "functions")>
+				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
+					<!--- if this is a 'real' setter --->
+					<cfif left(md.functions[functionIndex].name,3) eq "set" 
+							  and arraylen(md.functions[functionIndex].parameters) eq 1>
+						<!--- look for a bean in the factory of the params's type --->	  
+						<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3) />
+						
+						<cfif beanFactory.containsBean(setterName)>
+							<cfset beanName = setterName />
+						<cfelse>
+							<cfset beanName = beanFactory.findBeanNameByType(md.functions[functionIndex].parameters[1].type) />
+						</cfif>
+						<!--- if we found a bean, call the target object's setter --->
+						<cfif len(beanName)>
+							<cfinvoke component="#targetObj#"
+									  method="set#setterName#">
+								<cfinvokeargument name="#md.functions[functionIndex].parameters[1].name#"
+									  	value="#beanFactory.getBean(beanName)#"/>
+							</cfinvoke>	
+						</cfif>			  
 					</cfif>
-					<!--- if we found a bean, call the target object's setter --->
-					<cfif len(beanName)>
-						<cfinvoke component="#targetObj#"
-								  method="set#setterName#">
-							<cfinvokeargument name="#md.functions[functionIndex].parameters[1].name#"
-								  	value="#beanFactory.getBean(beanName)#"/>
-						</cfinvoke>	
-					</cfif>			  
-				</cfif>
-			</cfloop>		
+				</cfloop>		
+			</cfif>
 		</cfloop>
 		
 	</cffunction>
