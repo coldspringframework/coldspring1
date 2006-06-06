@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: ColdspringPlugin.cfc,v 1.7 2006/06/05 02:33:16 rossd Exp $
+ $Id: ColdspringPlugin.cfc,v 1.8 2006/06/06 00:01:36 scottc Exp $
 
 --->
 
@@ -137,7 +137,7 @@
 		
 		<cfset var setterName = '' />
 		<cfset var beanName = '' />
-		
+		<cfset var access = '' />
 
 		<cfset targets.data = ArrayNew(1) />
 		<cfset getListeners(targets) />
@@ -150,9 +150,16 @@
 			<cfset md = getMetaData(targetObj) />	
 			<cfif StructKeyExists(md, "functions")>
 				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
+					<!--- first get the access type --->
+					<cfif structKeyExists(md.functions[functionIndex],'access')>
+						<cfset access = md.functions[functionIndex].access />
+					<cfelse>
+						<cfset access = 'public' />
+					</cfif>
 					<!--- if this is a 'real' setter --->
 					<cfif left(md.functions[functionIndex].name,3) eq "set" 
-							  and arraylen(md.functions[functionIndex].parameters) eq 1>
+							  and arraylen(md.functions[functionIndex].parameters) eq 1 
+							  and (access is not 'private')>
 						<!--- look for a bean in the factory of the params's type --->	  
 						<cfset setterName = mid(md.functions[functionIndex].name,4,len(md.functions[functionIndex].name)-3) />
 						
