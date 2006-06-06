@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.29 2006/06/02 00:22:19 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.30 2006/06/06 12:41:38 rossd Exp $
 
 --->
 
@@ -388,7 +388,7 @@
 			<cfcatch type="any">
 				<cfthrow type="coldspring.beanCreationException" 
 					message="Bean creation exception in #getBeanClass()#" 
-					detail="#cfcatch.message#">
+					detail="#cfcatch.message#:#cfcatch.detail#">
 			</cfcatch>
 		</cftry>
 		

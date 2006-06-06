@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.35 2006/06/02 16:39:07 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.36 2006/06/06 12:41:38 rossd Exp $
 
 ---> 
 
@@ -471,7 +471,7 @@
 						<cfcatch type="any">
 							<cfthrow type="coldspring.beanCreationException" 
 								message="Bean creation exception during factory-method call (trying to call #beanDef.getFactoryMethod()# on #factoryBeanDef.getBeanClass()#)" 
-								detail="#cfcatch.message#">							
+								detail="#cfcatch.message#:#cfcatch.detail#">							
 						</cfcatch>						
 					</cftry>					
 					<!--- since we skipped factory beans in the bean creation loop, we need to store a reference to the bean now --->
@@ -536,7 +536,7 @@
 							<cfcatch type="any">
 								<cfthrow type="coldspring.beanCreationException" 
 									message="Bean creation exception during init() of #beanDef.getBeanClass()#" 
-									detail="#cfcatch.message#">
+									detail="#cfcatch.message#:#cfcatch.detail#">
 							</cfcatch>
 						</cftry>
 						
