@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.14 2006/04/20 20:24:43 rossd Exp $
+ $Id: BeanProperty.cfc,v 1.15 2006/06/25 13:20:32 rossd Exp $
 
 ---> 
 
@@ -42,14 +42,19 @@
 		<cfargument name="propertyDef" type="any" required="true" hint="property definition xml" />
 		<cfset var child = 0 />
 		<cfset var beanUID = 0 />
+		<cfset var propName = ""/>
 		
-		<cfif not (StructKeyExists(propertyDef.XmlAttributes,'name') and StructKeyExists(propertyDef,'XmlChildren'))
-			  	and ArrayLen(arguments.propertyDef.XmlChildren)>
+		<!-- <!---  not (StructKeyExists(propertyDef.XmlAttributes,'name') and ---> -->
+		<cfif not (StructKeyExists(propertyDef,'XmlChildren')
+			  	and ArrayLen(arguments.propertyDef.XmlChildren))>
 			<cfthrow type="coldspring.MalformedPropertyException" message="Xml properties must contain a 'name' and a child element!">
 		</cfif>
 		
 		<!--- the only things we need to know at this level is the name of the property... --->
-		<cfset setName(propertyDef.XmlAttributes.name) />
+		<cfif StructKeyExists(propertyDef.XmlAttributes,'name')>
+			<cfset propName = propertyDef.XmlAttributes.name/>
+		</cfif>
+		<cfset setName(propName) />
 		
 		<cftry>
 			<!--- the should only be one child node --->
