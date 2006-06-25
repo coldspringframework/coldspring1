@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: Exception.cfc,v 1.2 2005/11/16 16:16:10 rossd Exp $
+ $Id: Exception.cfc,v 1.3 2006/06/25 22:56:30 rossd Exp $
  $Log: Exception.cfc,v $
+ Revision 1.3  2006/06/25 22:56:30  rossd
+ added lockname
+
  Revision 1.2  2005/11/16 16:16:10  rossd
  updates to license in all framework code
 
@@ -120,7 +123,15 @@
 			<cfreturn "" />
 		</cfif>
 	</cffunction>
-
+	
+	<cffunction name="getLockName" access="public" returntype="string" output="false">
+		<cfif StructKeyExists(variables.exception,'lockName')>
+			<cfreturn variables.exception.lockName />
+		<cfelse>
+			<cfreturn "" />
+		</cfif>
+	</cffunction>
+	
 	<cffunction name="getLockOperation" access="public" returntype="string" output="false">
 		<cfif StructKeyExists(variables.exception,'lockOperation')>
 			<cfreturn variables.exception.lockOperation />
