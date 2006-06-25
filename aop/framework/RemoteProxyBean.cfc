@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: RemoteProxyBean.cfc,v 1.4 2006/04/04 03:51:27 simb Exp $
+ $Id: RemoteProxyBean.cfc,v 1.5 2006/06/25 13:22:43 rossd Exp $
  $Log: RemoteProxyBean.cfc,v $
+ Revision 1.5  2006/06/25 13:22:43  rossd
+ removing debug code
+
  Revision 1.4  2006/04/04 03:51:27  simb
  removed duplicate local var bfUtils
 
@@ -59,11 +62,7 @@
 			<cfset variables.target = bf.getBean("${proxyFactoryId}") />
 			<cfset variables.adviceChains = remoteFactory.getProxyAdviceChains() />
 			
-			<!--- so we can dump and see out data members --->
-			<cfset this.target = variables.target />
-			<cfset this.adviceChains = variables.adviceChains />
 			<cfcatch>
-				<cfdump var="#cfcatch#" /><cfabort />
 				<cfthrow type="coldspring.remoting.ApplicationContextError" 
 						 message="Sorry, a ColdSpring BeanFactory named #variables.beanFactoryName# was not found in #variables.beanFactoryScope# scope. Please make sure your bean factory is properly loaded. Perhapse your main application is not running?" />
 			</cfcatch>
