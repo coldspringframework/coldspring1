@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.36 2006/06/06 12:41:38 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.37 2006/07/02 13:36:37 rossd Exp $
 
 ---> 
 
@@ -422,7 +422,16 @@
 					<cfelse>
 						<cfset beanInstance = localBeanCache[beanDef.getBeanID()] />
 					</cfif>
-					<cfset md = flattenMetaData(getMetaData(beanInstance))/>
+					
+					<!--- make sure the beanInstance is an object if we are gonna look at it
+						  (beanInstance could be anything)  --->
+					<cfif isCFC(beanInstance)>
+						<cfset md = flattenMetaData(getMetaData(beanInstance))/>
+					<cfelse>
+						<cfset md = structnew()/>
+						<cfset md.name = ""/>
+					</cfif>
+	
 					
 				<cfelse>
 					
@@ -482,7 +491,7 @@
 					</cfif>
 					<!--- make sure the beanInstance is an object if we are gonna look at it
 						  (beanInstance could be anything returned from a factory-method call)  --->
-					<cfif isObject(beanInstance)>
+					<cfif isCFC(beanInstance)>
 						<cfset md = flattenMetaData(getMetaData(beanInstance))/>
 					<cfelse>
 						<cfset md = structnew()/>
@@ -829,6 +838,13 @@
 		
 	</cffunction>	
 	
+	<cffunction name="isCFC" access="public" returntype="boolean">
+		<cfargument name="objectToCheck" type="any" required="true"/>
+		
+		<cfset var md = getMetaData(arguments.objectToCheck)/>
+		<cfreturn isObject(arguments.objectToCheck) and structKeyExists(md,'type') and md.type eq 'component'/>
+		
+	</cffunction>
 	
 	<cffunction name="flattenMetaData" access="public" output="false" hint="takes metadata, copies inherited methods into the top level function array, and returns it" returntype="struct">
 		<cfargument name="md" type="struct" required="true" />
