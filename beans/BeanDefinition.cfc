@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.30 2006/06/06 12:41:38 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.31 2006/07/02 13:40:06 rossd Exp $
 
 --->
 
@@ -165,7 +165,7 @@
 			<cfreturn variables.instanceData.properties[arguments.propertyName] />
 		<cfelse>
 			<cfthrow type="coldspring.beanDefException" 
-					 message="property requested does not exist for bean: #getBeanID()# "/>
+					 message="property requested (#arguments.propertyName#) does not exist for bean: #getBeanID()# "/>
 		</cfif>
 	</cffunction>
 	
