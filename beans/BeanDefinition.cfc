@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.31 2006/07/02 13:40:06 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.32 2006/07/12 15:24:10 rossd Exp $
 
 --->
 
@@ -137,7 +137,7 @@
 			<cfreturn variables.instanceData.constructorArgs[arguments.constructorArgName] />
 		<cfelse>
 			<cfthrow type="coldspring.beanDefException" 
-					 message="constructor-arg requested does not exist for bean: #getBeanID()# "/>
+					 message="constructor-arg requested (#arguments.constructorArgName#) does not exist for bean: #getBeanID()# "/>
 		</cfif>
 	</cffunction>
 	
