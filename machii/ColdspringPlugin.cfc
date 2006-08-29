@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: ColdspringPlugin.cfc,v 1.8 2006/06/06 00:01:36 scottc Exp $
+ $Id: ColdspringPlugin.cfc,v 1.9 2006/08/29 12:28:46 scottc Exp $
 
 --->
 
@@ -193,11 +193,15 @@
 		<cfset var listenerNames = 0 />
 		<cfset var i = 0 />
 		
-		<!--- inject a method I need into the manager and use it to get the listener names --->
-		<cfset listenerManager['getListenerNamesForColdSpring'] = variables['getListenerNamesForColdSpring'] />
-		<cfset listenerNames = listenerManager.getListenerNamesForColdSpring() />
-		<!--- get rid of my mayhem --->
-		<cfset StructDelete(listenerManager,'getListenerNamesForColdSpring') /> 
+		<cfif StructKeyExists(listenerManager,"getListenerNames")>
+			<cfset listenerNames = listenerManager.getListenerNames() />
+		<cfelse>
+			<!--- inject a method I need into the manager and use it to get the listener names --->
+			<cfset listenerManager['getListenerNamesForColdSpring'] = variables['getListenerNamesForColdSpring'] />
+			<cfset listenerNames = listenerManager.getListenerNamesForColdSpring() />
+			<!--- get rid of my mayhem --->
+			<cfset StructDelete(listenerManager,'getListenerNamesForColdSpring') /> 
+		</cfif>
 		
 		<!--- append each retrieved listener to the targets array (in struct) --->
 		<cfloop from="1" to="#ArrayLen(listenerNames)#" index="i">
@@ -216,10 +220,13 @@
 		<cfset var filterNames = 0 />
 		<cfset var i = 0 />
 		
-		<cfset filterManager['getFilterNamesForColdSpring'] = variables['getFilterNamesForColdSpring'] />
-		<cfset filterNames = filterManager.getFilterNamesForColdSpring() />
-		<cfset StructDelete(filterManager,'getFilterNamesForColdSpring') /> 
-		
+		<cfif StructKeyExists(filterManager,"getFilterNames")>
+			<cfset filterNames = filterManager.getFilterNames() />
+		<cfelse>
+			<cfset filterManager['getFilterNamesForColdSpring'] = variables['getFilterNamesForColdSpring'] />
+			<cfset filterNames = filterManager.getFilterNamesForColdSpring() />
+			<cfset StructDelete(filterManager,'getFilterNamesForColdSpring') /> 
+		</cfif>
 		<!--- append each retrieved filter to the targets array (in struct) --->
 		<cfloop from="1" to="#ArrayLen(filterNames)#" index="i">
 			<cfset ArrayAppend(targets.data, filterManager.getFilter(filterNames[i])) />
@@ -237,9 +244,13 @@
 		<cfset var pluginNames = 0 />
 		<cfset var i = 0 />
 		
-		<cfset pluginManager['getPluginNamesForColdSpring'] = variables['getPluginNamesForColdSpring'] />
-		<cfset pluginNames = pluginManager.getPluginNamesForColdSpring() />
-		<cfset StructDelete(pluginManager,'getPluginNamesForColdSpring') /> 
+		<cfif StructKeyExists(pluginManager,"getPluginNames")>
+			<cfset pluginNames = pluginManager.getPluginNames() />
+		<cfelse>
+			<cfset pluginManager['getPluginNamesForColdSpring'] = variables['getPluginNamesForColdSpring'] />
+			<cfset pluginNames = pluginManager.getPluginNamesForColdSpring() />
+			<cfset StructDelete(pluginManager,'getPluginNamesForColdSpring') /> 
+		</cfif>
 		
 		<!--- append each retrieved plugin to the targets array (in struct) --->
 		<cfloop from="1" to="#ArrayLen(pluginNames)#" index="i">
