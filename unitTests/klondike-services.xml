@@ -94,7 +94,7 @@
 	
 	<!-- set up a proxy for the dao -->
 	<bean id="catalogDAOTarget"
-			  class="net.klondike.component.catalogDAO">
+			  class="net.klondike.component.CatalogDAO">
          <property name="dsn">
 			<value>klondike</value>
          </property>
