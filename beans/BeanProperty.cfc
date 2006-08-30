@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.15 2006/06/25 13:20:32 rossd Exp $
+ $Id: BeanProperty.cfc,v 1.16 2006/08/30 00:11:05 scottc Exp $
 
 ---> 
 
@@ -25,26 +25,34 @@
 			output="false">
 
 	<cfset variables.instanceData = StructNew() />
+	<cfset variables.propertyDef = "" />
 
 	<cffunction name="init" returntype="coldspring.beans.BeanProperty" access="public" output="false"
 				hint="Constructor. Creates a new Bean Property.">
 		<cfargument name="propertyDefinition" type="any" required="true" hint="CF xml object that defines what I am" />
 		<cfargument name="parentBeanDefinition" type="coldspring.beans.BeanDefinition" hint="reference to the bean definition that I'm being added to" />
 		
+		<cfset variables.propertyDefinition = arguments.propertyDefinition />
 		<cfset setParentBeanDefinition(arguments.parentBeanDefinition) />
 		<cfset parsePropertyDefinition(arguments.propertyDefinition) />
 		
 		<cfreturn this />
 	</cffunction>
 	
+	<cffunction name="resolvePropertyPlaceholders" access="public" returntype="void" output="false">
+		<cfargument name="properties" type="struct" required="true" hint="properties struct, passed in by a postProcessor" />
+		<cfset parsePropertyDefinition(variables.propertyDefinition, arguments.properties) />
+	</cffunction>
+	
 	<cffunction name="parsePropertyDefinition" access="private" returntype="void" output="false"
 				hint="I parse the CF xml object that defines what I am ">
 		<cfargument name="propertyDef" type="any" required="true" hint="property definition xml" />
+		<cfargument name="properties" type="struct" required="false" hint="properties struct, passed in by a postProcessor" />
 		<cfset var child = 0 />
 		<cfset var beanUID = 0 />
 		<cfset var propName = ""/>
 		
-		<!-- <!---  not (StructKeyExists(propertyDef.XmlAttributes,'name') and ---> -->
+		<!---  not (StructKeyExists(propertyDef.XmlAttributes,'name') and --->
 		<cfif not (StructKeyExists(propertyDef,'XmlChildren')
 			  	and ArrayLen(arguments.propertyDef.XmlChildren))>
 			<cfthrow type="coldspring.MalformedPropertyException" message="Xml properties must contain a 'name' and a child element!">
@@ -68,13 +76,18 @@
 		<cfset setType(child.XmlName) />
 		
 		<!--- ok now parse the definition of my child --->
-		<cfset parseChildNode(child)/>
+		<cfif StructKeyExists(arguments, "properties")>
+			<cfset parseChildNode(child, arguments.properties)/>
+		<cfelse>
+			<cfset parseChildNode(child)/>
+		</cfif>
 			
 	</cffunction>
 
 	<cffunction name="parseChildNode" access="private" returntype="void" output="false"
 				hint="I parse the child of this property">
 		<cfargument name="childNode" type="any" required="true" hint="child xml" />
+		<cfargument name="properties" type="struct" required="false" hint="properties struct, passed in by a postProcessor" />
 		
 		<cfset var child = arguments.childNode />
 		<cfset var initMethod = ""/>
@@ -153,12 +166,20 @@
 			
 			<cfcase value="list,map">
 				<!--- list + map properties get special parsing, set our internal "value" to be the result --->
-				<cfset setValue(parseEntries(child.xmlChildren,child.xmlName)) />
+				<cfif StructKeyExists(arguments, "properties")>
+					<cfset setValue(parseEntries(child.xmlChildren,child.xmlName, arguments.properties)) />
+				<cfelse>
+					<cfset setValue(parseEntries(child.xmlChildren,child.xmlName)) />
+				</cfif>
 			</cfcase>
 			
 			<cfcase value="value">
 				<!--- parse the value and set our internal "value" to be the result --->
-				<cfset setValue(parseValue(child.xmlText)) />
+				<cfif StructKeyExists(arguments, "properties")>
+					<cfset setValue(parseValue(child.xmlText, arguments.properties)) />
+				<cfelse>
+					<cfset setValue(parseValue(child.xmlText)) />
+				</cfif>
 			</cfcase>
 			
 		</cfswitch>
@@ -167,15 +188,22 @@
 	<cffunction name="parseValue" access="private" returntype="string" output="false"
 				hint="I parse a <value/>">
 		<cfargument name="rawValue" type="string" required="true" />
+		<cfargument name="properties" type="struct" required="false" hint="properties struct, passed in by a postProcessor" />
 		
 		<!--- grab the default properties out of the enclosing bean factory --->
 		<cfset var beanFactoryDefaultProperties = getParentBeanDefinition().getBeanFactory().getDefaultProperties() />
 		<!--- resolve anything that looks like it should get replaced with a beanFactory default property --->
 		<cfif left(rawValue,2) eq "${" and right(rawValue,1) eq "}">
-			<!--- look for this property value in the bean factory (using isDefined/evaluate incase of "." in property name--->
-			<cfif isDefined("beanFactoryDefaultProperties.#mid(rawValue,3,len(rawValue)-3)#")>
+			<!--- look for this property value in the bean factory (using isDefined/evaluate incase of "." in property name)
+				OR look for the property in the passed in struct ( do that first, as we may be postProcessing ) --->
+			<cfif StructKeyExists(arguments, "properties")>
+				<cfif isDefined("arguments.properties.#mid(rawValue,3,len(rawValue)-3)#")>
+					<cfreturn evaluate("arguments.properties.#mid(rawValue,3,len(rawValue)-3)#")/>
+				</cfif>		
+			<cfelseif isDefined("beanFactoryDefaultProperties.#mid(rawValue,3,len(rawValue)-3)#")>
 				<cfreturn evaluate("beanFactoryDefaultProperties.#mid(rawValue,3,len(rawValue)-3)#")/>
 			</cfif>		
+				
 		</cfif>
 		<cfreturn rawValue />
 	</cffunction>
@@ -185,6 +213,7 @@
 				hint="parses complex properties, limited to <map/> and <list/>. Should return either an array or an struct.">
 		<cfargument name="mapEntries" type="array" required="true" hint="xml of child nodes for this complex type" />
 		<cfargument name="returnType" type="string" required="true" hint="type of property (list|map)" />
+		<cfargument name="properties" type="struct" required="false" hint="properties struct, passed in by a postProcessor" />
 		
 		<!--- local vars --->
 		<cfset var rtn = 0 />
@@ -238,7 +267,11 @@
 				
 				<cfcase value="value">
 					<!--- easy, just put in your parsed value --->
-					<cfset rtn[entryKey] = parseValue(entryChild.xmlText) />
+					<cfif StructKeyExists(arguments, "properties")>
+						<cfset rtn[entryKey] = parseValue(entryChild.xmlText, arguments.properties) />
+					<cfelse>
+						<cfset rtn[entryKey] = parseValue(entryChild.xmlText) />
+					</cfif>
 				</cfcase>
 				
 				<!--- for <ref/> and <bean/> elements within complex properties, we need make a 'placeholder'
@@ -308,7 +341,11 @@
 				
 				<cfcase value="map,list">
 					<!--- recurse if we find another complex property --->
-					<cfset rtn[entryKey] = parseEntries(entryChild.xmlChildren,entryChild.xmlName) />											
+					<cfif StructKeyExists(arguments, "properties")>
+						<<cfset rtn[entryKey] = parseEntries(entryChild.xmlChildren,entryChild.xmlName, arguments.properties) />
+					<cfelse>
+						<cfset rtn[entryKey] = parseEntries(entryChild.xmlChildren,entryChild.xmlName) />
+					</cfif>										
 				</cfcase>
 			</cfswitch>
 		</cfloop>

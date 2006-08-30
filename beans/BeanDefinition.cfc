@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.32 2006/07/12 15:24:10 rossd Exp $
+ $Id: BeanDefinition.cfc,v 1.33 2006/08/30 00:11:05 scottc Exp $
 
 --->
 
@@ -53,6 +53,8 @@
 	<cfset variables.instanceData.factoryMethod = ''>
 	<!--- autowire method, defaults to true (a string) --->
 	<cfset variables.instanceData.autowire = 'no'>
+	<!--- whether this bean is a factoryPostProcessor --->
+	<cfset variables.instanceData.factoryPostProcessor = false/>	
 	
 	
 	<cffunction name="init" returntype="coldspring.beans.BeanDefinition" output="false"
@@ -373,6 +375,7 @@
 				hint="I retrieve the the actual bean instance (a new one if this is a prototype bean) from this bean definition - or the result of a factory-method invocation">
 		
 		<cfset var bean = 0 />
+		<cfset var additionalInfo = "" />
 		<!--- create this if it doesn't exist --->
 		<cftry>
 			<cfif not structkeyexists(variables,"beanInstance")>
@@ -386,9 +389,15 @@
 			</cfif>
 			
 			<cfcatch type="any">
+				<cfif StructKeyExists(cfcatch, "line")>
+					<cfset additionalInfo = "<br/> Line: " & cfcatch.line />
+				</cfif>
+				<cfif StructKeyExists(cfcatch, "Snippet")>
+					<cfset additionalInfo = additionalInfo & "<br/> Snippet: " & HTMLCodeFormat(cfcatch.Snippet) />
+				</cfif>
 				<cfthrow type="coldspring.beanCreationException" 
 					message="Bean creation exception in #getBeanClass()#" 
-					detail="#cfcatch.message#:#cfcatch.detail#">
+					detail="#cfcatch.message#:#cfcatch.detail#:#additionalInfo#">
 			</cfcatch>
 		</cftry>
 		
@@ -473,6 +482,18 @@
 				hint="I set the the autowire method in this instance's data">
 		<cfargument name="autowire" type="string" required="true"/>
 		<cfset variables.instanceData.autowire = arguments.autowire/>
+	</cffunction>
+	
+	
+	<cffunction name="isFactoryPostProcessor" access="public" output="false" returntype="boolean" 
+				hint="I retrieve the factoryPostProcessor flag from instance's data">
+		<cfreturn variables.instanceData.factoryPostProcessor />
+	</cffunction>
+
+	<cffunction name="setFactoryPostProcessor" access="public" output="false" returntype="void"  
+				hint="I set the the factoryPostProcessor flag in this instance's data">
+		<cfargument name="factoryPostProcessor" type="boolean" required="true"/>
+		<cfset variables.instanceData.factoryPostProcessor = arguments.factoryPostProcessor/>
 	</cffunction>
 	
 	

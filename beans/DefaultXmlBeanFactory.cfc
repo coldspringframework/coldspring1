@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.37 2006/07/02 13:36:37 rossd Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.38 2006/08/30 00:11:05 scottc Exp $
 
 ---> 
 
@@ -79,6 +79,8 @@
 				
 		<cfset loadBeanDefinitions(xmlParse(rawBeanDefXML))/>
 		
+		<cfset processFactoryPostProcessors() />
+		
 		<cfif arguments.ConstructNonLazyBeans>
 			<cfset initNonLazyBeans()/>
 		</cfif>
@@ -91,6 +93,8 @@
 	
 		<cfset loadBeanDefinitions(xmlParse(arguments.beanDefinitionXml))/>
 		
+		<cfset processFactoryPostProcessors() />
+		
 		<cfif arguments.ConstructNonLazyBeans>
 			<cfset initNonLazyBeans()/>
 		</cfif>
@@ -102,6 +106,8 @@
 		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
 	
 		<cfset loadBeanDefinitions(arguments.beanDefinitionXmlObj)/>
+		
+		<cfset processFactoryPostProcessors() />
 		
 		<cfif arguments.ConstructNonLazyBeans>
 			<cfset initNonLazyBeans()/>
@@ -124,7 +130,8 @@
 		<cfset var factoryBean = "" />
 		<cfset var factoryMethod = "" />
 		<cfset var autowire = "no" />
-		<cfset var default_autowire = "no" />		
+		<cfset var default_autowire = "no" />	
+		<cfset var factoryPostProcessor = "" />	
 	
 		<!--- make sure some beans exist --->
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
@@ -187,6 +194,15 @@
 				<cfset autowire = beanAttributes['autowire'] />
 			</cfif>
 			
+			<!--- look for a factory-post-processor attribute for this bean def --->
+			<cfif listFind(variables.known_bf_postprocessors,beanAttributes.class)>
+				<cfset factoryPostProcessor = true />
+			<cfelseif StructKeyExists(beanAttributes,'factory-post-processor') and len(beanAttributes['factory-post-processor'])>
+				<cfset factoryPostProcessor = beanAttributes['factory-post-processor'] />
+			<cfelse>
+				<cfset factoryPostProcessor = false />
+			</cfif>
+			
 			<!--- call function to create bean definition and add to store --->
 			<cfif not structKeyExists(beanAttributes, "factory-bean")> 
 				<cfset createBeanDefinition(beanAttributes.id, 
@@ -197,7 +213,8 @@
 										initMethod,
 										factoryBean, 
 										factoryMethod,
-										autowire) />
+										autowire,
+										factoryPostProcessor) />
 			<cfelse>
 				<cfset createBeanDefinition(beanAttributes.id, 
 										"", 
@@ -207,7 +224,8 @@
 										initMethod,
 										factoryBean, 
 										factoryMethod,
-										autowire) />
+										autowire,
+										false) />
 			</cfif>
 		
 		</cfloop>
@@ -227,6 +245,7 @@
 		<cfargument name="factoryBean" type="string" default="" required="false" />
 		<cfargument name="factoryMethod" type="string" default="" required="false" />
 		<cfargument name="autowire" type="string" default="no" required="false" />
+		<cfargument name="factoryPostProcessor" type="boolean" default="false" required="false" />
 		
 		<cfset var childIx = 0 />
 		<cfset var child = '' />
@@ -242,6 +261,7 @@
 		<cfset variables.beanDefs[arguments.beanID].setFactoryBean(arguments.factoryBean) />
 		<cfset variables.beanDefs[arguments.beanID].setFactoryMethod(arguments.factoryMethod) />
 		<cfset variables.beanDefs[arguments.beanID].setAutowire(arguments.autowire) />
+		<cfset variables.beanDefs[arguments.beanID].setFactoryPostProcessor(arguments.factoryPostProcessor) />
 		
 		<cfif len(arguments.initMethod)>
 			
@@ -343,6 +363,26 @@
 		</cfif>		
 		
 	</cffunction>
+	
+	
+	<cffunction name="processFactoryPostProcessors" access="private" output="false" returntype="void"
+				hint="constructs and calls postProcessBeanFactory(this) for all factory post processor beans">
+		
+		<cfset var beanName = "" />
+		<cfset var bean = 0 />
+					
+		<cfloop collection="#variables.beanDefs#" item="beanName">
+			<cfif variables.beanDefs[beanName].isFactoryPostProcessor() >
+				<cfset bean = getBean(beanName) />
+				<cftry>
+					<cfset bean.setBeanID(bean) />
+					<cfcatch></cfcatch>
+				</cftry>
+				<cfset bean.postProcessBeanFactory(this) />
+			</cfif>
+		</cfloop>
+		
+	</cffunction>	
 	
 	
 	<cffunction name="initNonLazyBeans" access="private" output="false" returntype="void"

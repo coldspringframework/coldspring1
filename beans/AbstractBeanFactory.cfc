@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: AbstractBeanFactory.cfc,v 1.5 2005/11/16 16:16:11 rossd Exp $
+ $Id: AbstractBeanFactory.cfc,v 1.6 2006/08/30 00:11:05 scottc Exp $
 
 --->
  
@@ -26,6 +26,7 @@
 			output="false">
 			
 	<cfset variables.singletonCache = StructNew() />
+	<cfset variables.known_bf_postprocessors = "coldspring.beans.factory.config.PropertyPlaceholderConfigurer" />
 			
 	<cffunction name="init" access="private" returntype="void" output="false">
 		<cfthrow message="Abstract CFC cannot be initialized" />
