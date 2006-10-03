@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.38 2006/08/30 00:11:05 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.39 2006/10/03 00:38:20 scottc Exp $
 
 ---> 
 
@@ -195,7 +195,7 @@
 			</cfif>
 			
 			<!--- look for a factory-post-processor attribute for this bean def --->
-			<cfif listFind(variables.known_bf_postprocessors,beanAttributes.class)>
+			<cfif StructKeyExists(beanAttributes,'class') and listFind(variables.known_bf_postprocessors,beanAttributes.class)>
 				<cfset factoryPostProcessor = true />
 			<cfelseif StructKeyExists(beanAttributes,'factory-post-processor') and len(beanAttributes['factory-post-processor'])>
 				<cfset factoryPostProcessor = beanAttributes['factory-post-processor'] />
