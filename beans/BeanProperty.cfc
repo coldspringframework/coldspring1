@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.16 2006/08/30 00:11:05 scottc Exp $
+ $Id: BeanProperty.cfc,v 1.17 2006/10/21 16:43:07 rossd Exp $
 
 ---> 
 
@@ -294,9 +294,9 @@
 					<cfif not (StructKeyExists(entryChild.XmlAttributes,'class'))
 						and not
 					  	(
-					  		StructKeyExists(child.XmlAttributes,'factory-bean')
+					  		StructKeyExists(entryChild.XmlAttributes,'factory-bean')
 					  	and
-					  		StructKeyExists(child.XmlAttributes,'factory-method')
+					  		StructKeyExists(entryChild.XmlAttributes,'factory-method')
 					  	)  >
 						<cfthrow type="coldspring.MalformedInnerBeanException" message="Xml inner bean definitions must contain a 'class' attribute or 'factory-bean'/'factory-method' attributes!">
 					</cfif>
