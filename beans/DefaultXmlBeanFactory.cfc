@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.39 2006/10/03 00:38:20 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.40 2006/11/10 21:40:19 wiersma Exp $
 
 ---> 
 
@@ -61,11 +61,102 @@
 	
 	<cffunction name="loadBeans" access="public" returntype="void" output="false" hint="loads bean definitions into the bean factory from an xml file location">
 		<cfargument name="beanDefinitionFileName" type="string" required="true" />
-		
-		<cfset loadBeansFromXmlFile(arguments.beanDefinitionFileName)/>
-		
+		<cfset var xmlFiles = structNew()>
+
+		<cfset findImports(xmlFiles,arguments.beanDefinitionFileName)>
+		<cfloop collection="#xmlFiles#" item="i">
+			<cfset loadBeansFromXmlObj(xmlFiles[i])/>
+		</cfloop>
 	</cffunction>
+
+	<cffunction name="findImports" access="public" returntype="void" hint="finds and caches include file paths">
+		<cfargument name="importFiles" type="struct" required="true" />
+		<cfargument name="importedFilename" type="string" required="true" />
+		<cfset var i = 0>
+		<cfset var xml = 0>
+		<cfset var imports = 0>
+		<cfset var currentPath = getDirectoryFromPath(arguments.importedFilename)>
+		<cfset var resource = "">
+
+		<cfif not structKeyExists(arguments.importFiles,arguments.importedFilename)>
+			<cfif not fileExists(arguments.importedFilename)>
+				<cfset arguments.importedFilename = expandPath(arguments.importedFilename)>
+			</cfif>
+
+			<cfif not fileExists(arguments.importedFilename)>
+				<cfthrow message="The file #arguments.importedFilename# does not exist!"
+						detail="You have tried to use or include a file (#arguments.importedFilename#) that does not exist using either absolute, relative, or mapped paths." />
+			</cfif>
+
+
+			<cfset xml = xmlParse(arguments.importedFilename)>
+			<cfset imports = xmlSearch(xml,"/beans/import")>
+
+			<cfset structInsert(arguments.importFiles,arguments.importedFilename,xml,false)>
+	
+			<cfif arrayLen(imports) GT 0>
+				<cfloop from="1" to="#arrayLen(imports)#" index="i">
+					<cfset resource = imports[i].xmlAttributes.resource>
+					<cfif left(resource,1) IS "/" and not fileExists(resource)>
+						<cfset resource = expandPath(resource)>
+					<cfelseif left(resource,1) is ".">
+						<cfset resource = shrinkFullRelativePath(currentPath & resource)>
+					</cfif>
+					<cfset findImports(arguments.importFiles,resource)>
+				</cfloop>
+			</cfif>
+		</cfif>
+
+	</cffunction>
+
+	<cffunction name="shrinkFullRelativePath" access="public" output="true" returntype="string">
+		<cfargument name="fullPath" type="string" required="true" />
+	
+		<cfset var newPath = 0>
+		<cfset var i = 0>
+		<cfset var h = 0>
+		<cfset var hits = arrayNew(1)>
+		<cfset var offset = 0>
+		<cfset var retVal = "">
+		<cfset var depth = 0>
+	
+		<cfset fullPath = replace(fullPath,"\","/","all")>
+		<cfset fullPath = replace(fullPath,"/./","/","all")>
+		<cfset newPath = listToArray(fullPath,"/")>
+	
+		<cfloop from="1" to="#arrayLen(newPath)#" index="i">
+			<cfif newPath[i] IS "..">
+				<cfset arrayAppend(hits,i)>
+			<cfelseif i LT arrayLen(newPath)>
+				<cfset depth = depth+1>
+			</cfif>
+		</cfloop>
+		<cfif arrayLen(hits) GT depth>
+			<cfthrow message="The relative path specified is requesting more levels than are available in the directory structure."
+					detail="You are trying to use a relative path containing #arrayLen(hits)# levels of nested directories but there are only #depth# levels available." />
+		</cfif>
+		<cfloop from="1" to="#arrayLen(hits)#" index="h">
+			<cfset arrayDeleteAt(newPath,hits[h]-offset)>
+			<cfset arrayDeleteAt(newPath,hits[h]-(offset+1))>
+			<cfset offset = offset+2>
+		</cfloop>
+		<cfif left(fullPath,1) is "/">
+			<cfset retVal = "/" & arrayToList(newPath,"/")>
+		<cfelse>
+			<cfset retVal = arrayToList(newPath,"/")>
+		</cfif>
+		<cfif right(fullPath,1) is "/">
+			<cfset retVal = retVal & "/">
+		</cfif>
 		
+		<cfif not directoryExists(getDirectoryFrompath(retVal))>
+			<cfthrow message="You have specified an invalid directory"
+					detail="The directory path specified, #getDirectoryFromPath(retVal)# does not exist." />
+		</cfif>
+		 
+		<cfreturn retVal />
+	</cffunction>
+
 	<cffunction name="loadBeansFromXmlFile" returntype="void" access="public" hint="loads bean definitions into the bean factory from an xml file location">
 		<cfargument name="beanDefinitionFile" type="string" required="true" hint="I am the location of the bean definition xml file"/>
 		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
