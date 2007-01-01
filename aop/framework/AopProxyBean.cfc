@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.16 2006/01/13 15:00:12 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.17 2007/01/01 17:41:36 scottc Exp $
  $Log: AopProxyBean.cfc,v $
+ Revision 1.17  2007/01/01 17:41:36  scottc
+ added support for <alias name="fromName" alias="toName"/> tag
+
  Revision 1.16  2006/01/13 15:00:12  scottc
  CSP-38 - First pass at RemoteProxyBean, creating remote services for CS managed seriveces through AOP
 
@@ -68,7 +71,7 @@
 		<cfreturn variables.adviceChains />
 	</cffunction>
 
-	<cffunction name="callMethod" access="public" returntype="any">
+	<cffunction name="callMethod" access="private" returntype="any">
 		<cfargument name="methodName" type="string" required="true" />
 		<cfargument name="args" type="struct" required="true" />
 		<cfset var adviceChain = 0 />

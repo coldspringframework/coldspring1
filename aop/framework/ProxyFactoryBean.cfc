@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.12 2006/05/14 19:47:10 scottc Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.13 2007/01/01 17:41:36 scottc Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.13  2007/01/01 17:41:36  scottc
+  added support for <alias name="fromName" alias="toName"/> tag
+
   Revision 1.12  2006/05/14 19:47:10  scottc
   Changed the way that the aop ProxyFactories build the advisor chains, the advisors are now supplied by the bean factory from inside the constructBean method, which handles nonSingletons correctly. Also a small tweek for CSP-52 where the beanFactory wasn't being given to the RemoteFactoryBean
 
@@ -83,6 +86,7 @@
 		<cfset ArrayAppend(variables.advisorChain, arguments.advisor) />
 	</cffunction>
 	
+	<!--- todo: shouldn't this really be internal? used in addAdvisor? Check the type searching in AdviceChain --->
 	<cffunction name="addAdviceWithDefaultAdvisor" access="public" returntype="string" output="false">
 		<cfargument name="advice" type="coldspring.aop.Advice" required="true"/>
 		<cfset var defaultAdvisor = CreateObject("component", "coldspring.aop.support.DefaultPointcutAdvisor") />
@@ -196,7 +200,8 @@
 		<cfreturn aopProxyBean />
 		
 	</cffunction>
-			
+	
+	<!--- todo: This is really a method that is specific to ColdSpring, I'm not sure it belongs in this class, gotta think... --->	
 	<cffunction name="buildAdvisorChain" access="public" returntype="void" output="false">
 		<cfargument name="localBeanCache" type="struct" required="true" hint="non singleton beans, local to constructBean method" />
 		<cfset var advisorBeanDef = 0 />
@@ -212,7 +217,7 @@
 					  we'll try to create a new default advisor and add as an avice --->
 				<!--- <cfset advisorBean = getBeanFactory().getBean(variables.interceptorNames[ix]) /> --->
 				<!--- 4/2/6: ok, we are going to try to get the advisor from the singleton cache, but a big problem is, what if it's
-					  a singleton?? How would he get the localBeanCache from the constructBean() method which is actually creating
+					  not a singleton?? How would he get the localBeanCache from the constructBean() method which is actually creating
 					  this object??
 				<cfset advisorBean = getBeanFactory().getBeanFromSingletonCache(variables.interceptorNames[ix]) /> --->
 				

@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.40 2006/11/10 21:40:19 wiersma Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.41 2007/01/01 17:41:36 scottc Exp $
 
 ---> 
 
@@ -27,9 +27,6 @@
 			
 	<!--- local struct to hold bean definitions --->
 	<cfset variables.beanDefs = structnew()/>
-	
-	<!--- local bean factory id --->
-	<cfset variables.beanFactoryId = CreateUUId() />
 	
 	<!--- Optional parent bean factory --->
 	<cfset variables.parent = 0>
@@ -223,6 +220,9 @@
 		<cfset var autowire = "no" />
 		<cfset var default_autowire = "no" />	
 		<cfset var factoryPostProcessor = "" />	
+		<cfset var aliases = 0 />
+		<cfset var aliasIx = 0 />
+		<cfset var aliasAttributes = 0 />
 	
 		<!--- make sure some beans exist --->
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
@@ -321,7 +321,23 @@
 		
 		</cfloop>
 		
-		
+		<!--- now register aliases --->
+		<cfif isDefined("arguments.XmlBeanDefinitions.beans.alias")>
+			<cfset aliases = arguments.XmlBeanDefinitions.beans.alias>
+			
+			<!--- create bean definition objects for each (top level) bean in the xml--->
+			<cfloop from="1" to="#ArrayLen(aliases)#" index="aliasIx">
+				
+				<cfset aliasAttributes = aliases[aliasIx].XmlAttributes />
+				
+				<cfif not (StructKeyExists(aliasAttributes,'name') and StructKeyExists(aliasAttributes,'alias'))>
+					<cfthrow type="coldspring.MalformedAliasException" 
+						message="Xml alias definitions must contain 'name' and 'alias' attributes!">
+				</cfif>
+				
+				<cfset registerAlias(aliasAttributes.name, aliasAttributes.alias)>
+			</cfloop>
+		</cfif>
 		
 	</cffunction>
 	
@@ -384,12 +400,13 @@
 	<cffunction name="containsBean" access="public" output="false" returntype="boolean"
 				hint="returns true if the BeanFactory contains a bean definition or bean instance that matches the given name">
 		<cfargument name="beanName" required="true" type="string" hint="name of bean to look for"/>
-		
-		<cfif structKeyExists(variables.beanDefs, arguments.beanName)>
+		<!--- the supplied 'beanName' could be an alias, so we want to resolve that to the concrete name first --->
+		<cfset var resolvedName = resolveBeanName(arguments.beanName) />
+		<cfif structKeyExists(variables.beanDefs, resolvedName)>
 			<cfreturn true />
 		<cfelse>
 			<cfif isObject(variables.parent)>
-				<cfreturn variables.parent.containsBean(arguments.beanName)>
+				<cfreturn variables.parent.containsBean(resolvedName)>
 			<cfelse>
 				<cfreturn false />
 			</cfif>
@@ -414,6 +431,7 @@
 		<cfreturn ""/>
 	</cffunction>	
 	
+	<!--- DEPRECIATED?? IS THIS METHOD USED EVER??? --->
 	<cffunction name="isSingleton" access="public" returntype="boolean" output="false"
 				hint="returns whether the bean with the specified name is a singleton">
 		<cfargument name="beanName" type="string" required="true" hint="the bean name to look for"/>
@@ -430,27 +448,30 @@
 				hint="returns an instance of the bean registered under the given name. Depending on how the bean was configured, either a singleton and thus shared instance or a newly created bean will be returned. A BeansException will be thrown when either the bean could not be found (in which case it'll be a NoSuchBeanDefinitionException), or an exception occurred while instantiating and preparing the bean">
 		<cfargument name="beanName" required="true" type="string" hint="name of bean to look for"/>
 		<cfset var returnFactory = Left(arguments.beanName,1) IS '&'>
+		<cfset var resolvedName = "" />
 		<cfif returnFactory>
 			<cfset arguments.beanName = Right(arguments.beanName,Len(arguments.beanName)-1) />
 		</cfif>
-		<cfif localFactoryContainsBean(arguments.beanName)>
-			<cfif variables.beanDefs[arguments.beanName].isSingleton()>
-				<cfif variables.beanDefs[arguments.beanName].isConstructed()>
+		<!--- the supplied 'beanName' could be an alias, so we want to resolve that to the concrete name first --->
+		<cfset resolvedName = resolveBeanName(arguments.beanName) />
+		<cfif localFactoryContainsBean(resolvedName)>
+			<cfif variables.beanDefs[resolvedName].isSingleton()>
+				<cfif variables.beanDefs[resolvedName].isConstructed()>
 					<!--- <cfreturn getBeanFromSingletonCache(arguments.beanName) > --->
-					<cfreturn variables.beanDefs[arguments.beanName].getInstance(returnFactory) />
+					<cfreturn variables.beanDefs[resolvedName].getInstance(returnFactory) />
 				<cfelse>
 					<!--- lazy-init happens here --->
-					<cfset constructBean(arguments.beanName)/>	
+					<cfset constructBean(resolvedName)/>	
 				</cfif>
-				<cfreturn variables.beanDefs[arguments.beanName].getInstance(returnFactory) />
+				<cfreturn variables.beanDefs[resolvedName].getInstance(returnFactory) />
 			<cfelse>
 				<!--- return a new instance of this bean def --->
-				<cfreturn constructBean(arguments.beanName,true)/>
+				<cfreturn constructBean(resolvedName,true)/>
 			</cfif>	
 		<cfelseif isObject(variables.parent)> <!--- AND variables.parent.containsBean(arguments.beanName)> --->
-			<cfreturn variables.parent.getBean(arguments.beanName)>			
+			<cfreturn variables.parent.getBean(resolvedName)>			
 		<cfelse>
-			<cfthrow type="coldspring.NoSuchBeanDefinitionException" detail="Bean definition for bean named: #arguments.beanName# could not be found."/>
+			<cfthrow type="coldspring.NoSuchBeanDefinitionException" detail="Bean definition for bean named: #resolvedName# could not be found."/>
 		</cfif>		
 		
 	</cffunction>
@@ -810,25 +831,29 @@
 	<cffunction name="getBeanDefinition" access="public" returntype="coldspring.beans.BeanDefinition" output="false"
 				hint="retrieves a bean definition for the specified bean">
 		<cfargument name="beanName" type="string" required="true" />
-		<cfif not StructKeyExists(variables.beanDefs, beanName)>
+		<!--- the supplied 'beanName' could be an alias, so we want to resolve that to the concrete name first --->
+		<cfset var resolvedName = resolveBeanName(arguments.beanName) />
+		<cfif not StructKeyExists(variables.beanDefs, resolvedName)>
 			<cfif isObject(variables.parent)>
-				<cfreturn variables.parent.getBeanDefinition(arguments.beanName)>
+				<cfreturn variables.parent.getBeanDefinition(resolvedName)>
 			<cfelse>
 				<cfthrow type="coldspring.MissingBeanReference" message="There is no bean registered with the factory with the id #arguments.beanName#" />
 			</cfif>
 		<cfelse>
-			<cfreturn variables.beanDefs[arguments.beanName] />
+			<cfreturn variables.beanDefs[resolvedName] />
 		</cfif>
 	</cffunction>
 	
 	<cffunction name="beanDefinitionExists" access="public" returntype="boolean" output="false"
 				hint="searches all known factories (parents) to see if bean definition for the specified bean exists">
 		<cfargument name="beanName" type="string" required="true" />
-		<cfif StructKeyExists(variables.beanDefs, beanName)>
+		<!--- the supplied 'beanName' could be an alias, so we want to resolve that to the concrete name first --->
+		<cfset var resolvedName = resolveBeanName(arguments.beanName) />
+		<cfif StructKeyExists(variables.beanDefs, resolvedName)>
 			<cfreturn true />
 		<cfelse>
 			<cfif isObject(variables.parent)>
-				<cfreturn variables.parent.beanDefinitionExists(arguments.beanName)>
+				<cfreturn variables.parent.beanDefinitionExists(resolvedName)>
 			<cfelse>
 				<cfreturn false />
 			</cfif>

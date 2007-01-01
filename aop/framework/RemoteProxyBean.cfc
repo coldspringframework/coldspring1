@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: RemoteProxyBean.cfc,v 1.5 2006/06/25 13:22:43 rossd Exp $
+ $Id: RemoteProxyBean.cfc,v 1.6 2007/01/01 17:41:36 scottc Exp $
  $Log: RemoteProxyBean.cfc,v $
+ Revision 1.6  2007/01/01 17:41:36  scottc
+ added support for <alias name="fromName" alias="toName"/> tag
+
  Revision 1.5  2006/06/25 13:22:43  rossd
  removing debug code
 
@@ -69,7 +72,7 @@
 		</cftry>
 	</cffunction>
 
-	<cffunction name="callMethod" access="public" returntype="any">
+	<cffunction name="callMethod" access="private" returntype="any">
 		<cfargument name="methodName" type="string" required="true" />
 		<cfargument name="args" type="struct" required="true" />
 		<cfset var adviceChain = 0 />
