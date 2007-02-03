@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.41 2007/01/01 17:41:36 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.42 2007/02/03 18:54:46 wiersma Exp $
 
 ---> 
 
@@ -61,9 +61,8 @@
 		<cfset var xmlFiles = structNew()>
 
 		<cfset findImports(xmlFiles,arguments.beanDefinitionFileName)>
-		<cfloop collection="#xmlFiles#" item="i">
-			<cfset loadBeansFromXmlObj(xmlFiles[i])/>
-		</cfloop>
+
+		<cfset processLoadBeans(xmlFiles)>
 	</cffunction>
 
 	<cffunction name="findImports" access="public" returntype="void" hint="finds and caches include file paths">
@@ -85,7 +84,6 @@
 						detail="You have tried to use or include a file (#arguments.importedFilename#) that does not exist using either absolute, relative, or mapped paths." />
 			</cfif>
 
-
 			<cfset xml = xmlParse(arguments.importedFilename)>
 			<cfset imports = xmlSearch(xml,"/beans/import")>
 
@@ -102,6 +100,39 @@
 					<cfset findImports(arguments.importFiles,resource)>
 				</cfloop>
 			</cfif>
+		</cfif>
+
+	</cffunction>
+
+	<cffunction name="findImportsFromXmlObj" access="public" returntype="void" hint="finds and caches include file paths">
+		<cfargument name="importFiles" type="struct" required="true" />
+		<cfargument name="beanDefinitionXmlObj" type="any" required="true" hint="I am parsed xml bean defs"/>
+		<cfset var i = 0>
+		<cfset var xml = 0>
+		<cfset var imports = 0>
+		<cfset var resource = "">
+
+		<cfset xml = xmlParse(arguments.beanDefinitionXmlObj)>
+		<cfset imports = xmlSearch(xml,"/beans/import")>
+		
+		<cfset structInsert(arguments.importFiles,"root",xml,false)>
+		
+		<cfif arrayLen(imports) GT 0>
+			<cfloop from="1" to="#arrayLen(imports)#" index="i">
+				<cfset resource = imports[i].xmlAttributes.resource>
+				<cfif left(resource,1) IS "/" and not fileExists(resource)>
+					<cfset resource = expandPath(resource)>
+				<cfelseif left(resource,1) is ".">
+					<cfset resource = shrinkFullRelativePath(expandPath(resource))>
+				</cfif>
+				
+				<cfif not fileExists(resource)>
+					<cfthrow message="The file #resource# does not exist!"
+							detail="You have tried to use or include a file (#resource#) that does not exist using either absolute, relative, or mapped paths." />
+				</cfif>
+
+				<cfset findImports(arguments.importFiles,resource)>
+			</cfloop>
 		</cfif>
 
 	</cffunction>
@@ -158,49 +189,49 @@
 		<cfargument name="beanDefinitionFile" type="string" required="true" hint="I am the location of the bean definition xml file"/>
 		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
 	
-		<cfset var cffile = 0/>
-		<cfset var rawBeanDefXML = ""/>
+		<cfset var xmlFiles = structNew()/>
+
+		<cfset findImports(xmlFiles,arguments.beanDefinitionFile)>
 		
-		<cffile action="read" 
-				file="#arguments.beanDefinitionFile#"	 
-				variable="rawBeanDefXML"/>
-				
-		<cfset loadBeanDefinitions(xmlParse(rawBeanDefXML))/>
-		
-		<cfset processFactoryPostProcessors() />
-		
-		<cfif arguments.ConstructNonLazyBeans>
-			<cfset initNonLazyBeans()/>
-		</cfif>
-			
+		<cfset processLoadBeans(xmlFiles, arguments.ConstructNonLazyBeans)>				
 	</cffunction>
 				
 	<cffunction name="loadBeansFromXmlRaw" returntype="void" access="public" hint="loads bean definitions into the bean factory from supplied raw xml">
 		<cfargument name="beanDefinitionXml" type="string" required="true" hint="I am raw unparsed xml bean defs"/>
 		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
-	
-		<cfset loadBeanDefinitions(xmlParse(arguments.beanDefinitionXml))/>
 		
-		<cfset processFactoryPostProcessors() />
+		<cfset var xmlParsed = xmlParse(arguments.beanDefinitionXml)>
 		
-		<cfif arguments.ConstructNonLazyBeans>
-			<cfset initNonLazyBeans()/>
-		</cfif>
-			
+		<cfset loadBeansFromXmlObj(xmlParsed, arguments.ConstructNonLazyBeans)>
 	</cffunction>
 
 	<cffunction name="loadBeansFromXmlObj" returntype="void" access="public" hint="loads bean definitions into the bean factory from supplied cf xml object">
 		<cfargument name="beanDefinitionXmlObj" type="any" required="true" hint="I am parsed xml bean defs"/>
 		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
-	
-		<cfset loadBeanDefinitions(arguments.beanDefinitionXmlObj)/>
+		
+		<cfset var xmlFiles = structNew()>
+
+
+		<cfset findImportsFromXmlObj(xmlFiles, arguments.beanDefinitionXmlObj)>
+		
+		<cfset processLoadBeans(xmlFiles, arguments.ConstructNonLazyBeans)>
+	</cffunction>
+
+	<cffunction name="processLoadBeans" access="private" returntype="void" hint="perfoms the loadBeanDefinations, processFactoryPostProcessors and initNonLazyBeans">
+		<cfargument name="beanDefinitions" type="struct" required="true" hint="I am a structure containing the beans definition"/>
+		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
+
+		<cfset var i = ""/>
+		
+		<cfloop collection="#arguments.beanDefinitions#" item="i">
+			<cfset loadBeanDefinitions(arguments.beanDefinitions[i])/>
+		</cfloop>		
 		
 		<cfset processFactoryPostProcessors() />
 		
 		<cfif arguments.ConstructNonLazyBeans>
 			<cfset initNonLazyBeans()/>
 		</cfif>
-			
 	</cffunction>
 		
 	<cffunction name="loadBeanDefinitions" access="public" returntype="void"
