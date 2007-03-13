@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.43 2007/02/09 22:38:42 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.44 2007/03/13 02:12:03 wiersma Exp $
 
 ---> 
 
@@ -73,6 +73,7 @@
 		<cfset var imports = 0>
 		<cfset var currentPath = getDirectoryFromPath(arguments.importedFilename)>
 		<cfset var resource = "">
+		<cfset var fileContent = "" />
 
 		<cfif not structKeyExists(arguments.importFiles,arguments.importedFilename)>
 			<cfif not fileExists(arguments.importedFilename)>
@@ -83,8 +84,10 @@
 				<cfthrow message="The file #arguments.importedFilename# does not exist!"
 						detail="You have tried to use or include a file (#arguments.importedFilename#) that does not exist using either absolute, relative, or mapped paths." />
 			</cfif>
-
-			<cfset xml = xmlParse(arguments.importedFilename)>
+			
+			<cffile action="read" file="#arguments.importedFilename#" variable="fileContent" />
+			
+			<cfset xml = xmlParse(fileContent)>
 			<cfset imports = xmlSearch(xml,"/beans/import")>
 
 			<cfset structInsert(arguments.importFiles,arguments.importedFilename,xml,false)>
@@ -92,7 +95,7 @@
 			<cfif arrayLen(imports) GT 0>
 				<cfloop from="1" to="#arrayLen(imports)#" index="i">
 					<cfset resource = imports[i].xmlAttributes.resource>
-					<cfif left(resource,1) IS "/" and not fileExists(resource)>
+					<cfif left(resource,1) is "/">
 						<cfset resource = expandPath(resource)>
 					<cfelseif left(resource,1) is ".">
 						<cfset resource = shrinkFullRelativePath(currentPath & resource)>
@@ -120,7 +123,7 @@
 		<cfif arrayLen(imports) GT 0>
 			<cfloop from="1" to="#arrayLen(imports)#" index="i">
 				<cfset resource = imports[i].xmlAttributes.resource>
-				<cfif left(resource,1) IS "/" and not fileExists(resource)>
+				<cfif left(resource,1) is "/">
 					<cfset resource = expandPath(resource)>
 				<cfelseif left(resource,1) is ".">
 					<cfset resource = shrinkFullRelativePath(expandPath(resource))>
