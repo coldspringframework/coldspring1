@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: RemoteFactoryBean.cfc,v 1.4 2006/05/14 19:47:10 scottc Exp $
+  $Id: RemoteFactoryBean.cfc,v 1.5 2007/06/02 21:02:57 scottc Exp $
   $Log: RemoteFactoryBean.cfc,v $
+  Revision 1.5  2007/06/02 21:02:57  scottc
+  Removed ALL output from bean factory and aop, no system out, no logging. Added support for placeholders in map and list tags, major restructuring of bean factory, abstract bean factory, bean property
+
   Revision 1.4  2006/05/14 19:47:10  scottc
   Changed the way that the aop ProxyFactories build the advisor chains, the advisors are now supplied by the bean factory from inside the constructBean method, which handles nonSingletons correctly. Also a small tweek for CSP-52 where the beanFactory wasn't being given to the RemoteFactoryBean
 
@@ -56,9 +59,9 @@
 	<cfset variables.proxyAdviceChains = 0 />
 			
 	<cffunction name="init" access="public" returntype="coldspring.aop.framework.RemoteFactoryBean" output="false">
-		<cfset var category = CreateObject("java", "org.apache.log4j.Category") />
+		<!--- <cfset var category = CreateObject("java", "org.apache.log4j.Category") />
 		<cfset variables.logger = category.getInstance('coldspring.aop') />
-		<cfset variables.logger.info("ProxyFactoryBean created") />
+		<cfset variables.logger.info("ProxyFactoryBean created") /> --->
 		<cfreturn this />
 	</cffunction>
 	
@@ -67,7 +70,7 @@
 		<cfset variables.serviceName = arguments.serviceName />
 	</cffunction>
 	
-	<!--- DEPRECIATED, in favor of absolure and relative path --->
+	<!--- DEPRECIATED, in favor of absolute and relative path --->
 	<cffunction name="setServiceLocation" access="public" returntype="void" output="false">
 		<cfargument name="serviceLocation" type="string" required="true" />
 		<cfset variables.serviceLocation = arguments.serviceLocation />
@@ -115,10 +118,10 @@
 	
 	<cffunction name="getObject" access="public" returntype="any" output="true">
 		<cfif not isConstructed()>
-			<cfset variables.logger.info("RemopteFactoryBean.getObject() creating new remote proxy") />
+			<!--- <cfset variables.logger.info("RemopteFactoryBean.getObject() creating new remote proxy") /> --->
 			<cfset createRemoteProxy() />
 		</cfif>
-		<cfset variables.logger.info("RemopteFactoryBean.getObject() returning target instance") />
+		<!--- <cfset variables.logger.info("RemopteFactoryBean.getObject() returning target instance") /> --->
 		<cfreturn variables.target />
 	</cffunction>
 	
@@ -142,6 +145,18 @@
 		<cfset var functionString = '' />
 		<cfset var advisorIx = 0 />
 		<cfset var advice = 0 />
+		<cfset var bfUtils = createObject("component","coldspring.beans.util.BeanFactoryUtils").init()/>
+		<cfset var bfScope = "application"/>
+		
+		<!--- ok, very first thing, make sure this factory is going to be accessable to the generated proxies --->
+		<cfif len(variables.beanFactoryScope)>
+			<cfset bfScope = variables.beanFactoryScope/>
+		</cfif>
+		<cfif len(variables.beanFactoryName) and not bfUtils.namedFactoryExists(bfScope,variables.beanFactoryName)>
+			<cfset bfUtils.setNamedFactory(bfUtils,variables.beanFactoryName,variables.beanFactory)/>
+		<cfelseif not bfUtils.defaultFactoryExists(bfScope)>
+			<cfset bfUtils.setDefaultFactory(bfUtils,variables.beanFactory)/>
+		</cfif>
 		
 		<!--- first we need to build the advisor to search for pointcut matches --->
 		<cfset methodPointcutAdvisor = 

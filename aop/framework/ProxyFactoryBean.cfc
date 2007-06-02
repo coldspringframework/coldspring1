@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.13 2007/01/01 17:41:36 scottc Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.14 2007/06/02 21:02:57 scottc Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.14  2007/06/02 21:02:57  scottc
+  Removed ALL output from bean factory and aop, no system out, no logging. Added support for placeholders in map and list tags, major restructuring of bean factory, abstract bean factory, bean property
+
   Revision 1.13  2007/01/01 17:41:36  scottc
   added support for <alias name="fromName" alias="toName"/> tag
 
@@ -61,9 +64,9 @@
 	<cfset variables.constructed = false />
 			
 	<cffunction name="init" access="public" returntype="coldspring.aop.framework.ProxyFactoryBean" output="false">
-		<cfset var category = CreateObject("java", "org.apache.log4j.Category") />
+		<!--- <cfset var category = CreateObject("java", "org.apache.log4j.Category") />
 		<cfset variables.logger = category.getInstance('coldspring.aop') />
-		<cfset variables.logger.info("ProxyFactoryBean created") />
+		<cfset variables.logger.info("ProxyFactoryBean created") /> --->
 		<cfreturn this />
 	</cffunction>
 	
@@ -125,10 +128,10 @@
 	<cffunction name="getObject" access="public" returntype="any" output="true">
 		<cfif isSingleton()>
 			<cfif not isConstructed()>
-				<cfset variables.logger.info("ProxyFactoryBean.getObject() creating new proxy instance") />
+				<!--- <cfset variables.logger.info("ProxyFactoryBean.getObject() creating new proxy instance") /> --->
 				<cfreturn createProxyInstance() />
 			<cfelse>
-				<cfset variables.logger.info("ProxyFactoryBean.getObject() returning cached proxy instance") />
+				<!--- <cfset variables.logger.info("ProxyFactoryBean.getObject() returning cached proxy instance") /> --->
 				<cfreturn variables.proxyObject />
 			</cfif>
 		<cfelse>
@@ -210,9 +213,9 @@
 		<cfset var ix = 0 />
 		<cfif isArray(variables.interceptorNames)>
 			<cfloop from="1" to="#ArrayLen(variables.interceptorNames)#" index="ix">
-				<cfif variables.logger.isInfoEnabled()>
+				<!--- <cfif variables.logger.isInfoEnabled()>
 					<cfset variables.logger.info("ProxyFactoryBean.getObject() buildAdvisorChain adding Advisor: " & variables.interceptorNames[ix]) />
-				</cfif>
+				</cfif> --->
 				<!--- new update, now we'll try to add as type advisor, if that fails
 					  we'll try to create a new default advisor and add as an avice --->
 				<!--- <cfset advisorBean = getBeanFactory().getBean(variables.interceptorNames[ix]) /> --->
@@ -223,7 +226,7 @@
 				
 				
 				<!--- retrieve the advisor's bean def --->
-				<cfset advisorBeanDef = getBeanFactory().getBeanDefinition(variables.interceptorNames[ix]) />
+				<cfset advisorBeanDef = getBeanFactory().getMergedBeanDefinition(variables.interceptorNames[ix]) />
 				
 				<cfif advisorBeanDef.isSingleton()>
 					<cfset advisorBean = advisorBeanDef.getInstance() />

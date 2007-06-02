@@ -42,6 +42,7 @@
 		<cfset var proxy = 0 />
 		<cfset var debug = 0 />
 		
+		<!--- todo: note the usage here of the 'addAdviceWithDefaultAdvisor' method! Please depreciate! --->
 		<cfset factory.setTarget(variables.target) />
 		
 		<cfset factory.addAdvisor(npa) />

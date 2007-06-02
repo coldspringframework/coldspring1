@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.13 2006/03/06 02:44:16 scorfield Exp $
+ $Id: AopProxyUtils.cfc,v 1.14 2007/06/02 21:02:57 scottc Exp $
  $Log: AopProxyUtils.cfc,v $
+ Revision 1.14  2007/06/02 21:02:57  scottc
+ Removed ALL output from bean factory and aop, no system out, no logging. Added support for placeholders in map and list tags, major restructuring of bean factory, abstract bean factory, bean property
+
  Revision 1.13  2006/03/06 02:44:16  scorfield
  Chris spotted my condition on whether to attempt to return a value from the generated function, whilst safe, was not correct for the omitted returntype case.
 
@@ -46,12 +49,12 @@
 			hint="Utilities for building Proxy Beans" 
 			output="false">
 			
-	<cfset variables.logger = 0 />
+	<!--- <cfset variables.logger = 0 /> --->
 			
 	<cffunction name="init" access="public" returntype="coldspring.aop.framework.AopProxyUtils" output="false">
-		<cfset var category = CreateObject("java", "org.apache.log4j.Category") />
+		<!--- <cfset var category = CreateObject("java", "org.apache.log4j.Category") />
 		<cfset variables.logger = category.getInstance('coldspring.aop') />
-		<cfset variables.logger.info("AopProxyUtils created") />
+		<cfset variables.logger.info("AopProxyUtils created") /> --->
 		<cfreturn this />
 	</cffunction>
 	
@@ -66,9 +69,9 @@
 		<cfset var target = CreateObject('component',objType) />
 		<cfset var system = CreateObject('java','java.lang.System') />
 		
-		<cfif variables.logger.isInfoEnabled()>
+		<!--- <cfif variables.logger.isInfoEnabled()>
 			<cfset variables.logger.info("AopProxyUtils.clone() cloning object " & metaData.name) />
-		</cfif>
+		</cfif> --->
 		<!--- now we'll loop through the object's methods, if it's a setter and there's a getter, we'll call set on the
 			  target with it --->
 		<cfloop from="1" to="#arraylen(metaData.functions)#" index="functionIx">
@@ -90,18 +93,18 @@
 						  <cfinvokeargument name="#metaData.functions[functionIx].parameters[1].name#" value="#propVal#" />
 					</cfinvoke>
 					<cfcatch>
-						<cfif variables.logger.isDebugEnabled()>
+						<!--- <cfif variables.logger.isDebugEnabled()>
 							<cfset variables.logger.error("[coldspring.aop.AspectCloneError] Error reading: Error setting property #property#, #cfcatch.Detail#") />
-						</cfif>
+						</cfif> --->
 						<cfthrow type="coldspring.aop.AspectCloneError" message="Error setting property #property#, #cfcatch.Detail#" />
 					</cfcatch>
 				</cftry>
 			</cfif>
 		</cfloop>
 		
-		<cfif variables.logger.isInfoEnabled()>
+		<!--- <cfif variables.logger.isInfoEnabled()>
 			<cfset variables.logger.info("AopProxyUtils.clone() created new object: " & objType & "@"& FormatBaseN(system.identityHashCode(target), 16) ) />
-		</cfif>
+		</cfif> --->
 		
 		<cfreturn target />
 	</cffunction>
@@ -115,9 +118,9 @@
 		<cfset var beanDescription = '' />
 		<cfset var proxyBean = 0 />
 		
-		<cfif variables.logger.isInfoEnabled()>
+		<!--- <cfif variables.logger.isInfoEnabled()>
 			<cfset variables.logger.info("AopProxyUtils.createBaseProxyBean() creating proxy for " & metaData.name) />
-		</cfif>
+		</cfif> --->
 		
 		<!--- first load the AopProxyBean definition (the actual cfc file) --->
 		<cfset beanDescription = loadBeanFile("#path#/AopProxyBean.cfc") />
@@ -144,9 +147,9 @@
 			 <!--- delete the file --->
 			 <cffile action="delete" file="#path#/tmp/#tmpBean#.cfc" />
 			 <cfcatch>
-				<cfif variables.logger.isDebugEnabled()>
+				<!--- <cfif variables.logger.isDebugEnabled()>
 					<cfset variables.logger.error("[coldspring.aop.AopProxyError] Error reading: Error Loading: #tmpBean#, #cfcatch.Detail#") />
-				</cfif>
+				</cfif> --->
 			 	<cfthrow type="coldspring.aop.AopProxyError" message="Error Loading: #tmpBean#, #cfcatch.Detail#" />
 			 </cfcatch>
 		</cftry>
@@ -166,9 +169,9 @@
 		<cfset var path = GetDirectoryFromPath(getMetaData(this).path) />
 		<cfset var beanDescription = '' />
 		
-		<cfif variables.logger.isInfoEnabled()>
+		<!--- <cfif variables.logger.isInfoEnabled()>
 			<cfset variables.logger.info("AopProxyUtils.createRemoteProxyBean() creating remote proxy for " & serviceName) />
-		</cfif>
+		</cfif> --->
 		
 		<!--- first load the AopProxyBean definition (the actual cfc file) --->
 		<cfset beanDescription = loadBeanFile("#path#/RemoteProxyBean.cfc") />
@@ -186,9 +189,9 @@
 		<cftry>
 			<cffile action="write" file="#arguments.serviceLocation#/#arguments.serviceName#.cfc" output="#beanDescription#" />
 			 <cfcatch>
-				<cfif variables.logger.isDebugEnabled()>
+				<!--- <cfif variables.logger.isDebugEnabled()>
 					<cfset variables.logger.error("[coldspring.aop.AopProxyError] Error reading: Error writing: #arguments.serviceLocation#/#arguments.serviceName#.cfc, #cfcatch.Detail#") />
-				</cfif>
+				</cfif> --->
 			 	<cfthrow type="coldspring.aop.AopProxyError" message="Error Loading: #arguments.serviceLocation#/#arguments.serviceName#.cfc, #cfcatch.Detail#" />
 			 </cfcatch>
 		</cftry>
@@ -203,9 +206,9 @@
 			 <!--- delete the file --->
 			 <cffile action="delete" file="#arguments.serviceLocation#/#arguments.serviceName#.cfc" />
 			<cfcatch>
-				<cfif variables.logger.isDebugEnabled()>
+				<!--- <cfif variables.logger.isDebugEnabled()>
 					<cfset variables.logger.error("[coldspring.aop.AopProxyError] Error reading: Error removing: #arguments.serviceLocation#/#arguments.serviceName#.cfc, #cfcatch.Detail#") />
-				</cfif>
+				</cfif> --->
 			 	<cfthrow type="coldspring.aop.AopProxyError" message="Error removing: #arguments.serviceLocation#/#arguments.serviceName#.cfc, #cfcatch.Detail#" />
 			 </cfcatch>
 		</cftry>
@@ -223,9 +226,9 @@
 		<cfset var tmpFunction = "fnct_" & REReplace(CreateUUID(),"[\W+]","","all") />
 		<cfset var tmpFile = "tmp/" & tmpFunction & ".functions" />
 		
-		<cfif variables.logger.isInfoEnabled()>
+		<!--- <cfif variables.logger.isInfoEnabled()>
 			<cfset variables.logger.info("AopProxyUtils.createUDF() adding method " & metaData.name) />
-		</cfif>
+		</cfif> --->
 		
 		<!--- <cfset var path = ExpandPath('coldspring.aop.framework.tmp') /> --->
 		<!--- generate function string --->
@@ -239,9 +242,9 @@
 			 <!--- delete the file --->
 			 <cffile action="delete" file="#path#/#tmpFile#" />
 			 <cfcatch>
-				<cfif variables.logger.isDebugEnabled()>
+				<!--- <cfif variables.logger.isDebugEnabled()>
 					<cfset variables.logger.error("[coldspring.aop.UdfError] Error reading: Error Loading: #tmptmpFileBean#, #cfcatch.Detail#") />
-				</cfif>
+				</cfif> --->
 			 	<cfthrow type="coldspring.aop.UdfError" message="Error Loading: #tmpFile#, #cfcatch.Detail#" />
 			 </cfcatch>
 		</cftry>
@@ -320,9 +323,9 @@
 		<cftry>
 			<cffile action="read" file="#fileName#" variable="fileText" />
 			<cfcatch>
-				<cfif variables.logger.isDebugEnabled()>
+				<!--- <cfif variables.logger.isDebugEnabled()>
 					<cfset variables.logger.error("[coldspring.aop.AopProxyError]: Error reading: #fileName#, #cfcatch.Detail#") />
-				</cfif>
+				</cfif> --->
 				<cfthrow type="coldspring.aop.AopProxyError" message="Error reading: #fileName#, #cfcatch.Detail#" />
 			</cfcatch>
 		</cftry>

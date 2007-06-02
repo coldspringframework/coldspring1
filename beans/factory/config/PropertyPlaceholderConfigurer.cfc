@@ -15,14 +15,14 @@
   limitations under the License.
 		
 			
- $Id: PropertyPlaceholderConfigurer.cfc,v 1.1 2006/08/30 00:11:06 scottc Exp $
+ $Id: PropertyPlaceholderConfigurer.cfc,v 1.2 2007/06/02 21:02:57 scottc Exp $
 
 ---> 
 
 <cfcomponent name="PropertyPlaceholderConfigurer" 
 			displayname="PropertyPlaceholderConfigurer" 
 			hint="Resolves placeholders in bean property values of context definitions" 
-			output="true">
+			output="false">
 				
 	<cfset variables.beanID = "" />
 			
