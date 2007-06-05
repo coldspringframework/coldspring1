@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.19 2007/06/05 20:20:12 scottc Exp $
+ $Id: BeanProperty.cfc,v 1.20 2007/06/05 20:22:36 scottc Exp $
 
 ---> 
 
@@ -220,8 +220,8 @@
 					<cfthrow type="BeanProperty.PlaceholderTypeError" message="The supplied value for property placeholder #propertyPlaceholder# is not of type #returnType#. This error occured while processing a beanFactoryPostProcessor!"/>
 				</cfif>
 			<cfelseif StructKeyExists(beanFactoryDefaultProperties, propertyPlaceholder)>
-				<cfif (returnType eq "list" and isArray(arguments.properties[propertyPlaceholder])) or 
-					 (returnType eq "map" and isStruct(arguments.properties[propertyPlaceholder]))>
+				<cfif (returnType eq "list" and isArray(beanFactoryDefaultProperties[propertyPlaceholder])) or 
+					 (returnType eq "map" and isStruct(beanFactoryDefaultProperties[propertyPlaceholder]))>
 					<cfreturn beanFactoryDefaultProperties[propertyPlaceholder] />
 				<cfelse>
 					<cfthrow type="BeanProperty.PlaceholderTypeError" message="The supplied value for property placeholder #propertyPlaceholder# is not of type #returnType#. This error occured while while resolving properties with the default bean factory properties!"/>
