@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.18 2007/06/02 21:02:57 scottc Exp $
+ $Id: BeanProperty.cfc,v 1.19 2007/06/05 20:20:12 scottc Exp $
 
 ---> 
 
@@ -120,9 +120,17 @@
 			<cfcase value="list,map">
 				<!--- list + map properties get special parsing, set our internal "value" to be the result --->
 				<cfif StructKeyExists(arguments, "properties")>
-					<cfset setValue(parseEntries(child.xmlChildren,child.xmlName, arguments.properties)) />
+					<cfif len(child.xmlText) gt 2 and left(child.xmlText,2) eq "${">
+						<cfset setValue(parseEntries(child.xmlText,child.xmlName,arguments.properties)) />
+					<cfelse>
+						<cfset setValue(parseEntries(child.xmlChildren,child.xmlName,arguments.properties)) />
+					</cfif>
 				<cfelse>
-					<cfset setValue(parseEntries(child.xmlChildren,child.xmlName)) />
+					<cfif len(child.xmlText) gt 2 and left(child.xmlText,2) eq "${">
+						<cfset setValue(parseEntries(child.xmlText,child.xmlName)) />
+					<cfelse>
+						<cfset setValue(parseEntries(child.xmlChildren,child.xmlName)) />
+					</cfif>
 				</cfif>
 			</cfcase>
 			
@@ -205,15 +213,15 @@
 				OR look for the property in the passed in struct ( do that first, as we may be postProcessing ) --->
 			<cfif StructKeyExists(arguments, "properties")>
 				<cfif StructKeyExists(arguments.properties, propertyPlaceholder) and 
-						((returnType eq "array" and isArray(arguments.properties[propertyPlaceholder])) or 
-						 (returnType eq "struct" and isStruct(arguments.properties[propertyPlaceholder])))>
+						((returnType eq "list" and isArray(arguments.properties[propertyPlaceholder])) or 
+						 (returnType eq "map" and isStruct(arguments.properties[propertyPlaceholder])))>
 					<cfreturn arguments.properties[propertyPlaceholder] />
 				<cfelse>
 					<cfthrow type="BeanProperty.PlaceholderTypeError" message="The supplied value for property placeholder #propertyPlaceholder# is not of type #returnType#. This error occured while processing a beanFactoryPostProcessor!"/>
 				</cfif>
 			<cfelseif StructKeyExists(beanFactoryDefaultProperties, propertyPlaceholder)>
-				<cfif (returnType eq "array" and isArray(arguments.properties[propertyPlaceholder])) or 
-					 (returnType eq "struct" and isStruct(arguments.properties[propertyPlaceholder]))>
+				<cfif (returnType eq "list" and isArray(arguments.properties[propertyPlaceholder])) or 
+					 (returnType eq "map" and isStruct(arguments.properties[propertyPlaceholder]))>
 					<cfreturn beanFactoryDefaultProperties[propertyPlaceholder] />
 				<cfelse>
 					<cfthrow type="BeanProperty.PlaceholderTypeError" message="The supplied value for property placeholder #propertyPlaceholder# is not of type #returnType#. This error occured while while resolving properties with the default bean factory properties!"/>

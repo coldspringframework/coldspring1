@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.34 2007/06/02 21:02:57 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.35 2007/06/05 20:20:12 scottc Exp $
 
 --->
 
@@ -57,6 +57,10 @@
 	<cfset variables.instanceData.factoryPostProcessor = false/>
 	<!--- whether this bean is a beanPostProcessor --->
 	<cfset variables.instanceData.beanPostProcessor = false/>
+	
+	<!--- whether the dependencies have actually been checked already --->
+	<cfset variables.instanceData.dependenciesChecked = false />
+	<cfset variables.instanceData.dependentBeans = 0 />
 	
 	<!--- support for 'abstract' and 'parent' bean definitions --->	
 	<cfset variables.instanceData.abstract = false>
@@ -527,6 +531,10 @@
 			
 		</cfloop>
 		
+		<!--- save the dependent beans 
+		<cfset variables.instanceData.dependentBeans = arguments.dependentBeans />
+		<cfset variables.instanceData.dependenciesChecked = true /> --->
+		
 	</cffunction>
 	
 	<cffunction name="getBeanInstance" access="public" output="false" returntype="any" 
@@ -570,6 +578,14 @@
 		<cfelse>
 			<cfreturn true/>		
 		</cfif>
+	</cffunction>
+	
+	<cffunction name="dependenciesChecked" access="public" output="false" returntype="boolean">
+		<cfreturn variables.instanceData.dependenciesChecked />		
+	</cffunction>
+	
+	<cffunction name="getDependentBeans" access="public" output="false" returntype="struct">
+		<cfreturn variables.instanceData.dependentBeans />		
 	</cffunction>
 	
 	<cffunction name="getBeanFactory" access="public" output="false" returntype="struct" 

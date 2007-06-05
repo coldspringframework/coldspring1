@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.45 2007/06/02 21:02:57 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.46 2007/06/05 20:20:12 scottc Exp $
 
 ---> 
 
@@ -604,8 +604,10 @@
 		<cfset var dependentBeanDef = 0 />
 		<cfset var dependentBeanInstance = 0 />
 		<cfset var propDefs = 0 />
+		<cfset var propType = 0 />
 		<cfset var prop = 0/>
 		<cfset var argDefs = 0 />
+		<cfset var argType = "" />
 		<cfset var arg = 0/>
 		<cfset var md = '' />
 		<cfset var functionIndex = '' />
@@ -617,9 +619,17 @@
 		
 		<cfset var dependentBeanNames = "" />
 		<cfset var dependentBeans = StructNew() />
+		
+		<cfset var mergedBeanDefinition = getMergedBeanDefinition(arguments.beanName) />
+		
+		<!--- <cfif mergedBeanDefinition.dependenciesChecked()>
+			<cfset dependentBeans = mergedBeanDefinition.getDependentBeans()>
+		<cfelse>
+		</cfif> --->
 		<cfset dependentBeans.allBeans = arguments.beanName />
 		<cfset dependentBeans.orderedBeans = "" />
-		<cfset getMergedBeanDefinition(arguments.beanName).getDependencies(dependentBeans) />
+		<cfset mergedBeanDefinition.getDependencies(dependentBeans) />
+			
 		<cfset dependentBeanNames = ListPrepend(dependentBeans.orderedBeans, arguments.beanName) />
 		
 		<!--- DEBUGGING DEP LIST
@@ -627,6 +637,7 @@
 		<cfdump var="#dependentBeanNames#" label="DEPENDENCY LIST"/><cfabort/> --->
 		
 		<!--- put them all in an array, and while we're at it, make sure they're in the singleton cache, or the localbean cache --->
+		
 		<cfloop from="1" to="#ListLen(dependentBeanNames)#" index="beanDefIx">
 			<cfset beanDef = getMergedBeanDefinition(ListGetAt(dependentBeanNames,beanDefIx)) />
 			<cfset ArrayAppend(dependentBeanDefs,beanDef) />
@@ -702,15 +713,13 @@
 							returnvariable="beanInstance">
 							<!--- loop over constructor-args and pass them into the factoryMethod --->
 							<cfloop collection="#argDefs#" item="arg">
-								<cfswitch expression="#argDefs[arg].getType()#">
-									<cfcase value="value">
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#argDefs[arg].getValue()#"/>
-									</cfcase>
-									<cfcase value="list,map">
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
-									</cfcase>
-									<cfcase value="ref,bean">
-										<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
+								<cfset argType = argDefs[arg].getType() />
+								<cfif argType eq "value">
+									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#argDefs[arg].getValue()#"/>
+								<cfelseif argType eq "list" or argType eq "map">
+									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
+								<cfelseif argType eq "ref" or argType eq "bean">
+									<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
 										<cfif dependentBeanDef.isSingleton()>
 											<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
 										<cfelse>
@@ -721,8 +730,7 @@
 											</cfif>
 										</cfif>
 										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#dependentBeanInstance#"/>
-									</cfcase>								  
-								</cfswitch> 				  								
+								</cfif>	  								
 							</cfloop>
 						</cfinvoke>
 						<cfcatch type="any">
@@ -757,36 +765,17 @@
 							<cfinvoke component="#beanInstance#" method="init">
 								<!--- loop over any bean constructor-args and pass them into the init() --->
 								<cfloop collection="#argDefs#" item="arg">
-									<cfswitch expression="#argDefs[arg].getType()#">
-										<cfcase value="value">
-											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-													    	  value="#argDefs[arg].getValue()#"/>
-										</cfcase>
-	
-										<cfcase value="list,map">
-											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-													    	  value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
-										</cfcase>
-										
-										<cfcase value="ref,bean">
-											<!--- 
-											we thought we could support circular references with constructor args...
-												turns out that's not the case --->
-											<!--- 
-											<cfset dependentBeanDef = getMergedBeanDefinition(argDefs[arg].getValue()) />
-											<cfif dependentBeanDef.isSingleton()>
-												<cfset dependentBeanInstance = getBeanFromSingletonCache(dependentBeanDef.getBeanID())>
-											<cfelse>
-												<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
-											</cfif> 
-											--->
-											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-															  value="#getBean(argDefs[arg].getValue())#"/> <!--- value="#dependentBeanInstance#"  --->
-											
-										</cfcase>		
-										
-																					  
-									</cfswitch> 				  								
+									<cfset argType = argDefs[arg].getType() />
+									<cfif argType eq "value">
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+												    	  value="#argDefs[arg].getValue()#"/>
+									<cfelseif argType eq "list" or argType eq "map">
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+												    	  value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
+									<cfelseif argType eq "ref" or argType eq "bean">
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+														  value="#getBean(argDefs[arg].getValue())#"/>
+									</cfif>			  								
 								</cfloop>
 							</cfinvoke>
 							
@@ -829,45 +818,37 @@
 		
 				<!--- now do dependency injection via setters --->		
 				<cfloop collection="#propDefs#" item="prop">
-					<cfswitch expression="#propDefs[prop].getType()#">
-						<cfcase value="value">
-							<cfinvoke component="#beanInstance#"
-									  method="set#propDefs[prop].getName()#">
-								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
-									  	value="#propDefs[prop].getValue()#"/>
-							</cfinvoke>					
-						</cfcase>
-						
-						<cfcase value="map,list">
-							<cfinvoke component="#beanInstance#"
-									  method="set#propDefs[prop].getName()#">
-								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
-									  	value="#constructComplexProperty(propDefs[prop].getValue(), propDefs[prop].getType(), localBeanCache)#"/>
-							</cfinvoke>					
-						</cfcase>
-						
-						<cfcase value="ref,bean">
-					
-							<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
-							<cfif dependentBeanDef.isSingleton()>
-								<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
+					<cfset propType = propDefs[prop].getType() />
+					<cfif propType eq "value">
+						<cfinvoke component="#beanInstance#"
+								  method="set#propDefs[prop].getName()#">
+							<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
+								  	value="#propDefs[prop].getValue()#"/>
+						</cfinvoke>			
+					<cfelseif propType eq "map" or propType eq "list">
+						<cfinvoke component="#beanInstance#"
+								  method="set#propDefs[prop].getName()#">
+							<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
+								  	value="#constructComplexProperty(propDefs[prop].getValue(), propDefs[prop].getType(), localBeanCache)#"/>
+						</cfinvoke>				
+					<cfelseif propType eq "ref" or propType eq "bean">
+						<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
+						<cfif dependentBeanDef.isSingleton()>
+							<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
+						<cfelse>
+							<cfif dependentBeanDef.isFactory()>
+								<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
 							<cfelse>
-								<cfif dependentBeanDef.isFactory()>
-									<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
-								<cfelse>
-									<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
-								</cfif>
+								<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
 							</cfif>
-							
-							<cfinvoke component="#beanInstance#"
-									  method="set#propDefs[prop].getName()#">
-								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
-												  value="#dependentBeanInstance#"/>
-							</cfinvoke>
-							
-						</cfcase>		
-					</cfswitch>
-				
+						</cfif>
+						
+						<cfinvoke component="#beanInstance#"
+								  method="set#propDefs[prop].getName()#">
+							<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
+											  value="#dependentBeanInstance#"/>
+						</cfinvoke>
+					</cfif>
 				</cfloop>
 				
 				<!--- in order to inject the proper advisors into the aop proxy factories, we should do this now, 
@@ -890,7 +871,7 @@
 
 		</cfloop>
 		
-		<!--- now loop again (same direction: backwards) for init-methods  --->
+		<!--- now loop again (same direction: backwards) for init-methods --->
 		<cfloop from="#ArrayLen(dependentBeanDefs)#" to="1" index="beanDefIx" step="-1">
 			<cfset beanDef = dependentBeanDefs[beanDefIx] />
 			
