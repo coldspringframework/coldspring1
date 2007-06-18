@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: dspChannel.cfm,v 1.3 2007/06/18 11:58:50 rossd Exp $
+ $Id: dspChannel.cfm,v 1.4 2007/06/18 12:01:26 rossd Exp $
 
 --->
 
@@ -61,7 +61,7 @@
 	Recent Entries:<br />
 	<ul>
 		<cfloop query="channelEntries">
-			<li <cfif currentrow mod 2>class="hl"</cfif>><a href="#channelEntries.url#" target="_blank">#title#</a></li>
+			<li <cfif currentrow mod 2>class="hl"</cfif>><a href="#channelEntries.url#" target="_blank">#channelEntries.title#</a></li>
 		</cfloop>
 	</ul> 
 </cfif>

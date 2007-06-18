@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: dspEntries.cfm,v 1.3 2007/06/18 11:58:50 rossd Exp $
+ $Id: dspEntries.cfm,v 1.4 2007/06/18 12:01:26 rossd Exp $
 
 --->
 
@@ -40,7 +40,7 @@
 	<tr>
 		<td width="100%">
 			<table class="singleEntry" border="0" width="100%">
-				<tr><td class="entryTitle"><strong>#blogTitle#&nbsp;::&nbsp; <a href="#entries.url#" target="_blank">#title#</a></strong></td>
+				<tr><td class="entryTitle"><strong>#blogTitle#&nbsp;::&nbsp; <a href="#entries.url#" target="_blank">#entries.title#</a></strong></td>
 				<td  class="entryTitle" align="right">#authored_on#</td>
 				</tr>
 				<tr><td colspan="2">#Left(StripHTML(body),450)#</td></tr>
