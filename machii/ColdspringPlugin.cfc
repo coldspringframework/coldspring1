@@ -14,7 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 		
-$Id: ColdspringPlugin.cfc,v 1.11 2007/06/24 07:07:54 pjf Exp $
+$Id: ColdspringPlugin.cfc,v 1.12 2007/07/11 07:51:54 pjf Exp $
 
 Description:
 A Mach-II plugin that provides easy ColdSpring integration with Mach-II applications.
@@ -139,7 +139,7 @@ beanName1=machIIpropertyName1,beanName2=machIIpropertyName2
 		<cfset var parentBeanFactoryScope = getParameter('parentBeanFactoryScope', 'application')>
 
 		<!--- Get the parent props if in modules --->
-		<cfif getAppManager().getModuleName() NEQ ''>
+		<cfif StructKeyExists(getAppManager(), "getModuleName") AND getAppManager().getModuleName() NEQ ''>
 			<cfset StructAppend(props, pm.getParent().getProperties(), false) />
 		</cfif>				
 		
