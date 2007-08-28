@@ -14,7 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 		
-$Id: ColdspringProperty.cfc,v 1.4 2007/08/28 08:19:20 pjf Exp $
+$Id: ColdspringProperty.cfc,v 1.5 2007/08/28 18:26:41 pjf Exp $
 
 Description:
 A Mach-II property that provides easy ColdSpring integration with Mach-II applications.
@@ -103,12 +103,16 @@ to 'false' if not defined and indicates that a parent bean factory does not need
 The [placeFactoryInApplicationScope] parameter indicates whether or not to place the bean factory 
 in the application scope.  This parameter is used to for setting your bean factory for use as a
 parent.  The key that used is driven from the value from of the [beanFactoryPropertyName] parameter.
+If the parent uses the same value for the beanFactoryPropertyName, the module name (e.g. "_account")
+is append to the end of the key to eliminate namespace conflicts in the application scope.
 This parameter defaults to 'false' if not defined and indicates that this bean factory should not
 be placed in the application scope.
 
 The [placeFactoryInServerScope] parameter indicates whether or not to place the bean factory 
 in the server scope.  This parameter is used to for setting your bean factory for use as a
 parent.  The key that used is driven from the value from of the [beanFactoryPropertyName] parameter.
+If the parent uses the same value for the beanFactoryPropertyName, the module name (e.g. "_account")
+is append to the end of the key to eliminate namespace conflicts in the server scope.
 This parameter defaults to 'false' if not defined and indicates that this bean factory should not
 be placed in the server scope.
 
@@ -118,6 +122,43 @@ manager as the bean factory has been loaded.  In the past, a seperate property h
 to accomplish this task. This should be used for framework required "utility" objects that you 
 want to be managed by ColdSpring such as UDF, i18n or session facade objects. Do not use this 
 feature to inject your model objects into the Mach-II property manager.
+
+Parent/Child Bean Factories Configuration for Use with Modules:
+
+Base Mach-II Config File (i.e. Parent Factory)
+<property name="ColdSpring" type="coldspring.machii.ColdspringProperty">
+	<parameters>
+		<parameter name="beanFactoryPropertyName" value="serviceFactory"/>
+		<parameter name="configFile" value="/path/to/config/services.xml"/>
+		<parameter name="configFilePathIsRelative" value="true"/>
+		<parameter name="placeFactoryInApplicationScope" value="true"/>
+		<parameter name="resolveMachIIDependencies" value="true"/>
+</property>
+
+You must put the parent bean factory in the application (or server scope) in order
+for a module to inherit from a parent factory. This example put the parent factory
+into the application.serviceFactory variable.
+
+Account Module Config File (i.e. Child Factory):
+<property name="ColdSpring" type="coldspring.machii.ColdspringProperty">
+	<parameters>
+		<parameter name="beanFactoryPropertyName" value="serviceFactory"/>
+		<parameter name="configFile" value="/lightpost/modules/account/config/services_account.xml"/>
+		<parameter name="configFilePathIsRelative" value="true"/>
+		<parameter name="resolveMachIIDependencies" value="true"/>
+		<parameter name="placeFactoryInApplicationScope" value="true"/>
+		<parameter name="parentBeanFactoryScope" value="application"/>
+		<parameter name="parentBeanFactoryKey" value="serviceFactory"/>
+	</parameters>
+</property>
+
+You are NOT required to put child factories into the application (or server scope) for
+modules to inherit froma a parent factory.  However, in this example the account module
+puts this child factory into the application scope. Since the parent and module use the
+same beanFactoryPropertyName, an application scope namespace conflict would occur - so
+the Property appends the module name to the end.  This factory would be located in 
+application.serviceFactory_account variable.
+
 --->
 <cfcomponent
 	name="ColdspringProperty"
@@ -138,6 +179,7 @@ feature to inject your model objects into the Mach-II property manager.
 		
 		<!--- Default vars --->
 		<cfset var bf = "" />
+		<cfset var factoryKey = "" />
 		<cfset var i = 0 />
 		
 		<!--- Get the Mach-II property manager (gets the a module's property manager if this is a module) --->
@@ -209,12 +251,20 @@ feature to inject your model objects into the Mach-II property manager.
 		<cfset setProperty("beanFactoryName", localBeanFactoryKey) />
 		<cfset setProperty(localBeanFactoryKey, bf) />
 		
-		<!--- Put a bean factory reference into the application if required --->
+		<!--- Figure out application/server key --->
+		<cfset factoryKey = localBeanFactoryKey />
+		
+		<!--- Append the module the parent and child are using the same property name for the bean factory --->
+		<cfif Len(getAppManager().getModuleName()) AND getAppManager().getParent().getPropertyManager().isPropertyDefined(localBeanFactoryKey)>
+			<cfset factoryKey = factoryKey & "_" & getAppManager().getModuleName() />
+		</cfif>
+		
+		<!--- Put a bean factory reference into the application or server scopes if required --->
 		<cfif placeFactoryInApplicationScope>
-			<cfset bfUtils.setNamedFactory("application", localBeanFactoryKey, bf) />
+			<cfset bfUtils.setNamedFactory("application", factoryKey, bf) />
 		</cfif>
 		<cfif placeFactoryInServerScope>
-			<cfset bfUtils.setNamedFactory('server', localBeanFactoryKey, bf) />
+			<cfset bfUtils.setNamedFactory('server', factoryKey, bf) />
 		</cfif>
 		
 		<!--- Build the config files and hash --->
