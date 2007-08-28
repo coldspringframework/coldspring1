@@ -14,7 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 		
-$Id: ColdspringProperty.cfc,v 1.3 2007/08/28 04:38:54 pjf Exp $
+$Id: ColdspringProperty.cfc,v 1.4 2007/08/28 08:19:20 pjf Exp $
 
 Description:
 A Mach-II property that provides easy ColdSpring integration with Mach-II applications.
@@ -32,9 +32,9 @@ Usage:
 			Default: 'coldspring.beanfactory.root' -->
 		<parameter name="beanFactoryPropertyName" value="serviceFactory"/>
 
-		<!-- Name of a Mach-II property name that holds the path to the ColdSpring config file 
-			default: 'ColdSpringComponentsLocation' -->
-		<parameter name="configFilePropertyName" value="ColdSpringComponentsLocation"/>
+		<!-- Takes the path to the ColdSpring config file 
+			(required) -->
+		<parameter name="configFile" value="/path/to/services.xml"/>
 		
 		<!-- Flag to indicate whether supplied config path is relative (mapped) or absolute 
 			Default: FALSE (absolute path) -->
@@ -73,14 +73,12 @@ Usage:
 
 The [beanFactoryPropertyName] parameter value is the name of the Mach-II property name 
 that will hold a reference to the ColdSpring beanFactory. This parameter 
-defaults to "beanFactory" if not defined.
+defaults to "coldspring.beanfactory.root" if not defined.
 
-The [configFilePropertyName] paramater value is the name of Mach-II property name that
-hold the path of the ColdSpring configuration file. The value of the Mach-II property can 
-be an relative, ColdFusion mapped or absolute path. If you are using a relative or mapped
-path, be sure to set the [configFilePathIsRelative] parameter to TRUE or the property will
-not find your configuration file. This parameter defaults to "ColdSpringComponentsLocation" 
-if not defined.
+The [configFile] paramater value holds the path of the ColdSpring configuration file. The path 
+can be an relative, ColdFusion mapped or absolute path. If you are using a relative or mapped
+path, be sure to set the [configFilePathIsRelative] parameter to TRUE or the ColdSpring will
+not find your configuration file.
 
 The [configGilePathIsRelative] parameter value defines if the configure file is an relative
 (including ColdFusion mapped) or absolute path. If you are using a relative or mapped
@@ -94,8 +92,25 @@ wire Mach-II listeners/filters/plugins/properties.  This parameter defaults to F
 - TRUE (resolves all Mach-II dependencies)
 - FALSE (does not resolve Mach-II dependencies)
 
+The [parentBeanFactoryScope] parameter values defines which scope to pull in a parent bean 
+factory. This parameter defaults to 'false' if not defined and indicates that a parent bean
+factory does not need to be referenced.
+
 The [parentBeanFactoryKey] parameter values defines a key to pull in a parent bean factory
-from the application scope.  This parameter defaults to FALSE if not defined.
+from the scope specified in the [parentBeanFactoryKey] parameter.  This parameter defaults 
+to 'false' if not defined and indicates that a parent bean factory does not need to be referenced.
+
+The [placeFactoryInApplicationScope] parameter indicates whether or not to place the bean factory 
+in the application scope.  This parameter is used to for setting your bean factory for use as a
+parent.  The key that used is driven from the value from of the [beanFactoryPropertyName] parameter.
+This parameter defaults to 'false' if not defined and indicates that this bean factory should not
+be placed in the application scope.
+
+The [placeFactoryInServerScope] parameter indicates whether or not to place the bean factory 
+in the server scope.  This parameter is used to for setting your bean factory for use as a
+parent.  The key that used is driven from the value from of the [beanFactoryPropertyName] parameter.
+This parameter defaults to 'false' if not defined and indicates that this bean factory should not
+be placed in the server scope.
 
 The [beansToMachIIProperties] parameter holds a struct of bean names and corresponding
 Mach-II property names. This parameter will inject the specified beans in the Mach-II property
@@ -125,11 +140,11 @@ feature to inject your model objects into the Mach-II property manager.
 		<cfset var bf = "" />
 		<cfset var i = 0 />
 		
-		<!--- Get the Mach-II property manaager --->
+		<!--- Get the Mach-II property manager (gets the a module's property manager if this is a module) --->
 		<cfset var propertyManager = getPropertyManager() />
 	
 		<!--- Determine the location of the bean def xml file --->
-		<cfset var serviceDefXmlLocation = getParameter("configFile") />
+		<cfset var serviceDefXmlLocation = "" />
 		
 		<!--- Get all properties to pass to bean factory
 			Create a new struct instead of doing a direct assignment otherwise parent
@@ -146,10 +161,18 @@ feature to inject your model objects into the Mach-II property manager.
 		<cfset var parentBeanFactoryKey = getParameter("parentBeanFactoryKey", "") />
 		
 		<cfset var localBeanFactoryKey = getParameter("beanFactoryPropertyName", bfUtils.DEFAULT_FACTORY_KEY) />
+
 		<cfset var placeFactoryInApplicationScope = getParameter("placeFactoryInApplicationScope", false) />
+		<cfset var placeFactoryInServerScope = getParameter("placeFactoryInServerScope", false) />
 		
-		<cfset var placeFactoryInServerScope = getParameter("placeFactoryInServerScope", "false") />
-		<cfset var parentBeanFactoryScope = getParameter("parentBeanFactoryScope", "application")>
+		<cfset var parentBeanFactoryScope = getParameter("parentBeanFactoryScope", "application") />
+		
+		<cfif isParameterDefined("configFile")>
+			<cfset serviceDefXmlLocation = getParameter("configFile") />
+		<cfelse>
+			<cfthrow type="ColdspringProperty.configFileParameterNotDefined"
+				message="You must specify a parameter named 'configFile'." />
+		</cfif>
 		
 		<!--- Get the properties from the current property manager --->
 		<cfset StructAppend(defaultProperties, propertyManager.getProperties()) />
