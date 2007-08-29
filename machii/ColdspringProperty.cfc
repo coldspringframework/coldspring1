@@ -14,7 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 		
-$Id: ColdspringProperty.cfc,v 1.5 2007/08/28 18:26:41 pjf Exp $
+$Id: ColdspringProperty.cfc,v 1.6 2007/08/29 22:43:49 pjf Exp $
 
 Description:
 A Mach-II property that provides easy ColdSpring integration with Mach-II applications.
@@ -60,8 +60,8 @@ Usage:
 			 Default: FALSE -->
 		<parameter name="placeFactoryInServerScope" value="false" />
 		
-		<!--- Struct of bean names and corresponding Mach-II property names for injecting back into Mach-II
-			Default: does nothing if struct is not defined --->
+		<!-- Struct of bean names and corresponding Mach-II property names for injecting back into Mach-II
+			Default: does nothing if struct is not defined -->
 		<parameter name="beansToMachIIProperties">
 			<struct>
 				<key name="ColdSpringBeanName1" value="MachIIPropertyName1" />
@@ -143,7 +143,7 @@ Account Module Config File (i.e. Child Factory):
 <property name="ColdSpring" type="coldspring.machii.ColdspringProperty">
 	<parameters>
 		<parameter name="beanFactoryPropertyName" value="serviceFactory"/>
-		<parameter name="configFile" value="/lightpost/modules/account/config/services_account.xml"/>
+		<parameter name="configFile" value="/path/to/modules/account/config/services_account.xml"/>
 		<parameter name="configFilePathIsRelative" value="true"/>
 		<parameter name="resolveMachIIDependencies" value="true"/>
 		<parameter name="placeFactoryInApplicationScope" value="true"/>
@@ -153,10 +153,10 @@ Account Module Config File (i.e. Child Factory):
 </property>
 
 You are NOT required to put child factories into the application (or server scope) for
-modules to inherit froma a parent factory.  However, in this example the account module
+modules to inherit froma a parent factory. However, in this example the account module
 puts this child factory into the application scope. Since the parent and module use the
 same beanFactoryPropertyName, an application scope namespace conflict would occur - so
-the Property appends the module name to the end.  This factory would be located in 
+the Property appends the module name to the end. This factory would be located in 
 application.serviceFactory_account variable.
 
 --->
@@ -200,15 +200,13 @@ application.serviceFactory_account variable.
 		
 		<!--- Locating and storing bean factory (from properties/params) --->
 		<cfset var bfUtils = CreateObject("component", "coldspring.beans.util.BeanFactoryUtils").init() />
-		<cfset var parentBeanFactoryKey = getParameter("parentBeanFactoryKey", "") />
-		
-		<cfset var localBeanFactoryKey = getParameter("beanFactoryPropertyName", bfUtils.DEFAULT_FACTORY_KEY) />
 
-		<cfset var placeFactoryInApplicationScope = getParameter("placeFactoryInApplicationScope", false) />
-		<cfset var placeFactoryInServerScope = getParameter("placeFactoryInServerScope", false) />
-		
 		<cfset var parentBeanFactoryScope = getParameter("parentBeanFactoryScope", "application") />
+		<cfset var parentBeanFactoryKey = getParameter("parentBeanFactoryKey", "") />
+
+		<cfset var localBeanFactoryKey = getParameter("beanFactoryPropertyName", bfUtils.DEFAULT_FACTORY_KEY) />
 		
+		<!--- Get the config file path --->
 		<cfif isParameterDefined("configFile")>
 			<cfset serviceDefXmlLocation = getParameter("configFile") />
 		<cfelse>
@@ -219,7 +217,7 @@ application.serviceFactory_account variable.
 		<!--- Get the properties from the current property manager --->
 		<cfset StructAppend(defaultProperties, propertyManager.getProperties()) />
 		
-		<!--- Append the parent properties if we have a parent --->
+		<!--- Append the parent's default properties if we have a parent --->
 		<cfif IsObject(getAppManager().getParent())>
 			<cfset StructAppend(defaultProperties, propertyManager.getParent().getProperties(), false) />
 		</cfif>		
@@ -232,7 +230,7 @@ application.serviceFactory_account variable.
 		</cfloop>
 		
 		<!--- Create a new bean factory --->
-		<cfset bf = CreateObject("component", "coldspring.beans.DefaultXmlBeanFactory").init(defaultAttributes, defaultProperties)/>
+		<cfset bf = CreateObject("component", "coldspring.beans.DefaultXmlBeanFactory").init(defaultAttributes, defaultProperties) />
 		
 		<!--- If necessary setup the parent bean factory using the new ApplicationContextUtils --->
 		<cfif len(parentBeanFactoryKey) AND bfUtils.namedFactoryExists(parentBeanFactoryScope, parentBeanFactoryKey)>
@@ -245,7 +243,7 @@ application.serviceFactory_account variable.
 		</cfif>
 		
 		<!--- Load the bean defs --->
-		<cfset bf.loadBeansFromXmlFile(serviceDefXmlLocation, true)/>
+		<cfset bf.loadBeansFromXmlFile(serviceDefXmlLocation, true) />
 
 		<!--- Put a bean factory reference into Mach-II property manager --->
 		<cfset setProperty("beanFactoryName", localBeanFactoryKey) />
@@ -260,17 +258,12 @@ application.serviceFactory_account variable.
 		</cfif>
 		
 		<!--- Put a bean factory reference into the application or server scopes if required --->
-		<cfif placeFactoryInApplicationScope>
+		<cfif getParameter("placeFactoryInApplicationScope", false)>
 			<cfset bfUtils.setNamedFactory("application", factoryKey, bf) />
 		</cfif>
-		<cfif placeFactoryInServerScope>
-			<cfset bfUtils.setNamedFactory('server', factoryKey, bf) />
+		<cfif getParameter("placeFactoryInServerScope", false)>
+			<cfset bfUtils.setNamedFactory("server", factoryKey, bf) />
 		</cfif>
-		
-		<!--- Build the config files and hash --->
-		<cfset setConfigFilePaths(buildConfigFilePaths(serviceDefXmlLocation)) />
-		<cfset setLastReloadHash(getConfigFileReloadHash()) />
-		<cfset setLastReloadDatetime(Now()) />
 		
 		<!--- Resolve Mach-II dependences if required --->
 		<cfif getParameter("resolveMachIIDependencies", false)>
@@ -278,9 +271,19 @@ application.serviceFactory_account variable.
 		</cfif>
 		
 		<!--- Place bean references into the Mach-II properties if required --->
-		<cfif IsStruct(getParameter("beansToMachIIProperties"))>
-			<cfset referenceBeansToMachIIProperties(getParameter("beansToMachIIProperties")) />
+		<cfif isParameterDefined("beansToMachIIProperties")>
+			<cfif IsStruct(getParameter("beansToMachIIProperties"))>
+				<cfset referenceBeansToMachIIProperties(getParameter("beansToMachIIProperties")) />
+			<cfelse>
+				<cfthrow type="ColdspringProperty.beansToMachIIPropertiesInvalidType"
+					message="The value of a parameter named 'beansToMachIIProperties' must contain a struct." />
+			</cfif>
 		</cfif>
+				
+		<!--- Build the config files and hash --->
+		<cfset setConfigFilePaths(buildConfigFilePaths(serviceDefXmlLocation)) />
+		<cfset setLastReloadHash(getConfigFileReloadHash()) />
+		<cfset setLastReloadDatetime(Now()) />
 	</cffunction>
 	
 	<cffunction name="shouldReloadConfig" access="public" returntype="boolean" output="false"
