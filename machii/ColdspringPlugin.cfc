@@ -14,9 +14,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 		
-$Id: ColdspringPlugin.cfc,v 1.12 2007/07/11 07:51:54 pjf Exp $
+$Id: ColdspringPlugin.cfc,v 1.13 2007/09/04 18:57:32 pjf Exp $
 
 Description:
+DEPRECATED - FOR USE WITH MACH-II 1.1.1 OR LOWER ONLY
+(Use the never ColdspringProperty.cfc for Mach-II 1.5 higher)
 A Mach-II plugin that provides easy ColdSpring integration with Mach-II applications.
 
 Usage:
@@ -109,7 +111,7 @@ beanName1=machIIpropertyName1,beanName2=machIIpropertyName2
 	INITALIZATION / CONFIGURATION
 	--->
 	<cffunction name="configure" access="public" returntype="void" output="false"
-		hint="I initialize this plugin during framework startup.">
+		hint="DEPRECATED - I initialize this plugin during framework startup.">
 		
 		<!--- Default vars --->
 		<cfset var appContext = 0 />
@@ -204,7 +206,7 @@ beanName1=machIIpropertyName1,beanName2=machIIpropertyName2
 	PROTECTED FUNCTIONS
 	--->
 	<cffunction name="resolveDependencies" access="private" returntype="void" output="false"
-		hint="Resolves Mach-II dependencies.">
+		hint="DEPRECATED - Resolves Mach-II dependencies.">
 		
 		<cfset var beanFactory = getProperty(getProperty("beanFactoryName")) />
 		<cfset var targets = StructNew() />
@@ -272,7 +274,7 @@ beanName1=machIIpropertyName1,beanName2=machIIpropertyName2
 	</cffunction>
 		
 	<cffunction name="getListeners" access="private" returntype="void" output="false"
-		hint="Gets the listener targets.">
+		hint="DEPRECATED - Gets the listener targets.">
 		<cfargument name="targets" type="struct" required="true" />
 		
 		<cfset var listenerManager = getAppManager().getListenerManager() />
@@ -298,7 +300,7 @@ beanName1=machIIpropertyName1,beanName2=machIIpropertyName2
 	</cffunction>
 		
 	<cffunction name="getFilters" access="private" returntype="void" output="false"
-		hint="Get the filter targets.">
+		hint="DEPRECATED - Get the filter targets.">
 		<cfargument name="targets" type="struct" required="true" />
 		
 		<cfset var filterManager = getAppManager().getFilterManager() />
@@ -323,7 +325,7 @@ beanName1=machIIpropertyName1,beanName2=machIIpropertyName2
 	</cffunction>
 		
 	<cffunction name="getPlugins" returntype="void" access="private" output="false"
-		hint="Get the plugin targets.">
+		hint="DEPRECATED - Get the plugin targets.">
 		<cfargument name="targets" type="struct" required="true" />
 		
 		<cfset var pluginManager = getAppManager().getPluginManager() />
@@ -348,7 +350,7 @@ beanName1=machIIpropertyName1,beanName2=machIIpropertyName2
 	</cffunction>
 	
 	<cffunction name="referenceBeansToMachIIProperties" access="private" returntype="void" output="false"
-		hint="Places references to ColdSpring managed beans into the Mach-II properties.">
+		hint="DEPRECATED - Places references to ColdSpring managed beans into the Mach-II properties.">
 		<cfargument name="beanToPropertyList" type="string" required="true" />
 		
 		<cfset var beanFactory = getProperty(getProperty("beanFactoryName")) />
@@ -369,17 +371,17 @@ beanName1=machIIpropertyName1,beanName2=machIIpropertyName2
 	PUBLIC FUNCTIONS - INJECTABLE UTILITY METHODS
 	--->
 	<cffunction name="getPluginNamesForColdSpring" access="public" returntype="array" output="false"
-		hint="Injectable method for getting plugin names (for Mach-II versions 1.1.0 and lower)">
+		hint="DEPRECATED - Injectable method for getting plugin names (for Mach-II versions 1.1.0 and lower)">
 		<cfreturn StructKeyArray(variables.plugins) />
 	</cffunction>
 	
 	<cffunction name="getFilterNamesForColdSpring" access="public" returntype="array" output="false"
-		hint="Injectable method for getting filter names (for Mach-II versions 1.1.0 and lower)">
+		hint="DEPRECATED - Injectable method for getting filter names (for Mach-II versions 1.1.0 and lower)">
 		<cfreturn StructKeyArray(variables.filters) />
 	</cffunction>
 	
 	<cffunction name="getListenerNamesForColdSpring" access="public" returntype="array" output="false"
-		hint="Injectable method for getting listener names (for Mach-II versions 1.1.0 and lower)">
+		hint="DEPRECATED - Injectable method for getting listener names (for Mach-II versions 1.1.0 and lower)">
 		<cfreturn StructKeyArray(variables.listeners) />
 	</cffunction>
 
