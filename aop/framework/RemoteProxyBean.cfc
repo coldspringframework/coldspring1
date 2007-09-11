@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: RemoteProxyBean.cfc,v 1.6 2007/01/01 17:41:36 scottc Exp $
+ $Id: RemoteProxyBean.cfc,v 1.7 2007/09/11 11:41:52 scottc Exp $
  $Log: RemoteProxyBean.cfc,v $
+ Revision 1.7  2007/09/11 11:41:52  scottc
+ Fixed error setting bean factory in the proper scope, moved initialization into setup method in RemoteProxyBean
+
  Revision 1.6  2007/01/01 17:41:36  scottc
  added support for <alias name="fromName" alias="toName"/> tag
 
@@ -42,34 +45,60 @@
 			displayname="${name}:RemoteProxyBean" 
 			hint="Abstract Base Class for Aop Based Remote Proxy Beans" 
 			output="false">
-	
+			
+	<cfset variables.proxyId = CreateUUId() />
 	<cfset variables.beanFactoryName = "${factoryName}" />
 	<cfset variables.beanFactoryScope = "${scope}" />
+	<cfset variables.constructed = false />
 	<cfset setup() />
 	
 	<cffunction name="setup" access="public" returntype="void">
 		<cfset var bfUtils = 0 />
 		<cfset var bf = 0 />
-		<!--- make sure scope is setup (could have been set to '', meaning application, default) --->
-		<cfif not len(variables.beanFactoryScope)>
-			<cfset variables.beanFactoryScope = 'application' />
+		<cfset var error = false />
+		
+		<!--- I want to make sure that the proxy id really exists --->
+		<cfif not StructKeyExists(variables, "proxyId")>
+			<cfset variables.proxyId = CreateUUId() />
 		</cfif>
-		<cftry>		
-			<cfset bfUtils = createObject("component","coldspring.beans.util.BeanFactoryUtils").init()/>
-			<cfif not len(variables.beanFactoryName)>
-				<cfset bf = bfUtils.getDefaultFactory(variables.beanFactoryScope) />
-			<cfelse>
-				<cfset bf = bfUtils.getNamedFactory(variables.beanFactoryScope, variables.beanFactoryName) />
-			</cfif>
-			<cfset remoteFactory = bf.getBean("&${proxyFactoryId}") />
-			<cfset variables.target = bf.getBean("${proxyFactoryId}") />
-			<cfset variables.adviceChains = remoteFactory.getProxyAdviceChains() />
+		
+		<cflock name="RemoteProxyBean.#variables.proxyId#.Setup" type="readonly" timeout="5">
+			<cfif not StructKeyExists(variables, "constructed") or not variables.constructed>
 			
-			<cfcatch>
-				<cfthrow type="coldspring.remoting.ApplicationContextError" 
-						 message="Sorry, a ColdSpring BeanFactory named #variables.beanFactoryName# was not found in #variables.beanFactoryScope# scope. Please make sure your bean factory is properly loaded. Perhapse your main application is not running?" />
-			</cfcatch>
-		</cftry>
+				<!--- it looks like there is an issue with setting up the variables scope in a static initializer
+					  with remote methods, so we will make sure things are set up --->
+				<cfif not StructKeyExists(variables, "constructed")>
+					<cfset variables.beanFactoryName = "${factoryName}" />
+					<cfset variables.beanFactoryScope = "${scope}" />
+					<cfset variables.constructed = false />
+				</cfif>
+				<!--- make sure scope is setup (could have been set to '', meaning application, default) --->
+				<cfif not len(variables.beanFactoryScope)>
+					<cfset variables.beanFactoryScope = 'application' />
+				</cfif>
+				<cftry>		
+					<cfset bfUtils = createObject("component","coldspring.beans.util.BeanFactoryUtils").init()/>
+					<cfif not len(variables.beanFactoryName)>
+						<cfset bf = bfUtils.getDefaultFactory(variables.beanFactoryScope) />
+					<cfelse>
+						<cfset bf = bfUtils.getNamedFactory(variables.beanFactoryScope, variables.beanFactoryName) />
+					</cfif>
+					<cfset remoteFactory = bf.getBean("&${proxyFactoryId}") />
+					<cfset variables.target = bf.getBean("${proxyFactoryId}") />
+					<cfset variables.adviceChains = remoteFactory.getProxyAdviceChains() />
+					<cfset variables.constructed = true />
+					<cfcatch>
+						<cfset error = true />
+					</cfcatch>
+				</cftry>
+			</cfif>
+		</cflock>
+		
+		<cfif error>
+			<cfthrow type="coldspring.remoting.ApplicationContextError" 
+					 message="Sorry, a ColdSpring BeanFactory named #variables.beanFactoryName# was not found in #variables.beanFactoryScope# scope. Please make sure your bean factory is properly loaded. Perhapse your main application is not running?" />
+		</cfif>
+		
 	</cffunction>
 
 	<cffunction name="callMethod" access="private" returntype="any">
@@ -79,6 +108,11 @@
 		<cfset var methodInvocation = 0 />
 		<cfset var rtn = 0 />
 		<cfset var method = 0 />
+		
+		<!--- make sure setup is called --->
+		<cfif not StructKeyExists(variables, "constructed") or not variables.constructed>
+			<cfset setup() />
+		</cfif>
 		
 		<!--- if an advice chain was created for this method, retrieve a methodInvocation chain from it and proceed --->
 		<cfif StructKeyExists(variables.adviceChains, arguments.methodName)>
