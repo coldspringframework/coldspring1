@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.35 2007/06/05 20:20:12 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.36 2007/09/11 23:58:59 pjf Exp $
 
 --->
 
@@ -588,7 +588,7 @@
 		<cfreturn variables.instanceData.dependentBeans />		
 	</cffunction>
 	
-	<cffunction name="getBeanFactory" access="public" output="false" returntype="struct" 
+	<cffunction name="getBeanFactory" access="public" output="false" returntype="coldspring.beans.BeanFactory" 
 				hint="I retrieve the Bean Factory from this instance's data">
 		<cfreturn variables.instanceData.BeanFactory />
 	</cffunction>
