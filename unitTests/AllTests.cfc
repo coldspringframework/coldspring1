@@ -6,6 +6,7 @@
 		<cfset testSuite.addTestSuite(newObject("coldspring.unitTests.AopFactoryBeanTest"))>
 		<cfset testSuite.addTestSuite(newObject("coldspring.unitTests.ExceptionTests"))>
 		<cfset testSuite.addTestSuite(newObject("coldspring.unitTests.InterceptorTestsTwo"))>
+		<cfset testSuite.addTestSuite(newObject("coldspring.unitTests.InitMethodTests"))>
 		<!--- <cfset testSuite.addTestSuite(newObject("coldspring.unitTests.RemoteFactoryBeanTest"))> --->
 		
 		<cfreturn testSuite/>

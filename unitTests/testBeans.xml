@@ -12,6 +12,10 @@
 		</property>
 	</bean>
 	
+	<bean id="initSingletonBean" class="coldspring.tests.initMethodBean" init-method="setup"/>
+	
+	<bean id="initNonSingletonBean" class="coldspring.tests.initMethodBean" init-method="setup" singleton="false"/>
+	
 	<bean id="structBean" class="coldspring.tests.structBean">
 		<property name="data">
 			<map>
