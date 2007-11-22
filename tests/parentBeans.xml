@@ -163,7 +163,8 @@
 	</bean>
 	
 	<!-- Category Service -->
-	<bean id="categoryServiceTarget" class="net.litepost.component.category.CategoryService">
+	<bean id="categoryServiceTarget" class="net.litepost.component.category.CategoryService"
+			lazy-init="false">
 		<property name="categoryDAO">
 			<bean class="net.litepost.component.category.CategoryDAO">
          		<property name="dsn">

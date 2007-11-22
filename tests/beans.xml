@@ -68,7 +68,12 @@
 	</bean>
 	
 	<bean id="beanSeven"
-		class="coldspring.tests.beanSeven"/>
+		class="coldspring.tests.beanSeven"
+		singleton="false">
+		<constructor-arg name="beanEight">
+			<ref bean="beanEight" />
+		</constructor-arg>
+	</bean>
 		
 	<bean id="beanEight"
 		class="coldspring.tests.beanEight"/>

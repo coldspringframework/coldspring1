@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.36 2007/09/11 23:58:59 pjf Exp $
+ $Id: BeanDefinition.cfc,v 1.37 2007/11/22 20:55:58 scottc Exp $
 
 --->
 
@@ -91,7 +91,8 @@
 		<cfset setDependenciesForCopy(arguments.parent.getDependenciesForCopy()) />	
 					
 		<cfset getBeanFactory(arguments.parent.getBeanFactory()) />			
-		<cfset setSingleton(arguments.parent.isSingleton()) />			
+		<cfset setSingleton(arguments.parent.isSingleton()) />	
+		<cfset setLazyInit(arguments.parent.isLazyInit())>		
 		<cfset setIsFactory(arguments.parent.isFactory()) />			
 		<cfset setAutowire(arguments.parent.getAutowire()) />		
 		<cfset setFactoryPostProcessor(arguments.parent.isFactoryPostProcessor()) />	
@@ -143,6 +144,7 @@
 		
 		<cfset setAbstract(arguments.fromBeanDef.isAbstract()) />
 		<cfset setSingleton(arguments.fromBeanDef.isSingleton()) />
+		<cfset setLazyInit(arguments.fromBeanDef.isLazyInit()) />
 		
 		<cfset constructorArgs = arguments.fromBeanDef.getConstructorArgs() />	
 		<cfloop collection="#constructorArgs#" item="arg">
@@ -608,6 +610,17 @@
 				hint="I set the Singleton flag in this instance's data">
 		<cfargument name="Singleton" type="boolean" required="true"/>
 		<cfset variables.instanceData.Singleton = arguments.Singleton />
+	</cffunction>
+	
+	<cffunction name="isLazyInit" access="public" output="false" returntype="boolean" 
+				hint="I retrieve the LazyInit flag from this instance's data">
+		<cfreturn variables.instanceData.lazyInit />
+	</cffunction>
+
+	<cffunction name="setLazyInit" access="public" output="false" returntype="void"  
+				hint="I set the LazyInit flag in this instance's data">
+		<cfargument name="LazyInit" type="boolean" required="true"/>
+		<cfset variables.instanceData.lazyInit = arguments.LazyInit />
 	</cffunction>
 	
 	<cffunction name="isInnerBean" access="public" output="false" returntype="boolean" 

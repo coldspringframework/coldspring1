@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.46 2007/06/05 20:20:12 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.47 2007/11/22 20:55:58 scottc Exp $
 
 ---> 
 
@@ -44,6 +44,9 @@
 		<cfset findImports(xmlFiles,arguments.beanDefinitionFileName)>
 
 		<cfset processLoadBeans(xmlFiles)>
+		
+		<!--- DEBUG ONLY!!! 
+		<cfset this.beanCache = variables.singletonCache /> --->
 	</cffunction>
 
 	<cffunction name="findImports" access="public" returntype="void" hint="finds and caches include file paths">
@@ -171,34 +174,31 @@
 
 	<cffunction name="loadBeansFromXmlFile" returntype="void" access="public" hint="loads bean definitions into the bean factory from an xml file location">
 		<cfargument name="beanDefinitionFile" type="string" required="true" hint="I am the location of the bean definition xml file"/>
-		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
 	
 		<cfset var xmlFiles = structNew()/>
 
 		<cfset findImports(xmlFiles,arguments.beanDefinitionFile)>
 		
-		<cfset processLoadBeans(xmlFiles, arguments.ConstructNonLazyBeans)>				
+		<cfset processLoadBeans(xmlFiles)>				
 	</cffunction>
 				
 	<cffunction name="loadBeansFromXmlRaw" returntype="void" access="public" hint="loads bean definitions into the bean factory from supplied raw xml">
 		<cfargument name="beanDefinitionXml" type="string" required="true" hint="I am raw unparsed xml bean defs"/>
-		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
 		
 		<cfset var xmlParsed = xmlParse(arguments.beanDefinitionXml)>
 		
-		<cfset loadBeansFromXmlObj(xmlParsed, arguments.ConstructNonLazyBeans)>
+		<cfset loadBeansFromXmlObj(xmlParsed)>
 	</cffunction>
 
 	<cffunction name="loadBeansFromXmlObj" returntype="void" access="public" hint="loads bean definitions into the bean factory from supplied cf xml object">
 		<cfargument name="beanDefinitionXmlObj" type="any" required="true" hint="I am parsed xml bean defs"/>
-		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
 		
 		<cfset var xmlFiles = structNew()>
 
 
 		<cfset findImportsFromXmlObj(xmlFiles, arguments.beanDefinitionXmlObj)>
 		
-		<cfset processLoadBeans(xmlFiles, arguments.ConstructNonLazyBeans)>
+		<cfset processLoadBeans(xmlFiles)>
 	</cffunction>
 
 	<cffunction name="processLoadBeans" access="private" returntype="void" hint="perfoms the loadBeanDefinations, processFactoryPostProcessors and initNonLazyBeans">
@@ -213,9 +213,7 @@
 		
 		<cfset processFactoryPostProcessors() />
 		
-		<cfif arguments.ConstructNonLazyBeans>
-			<cfset initNonLazyBeans()/>
-		</cfif>
+		<cfset initNonLazyBeans()/>
 	</cffunction>
 		
 	<cffunction name="loadBeanDefinitions" access="public" returntype="void"
@@ -231,6 +229,8 @@
 		<cfset var beanChildren = 0 />
 		<cfset var class = "" />
 		<cfset var isSingleton = true />
+		<cfset var lazyInit = true />
+		<cfset var default_lazyInit = "true" />	
 		<cfset var factoryBean = "" />
 		<cfset var factoryMethod = "" />
 		<cfset var autowire = "no" />
@@ -259,6 +259,12 @@
 			<cfset default_autowire = arguments.XmlBeanDefinitions.beans.XmlAttributes['default-autowire']/>			
 		</cfif>
 		
+		<!--- see if default-lazy-init is set to anything --->
+		<cfif structKeyExists(arguments.XmlBeanDefinitions.beans,'XmlAttributes')
+			and structKeyExists(arguments.XmlBeanDefinitions.beans.XmlAttributes,'default-lazy-init')>
+			<cfset default_lazyInit = arguments.XmlBeanDefinitions.beans.XmlAttributes['default-lazy-init']/>			
+		</cfif>
+		
 		<!--- create bean definition objects for each (top level) bean in the xml--->
 		<cfloop from="1" to="#ArrayLen(beans)#" index="beanIx">
 			
@@ -284,6 +290,13 @@
 				<cfset isSingleton = beanAttributes.singleton />
 			<cfelse>
 				<cfset isSingleton = true />
+			</cfif>
+			
+			<!--- look for lazy-init for this bean def --->
+			<cfif StructKeyExists(beanAttributes,'lazy-init')>
+				<cfset lazyInit = beanAttributes["lazy-init"] />
+			<cfelse>
+				<cfset lazyInit = default_lazyInit/>
 			</cfif>
 			
 			<!--- look for an factory-bean and factory-method attribute for this bean def --->			
@@ -364,6 +377,7 @@
 										beanChildren, 
 										isSingleton, 
 										false,
+										lazyInit,
 										initMethod,
 										factoryBean, 
 										factoryMethod,
@@ -378,6 +392,7 @@
 										beanChildren, 
 										isSingleton, 
 										false,
+										lazyInit,
 										initMethod,
 										factoryBean, 
 										factoryMethod,
@@ -417,6 +432,7 @@
 		<cfargument name="children" type="any" required="true" />
 		<cfargument name="isSingleton" type="boolean" required="true" />
 		<cfargument name="isInnerBean" type="boolean" required="true" />
+		<cfargument name="isLazyInit" type="boolean" default="false" required="false" />
 		<cfargument name="initMethod" type="string" default="" required="false" />
 		<cfargument name="factoryBean" type="string" default="" required="false" />
 		<cfargument name="factoryMethod" type="string" default="" required="false" />
@@ -437,6 +453,7 @@
 		<cfset variables.beanDefs[arguments.beanID].setBeanClass(arguments.beanClass) />
 		<cfset variables.beanDefs[arguments.beanID].setSingleton(arguments.isSingleton) />
 		<cfset variables.beanDefs[arguments.beanID].setInnerBean(arguments.isInnerBean) />
+		<cfset variables.beanDefs[arguments.beanID].setLazyInit(arguments.isLazyInit) />
 		<cfset variables.beanDefs[arguments.beanID].setFactoryBean(arguments.factoryBean) />
 		<cfset variables.beanDefs[arguments.beanID].setFactoryMethod(arguments.factoryMethod) />
 		<cfset variables.beanDefs[arguments.beanID].setAutowire(arguments.autowire) />
@@ -586,6 +603,22 @@
 	
 	<cffunction name="initNonLazyBeans" access="private" output="false" returntype="void"
 				hint="constructs all non-lazy beans">
+				
+		<cfset var beanName = "" />
+		<cfset var bean = 0 />
+		<cfset var sys = CreateObject('java','java.lang.System') />
+					
+		<cfloop collection="#variables.beanDefs#" item="beanName">
+			<cfset sys.out.println("LAZY-INIT FOR BEAN: " & beanName & " SET TO: " & variables.beanDefs[beanName].isLazyInit()) />
+			<cfif variables.beanDefs[beanName].isSingleton() 
+				  and not variables.beanDefs[beanName].isLazyInit() 
+				  and not variables.beanDefs[beanName].isConstructed() 
+				  and not variables.beanDefs[beanName].isInnerBean() 
+				  and not variables.beanDefs[beanName].isFactory()>
+				<cfset bean = getBean(beanName) />
+				<cfset sys.out.println("NON_LAZY LOADING BEAN: " & beanName & " ON FACTORY LOAD!!") />
+			</cfif>
+		</cfloop>
 		
 	</cffunction>	
 	

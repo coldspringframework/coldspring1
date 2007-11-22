@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.20 2007/06/05 20:22:36 scottc Exp $
+ $Id: BeanProperty.cfc,v 1.21 2007/11/22 20:55:58 scottc Exp $
 
 ---> 
 
@@ -404,6 +404,7 @@
 																			   arguments.beanXml.XmlChildren, 
 																			   false, 
 																			   true, 
+																			   true,
 																			   beanProps.initMethod,
 																			   beanProps.factoryBean,
 																			   beanProps.factoryMethod,

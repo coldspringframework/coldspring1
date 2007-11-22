@@ -5,6 +5,12 @@
 	<cfset beanFactory.loadBeans(configFile) />
 </cfsilent>
 
-<cfset bookmarkService = beanFactory.getBean("bookmarkService")>
+<!--- <cfset bookmarkService = beanFactory.getBean("bookmarkService")>
 
-<cfdump var="#bookmarkService#">
+<cfdump var="#bookmarkService#"> --->
+
+<cfdump var="#beanFactory.beanCache#">
+
+<cfset categoryService = beanFactory.beanCache.categoryServiceTarget />
+
+<cfdump var="#categoryService.getCategoriesAsQuery()#">
