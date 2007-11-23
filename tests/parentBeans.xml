@@ -6,6 +6,35 @@
 	<!-- Standard Factory bean (extends coldspring.beans.factory.FactoryBean) -->
 	<bean id="beanEight.factory" class="coldspring.tests.BeanEightFactory" lazy-init="false"/>
 	
+	<!-- Test Bean for Collection Factories -->
+	<bean id="beanFour" class="coldspring.tests.beanFour" lazy-init="false">
+		<property name="myList">
+			<ref bean="list.factory"/>
+		</property>
+		<property name="myMap">
+			<ref bean="map.factory"/>
+		</property>
+	</bean>
+	
+	<!--  factories for the above bean -->
+	<bean id="list.factory" class="coldspring.beans.factory.config.ListFactoryBean">
+		<property name="sourceList">
+			<list>
+				<value>one</value>
+				<value>two</value>
+				<value>three</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="map.factory" class="coldspring.beans.factory.config.MapFactoryBean">
+		<property name="sourceMap">
+			<map>
+				<entry key="one"><value>hello</value></entry>	
+				<entry key="two"><value>there</value></entry>	
+			</map>
+		</property>
+	</bean>
+	
 	<!-- Session Service -->
 	<bean id="sessionService" class="net.litepost.component.session.SessionService"/>
 	
