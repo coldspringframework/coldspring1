@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.37 2007/11/22 20:55:58 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.38 2007/11/23 17:07:16 scottc Exp $
 
 --->
 
@@ -35,6 +35,8 @@
 	<cfset variables.instanceData.Constructed = false />
 	<!--- whether this bean is a factory: --->	
 	<cfset variables.instanceData.Factory = false />
+	<!--- whether this bean is a proxy factory: --->	
+	<cfset variables.instanceData.ProxyFactory = false />
 	<!--- whether this bean is a factory bean: --->	
 	<cfset variables.instanceData.isFactoryBean = false />
 	<!--- name of an init-method to call on this bean once all dependencies are set: --->
@@ -92,8 +94,9 @@
 					
 		<cfset getBeanFactory(arguments.parent.getBeanFactory()) />			
 		<cfset setSingleton(arguments.parent.isSingleton()) />	
-		<cfset setLazyInit(arguments.parent.isLazyInit())>		
-		<cfset setIsFactory(arguments.parent.isFactory()) />			
+		<cfset setLazyInit(arguments.parent.isLazyInit())> 
+		<cfset setIsFactory(arguments.parent.isFactory()) /> 
+		<cfset setIsProxyFactory(arguments.parent.isProxyFactory()) /> 	
 		<cfset setAutowire(arguments.parent.getAutowire()) />		
 		<cfset setFactoryPostProcessor(arguments.parent.isFactoryPostProcessor()) />	
 		<cfset setBeanPostProcessor(arguments.parent.isBeanPostProcessor()) />	
@@ -107,7 +110,7 @@
 		<cfreturn this/>	
 	</cffunction>
 	
-	<!--- for adding parent bean factory support. We will first duplicate the parent bean definition with initFromParent, then
+	<!--- for adding parent bean support. We will first duplicate the parent bean definition with initFromParent, then
 		  overwrite the paren't properties (or add constructor args and properties) however some of these rules will need a lot
 		  of tweeling, here are those of Java Spring:
 		  
@@ -654,6 +657,17 @@
 				hint="I set the Factory flag in this instance's data">
 		<cfargument name="Factory" type="boolean" required="true"/>
 		<cfset variables.instanceData.Factory = arguments.Factory/>
+	</cffunction>
+	
+	<cffunction name="isProxyFactory" access="public" output="false" returntype="boolean" 
+				hint="I retrieve the Factory flag from this instance's data">
+		<cfreturn variables.instanceData.ProxyFactory />
+	</cffunction>
+
+	<cffunction name="setIsProxyFactory" access="public" output="false" returntype="void"  
+				hint="I set the Factory flag in this instance's data">
+		<cfargument name="ProxyFactory" type="boolean" required="true"/>
+		<cfset variables.instanceData.ProxyFactory = arguments.ProxyFactory/>
 	</cffunction>
 	
 	

@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.47 2007/11/22 20:55:58 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.48 2007/11/23 17:07:16 scottc Exp $
 
 ---> 
 
@@ -606,17 +606,16 @@
 				
 		<cfset var beanName = "" />
 		<cfset var bean = 0 />
-		<cfset var sys = CreateObject('java','java.lang.System') />
+		<!--- <cfset var sys = CreateObject('java','java.lang.System') /> --->
 					
 		<cfloop collection="#variables.beanDefs#" item="beanName">
-			<cfset sys.out.println("LAZY-INIT FOR BEAN: " & beanName & " SET TO: " & variables.beanDefs[beanName].isLazyInit()) />
 			<cfif variables.beanDefs[beanName].isSingleton() 
 				  and not variables.beanDefs[beanName].isLazyInit() 
 				  and not variables.beanDefs[beanName].isConstructed() 
 				  and not variables.beanDefs[beanName].isInnerBean() 
 				  and not variables.beanDefs[beanName].isFactory()>
 				<cfset bean = getBean(beanName) />
-				<cfset sys.out.println("NON_LAZY LOADING BEAN: " & beanName & " ON FACTORY LOAD!!") />
+				<!--- <cfset sys.out.println("NON_LAZY LOADING BEAN: " & beanName & " ON FACTORY LOAD!!") /> --->
 			</cfif>
 		</cfloop>
 		
@@ -835,11 +834,17 @@
 				<cfif searchMd.name IS 'coldspring.aop.framework.RemoteFactoryBean'>
 					<cfset beanInstance.setId(arguments.beanName) />
 				</cfif>
+				<cfif searchMd.name IS 'coldspring.aop.framework.ProxyFactoryBean'>
+					<cfset beanDef.setIsProxyFactory(true) />
+				</cfif>
 				
 				<cfloop condition="#StructKeyExists(searchMd,"extends")#">
 					<cfset searchMd = searchMd.extends />
 					<cfif searchMd.name IS 'coldspring.aop.framework.RemoteFactoryBean'>
 						<cfset beanInstance.setId(arguments.beanName) />
+					</cfif>
+					<cfif searchMd.name IS 'coldspring.aop.framework.ProxyFactoryBean'>
+						<cfset beanDef.setIsProxyFactory(true) />
 					</cfif>
 					<cfif searchMd.name IS 'coldspring.beans.factory.FactoryBean'>
 						<cfset beanDef.setIsFactory(true) />
@@ -886,14 +891,8 @@
 				
 				<!--- in order to inject the proper advisors into the aop proxy factories, we should do this now, 
 					  instead of letting them lookup their own objects --->
-				<cfif beanDef.isFactory()>
-					<cftry>
-						<cfset beanInstance.buildAdvisorChain(localBeanCache) />
-						<cfcatch>
-							<!--- may not be an AOP factory, that's ok --->
-							<cfdump var="#cfcatch#"><cfabort />
-						</cfcatch>
-					</cftry>
+				<cfif beanDef.isProxyFactory()>
+					<cfset beanInstance.buildAdvisorChain(localBeanCache) />
 				</cfif>
 					
 				<cfif beanDef.isSingleton()>

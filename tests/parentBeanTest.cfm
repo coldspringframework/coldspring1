@@ -11,6 +11,10 @@
 
 <cfdump var="#beanFactory.beanCache#">
 
+<cfset beanEight = beanFactory.getBean("beanEight.factory")>
+
+<cfdump var="#beanEight#"/>
+
 <cfset categoryService = beanFactory.beanCache.categoryServiceTarget />
 
 <cfdump var="#categoryService.getCategoriesAsQuery()#">

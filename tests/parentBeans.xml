@@ -3,6 +3,9 @@
 
 <beans>
 	
+	<!-- Standard Factory bean (extends coldspring.beans.factory.FactoryBean) -->
+	<bean id="beanEight.factory" class="coldspring.tests.BeanEightFactory" lazy-init="false"/>
+	
 	<!-- Session Service -->
 	<bean id="sessionService" class="net.litepost.component.session.SessionService"/>
 	

@@ -1,5 +1,5 @@
 
-<cfcomponent name="beanSeven">
+<cfcomponent name="beanEight">
 
 	<cffunction name="init" access="public" returntype="coldspring.tests.beanEight">
 
