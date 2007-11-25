@@ -1,4 +1,4 @@
-<cfcomponent extends="coldspring.cfcunit.AbstractAutowireTests">
+<cfcomponent extends="coldspring.cfcunit.AbstractAutowireTransactionalTests">
 
 	<cffunction name="getConfigLocations" access="public" returntype="string" output="false">
 		<cfset var path = GetDirectoryFromPath(getMetaData(this).path) />
@@ -21,9 +21,13 @@
 		<cfset variables.structBean = arguments.structBean />
 	</cffunction>
 	
-	<cffunction name="testNothing" access="public" returntype="void" output="false">
+	<cffunction name="testBeanData" access="public" returntype="void" output="false">
 		<cfset variables.sys.out.println("some structBean data: " & variables.structBean.getData().intOne) />
 		<cfset AssertNotNull(variables.structBean) />
+	</cffunction>
+	
+	<cffunction name="testNothing" access="public" returntype="void" output="false">
+		<cfset AssertTrue(true) />
 	</cffunction>
 
 </cfcomponent>

@@ -15,14 +15,23 @@
   limitations under the License.
 		
 			
- $Id: AbstractAutowireTests.cfc,v 1.2 2007/11/24 21:19:06 scottc Exp $
+ $Id: AbstractAutowireTests.cfc,v 1.3 2007/11/25 17:51:04 scottc Exp $
 
 --->
 
 <cfcomponent displayname="AbstractAutowireTests"
 			 extends="org.cfcunit.framework.TestCase">
 	
-	<cffunction name="setUp" access="private" returntype="void" output="false">
+	<cffunction name="setUp" access="public" returntype="void" output="false">
+		
+		<cfset variables.sys = CreateObject('java','java.lang.System') />
+		
+		<cfif StructKeyExists(variables, "beanFactory")>
+			<cfset variables.sys.out.println("Bean Factory exists! Why am I creating it again??") />
+		<cfelse>
+			<cfset variables.sys.out.println("Damn you Paul! Why createObject every test??") />
+		</cfif>
+		
 		<cfset initBeanFactory() />
 		<cfset autowireTestCase() />
 		<cfset onSetUp() />
