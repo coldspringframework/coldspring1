@@ -15,7 +15,7 @@
   limitations under the License.
 
 
- $Id: DefaultXmlBeanFactory.cfc,v 1.49 2008/01/16 21:39:08 jared_cmg Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.50 2008/01/19 20:45:15 scottc Exp $
 
 --->
 
@@ -544,6 +544,7 @@
 		<cfset var returnFactory = Left(arguments.beanName,1) IS '&'>
 		<cfset var resolvedName = "" />
 		<cfset var beanDef = 0 />
+		<cfset var bean = 0 />
 
 		<cfif returnFactory>
 			<cfset arguments.beanName = Right(arguments.beanName,Len(arguments.beanName)-1) />
@@ -565,12 +566,17 @@
 					<cfreturn beanDef.getInstance(returnFactory) />
 				<cfelse>
 					<!--- lazy-init happens here --->
-					<cfset constructBean(resolvedName)/>
+					<cflock name="bf_#variables.beanFactoryId#.bean_#resolvedName#" throwontimeout="true" timeout="60">
+						<cfset constructBean(resolvedName)/>
+					</cflock>
 				</cfif>
 				<cfreturn beanDef.getInstance(returnFactory) />
 			<cfelse>
 				<!--- return a new instance of this bean def --->
-				<cfreturn constructBean(resolvedName,true)/>
+				<cflock name="bf_#variables.beanFactoryId#.bean_#resolvedName#" type="exclusive" timeout="60">
+					<cfset bean = constructBean(resolvedName,true)/>
+				</cflock>
+				<cfreturn bean />
 			</cfif>
 		<cfelseif isObject(variables.parent)> <!--- AND variables.parent.containsBean(arguments.beanName)> --->
 			<cfreturn variables.parent.getBean(resolvedName)>
