@@ -15,7 +15,7 @@
   limitations under the License.
 
 
- $Id: DefaultXmlBeanFactory.cfc,v 1.50 2008/01/19 20:45:15 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.51 2008/01/20 21:50:28 scottc Exp $
 
 --->
 
@@ -560,24 +560,23 @@
 				<cfthrow type="coldspring.BeanCreationException"
 						 detail="Abstract Beans cannot be instanciated. Did you really meen to define: #resolvedName# as 'Abstract'?"/>
 			</cfif>
-			<cfif beanDef.isSingleton()>
-				<cfif beanDef.isConstructed()>
-					<!--- <cfreturn getBeanFromSingletonCache(arguments.beanName) > --->
-					<cfreturn beanDef.getInstance(returnFactory) />
-				<cfelse>
-					<!--- lazy-init happens here --->
-					<cflock name="bf_#variables.beanFactoryId#.bean_#resolvedName#" throwontimeout="true" timeout="60">
+			
+			<!--- moving the lock out so a second thread will wait for a constructed bean --->
+			<cflock name="bf_#variables.beanFactoryId#.bean_#resolvedName#" throwontimeout="true" timeout="60">
+				<cfif beanDef.isSingleton()>
+					<cfif not beanDef.isConstructed()>
+						<!--- lazy-init happens here --->
 						<cfset constructBean(resolvedName)/>
-					</cflock>
-				</cfif>
-				<cfreturn beanDef.getInstance(returnFactory) />
-			<cfelse>
-				<!--- return a new instance of this bean def --->
-				<cflock name="bf_#variables.beanFactoryId#.bean_#resolvedName#" type="exclusive" timeout="60">
+					</cfif>
+					<cfset bean =  beanDef.getInstance(returnFactory) />
+				<cfelse>
+					<!--- return a new instance of this bean def --->
 					<cfset bean = constructBean(resolvedName,true)/>
-				</cflock>
-				<cfreturn bean />
-			</cfif>
+				</cfif>
+			</cflock>
+			
+			<cfreturn bean />
+			
 		<cfelseif isObject(variables.parent)> <!--- AND variables.parent.containsBean(arguments.beanName)> --->
 			<cfreturn variables.parent.getBean(resolvedName)>
 		<cfelse>
@@ -688,225 +687,232 @@
 					<cfthrow type="coldspring.BeanCreationException"
 							 detail="Abstract Beans cannot be instanciated. Did you really meen to define: #beanDef.getBeanID()# as 'Abstract'?"/>
 				</cfif>
-				<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
-					<cfset beanDef.getBeanFactory().addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) />
-				<cfelse>
-					<cfset localBeanCache[beanDef.getBeanID()] = beanDef.getBeanInstance() />
-				</cfif>
+				<!--- there are only two places where we check then create objects in the singletone cache, we need to 
+					  introduce a mutually exclusive lock around this --->
+				<cflock name="bf_#variables.beanFactoryId#.bean_#beanDef.getBeanID()#" throwontimeout="true" timeout="10">
+					<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
+						<cfset beanDef.getBeanFactory().addBeanToSingletonCache(beanDef.getBeanID(), beanDef.getBeanInstance() ) />
+					<cfelse>
+						<cfset localBeanCache[beanDef.getBeanID()] = beanDef.getBeanInstance() />
+					</cfif>
+				</cflock>
 			</cfif>
 		</cfloop>
 
 		<!--- now resolve all dependencies by looping through list backwards, causing the "most dependent" beans to get created first  --->
 		<cfloop from="#ArrayLen(dependentBeanDefs)#" to="1" index="beanDefIx" step="-1">
 			<cfset beanDef = dependentBeanDefs[beanDefIx] />
-
-			<cfif not beanDef.isConstructed()>
-
-				<cfset argDefs = beanDef.getConstructorArgs()/>
-				<cfset propDefs = beanDef.getProperties()/>
-
-				<!--- if this is a 'normal' bean, we can just get the created reference
-					but if it's a factory bean, we have to create it now --->
-				<cfif beanDef.getFactoryBean() eq "">
-
-					<cfif beanDef.isSingleton()>
-						<cfset beanInstance = getBeanFromSingletonCache(beanDef.getBeanID())>
-					<cfelse>
-						<cfset beanInstance = localBeanCache[beanDef.getBeanID()] />
-					</cfif>
-
-					<!--- make sure the beanInstance is an object if we are gonna look at it
-						  (beanInstance could be anything)  --->
-					<cfif isCFC(beanInstance)>
-						<cfset md = flattenMetaData(getMetaData(beanInstance))/>
-					<cfelse>
-						<cfset md = structnew()/>
-						<cfset md.name = ""/>
-					</cfif>
-
-
-				<cfelse>
-
-					<!--- retrieve the factoryBeanDef, then the factory bean --->
-					<cfset factoryBeanDef = getMergedBeanDefinition(beanDef.getFactoryBean()) />
-
-					<cfif factoryBeanDef.isAbstract()>
-						<cfthrow type="coldspring.BeanCreationException"
-								 detail="Abstract Beans cannot be instanciated. Did you really meen to define: #beanDef.getBeanID()# as 'Abstract'?"/>
-					</cfif>
-
-					<cfif factoryBeanDef.isSingleton()>
-						<cfset factoryBean = factoryBeanDef.getInstance() />
-					<cfelse>
-						<cfif factoryBeanDef.isFactory()>
-							<cfset factoryBean = localBeanCache[factoryBeanDef.getBeanID()].getObject() />
+			
+			<!--- this is the second place we need to lock --->
+			<cflock name="bf_#variables.beanFactoryId#.bean_#beanDef.getBeanID()#" throwontimeout="true" timeout="10">
+				<cfif not beanDef.isConstructed()>
+	
+					<cfset argDefs = beanDef.getConstructorArgs()/>
+					<cfset propDefs = beanDef.getProperties()/>
+	
+					<!--- if this is a 'normal' bean, we can just get the created reference
+						but if it's a factory bean, we have to create it now --->
+					<cfif beanDef.getFactoryBean() eq "">
+	
+						<cfif beanDef.isSingleton()>
+							<cfset beanInstance = getBeanFromSingletonCache(beanDef.getBeanID())>
 						<cfelse>
-							<cfset factoryBean = localBeanCache[factoryBeanDef.getBeanID()] />
+							<cfset beanInstance = localBeanCache[beanDef.getBeanID()] />
 						</cfif>
-					</cfif>
-
-					<cftry>
-						<!--- now call the 'constructor' to generate the bean, which is the factoryMethod --->
-						<cfinvoke component="#factoryBean#" method="#beanDef.getFactoryMethod()#"
-							returnvariable="beanInstance">
-							<!--- loop over constructor-args and pass them into the factoryMethod --->
-							<cfloop collection="#argDefs#" item="arg">
-								<cfset argType = argDefs[arg].getType() />
-								<cfif argType eq "value">
-									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#argDefs[arg].getValue()#"/>
-								<cfelseif argType eq "list" or argType eq "map">
-									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
-								<cfelseif argType eq "ref" or argType eq "bean">
-									<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
-										<cfif dependentBeanDef.isSingleton()>
-											<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
-										<cfelse>
-											<cfif dependentBeanDef.isFactory()>
-												<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
-											<cfelse>
-												<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
-											</cfif>
-										</cfif>
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#dependentBeanInstance#"/>
-								</cfif>
-							</cfloop>
-						</cfinvoke>
-						<cfcatch type="any">
-							<cfthrow type="coldspring.beanCreationException"
-								message="Bean creation exception during factory-method call (trying to call #beanDef.getFactoryMethod()# on #factoryBeanDef.getBeanClass()#)"
-								detail="#cfcatch.message#:#cfcatch.detail#">
-						</cfcatch>
-					</cftry>
-					<!--- since we skipped factory beans in the bean creation loop, we need to store a reference to the bean now --->
-					<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
-						<cfset beanDef.getBeanFactory().addBeanToSingletonCache(beanDef.getBeanID(), beanInstance ) />
+	
+						<!--- make sure the beanInstance is an object if we are gonna look at it
+							  (beanInstance could be anything)  --->
+						<cfif isCFC(beanInstance)>
+							<cfset md = flattenMetaData(getMetaData(beanInstance))/>
+						<cfelse>
+							<cfset md = structnew()/>
+							<cfset md.name = ""/>
+						</cfif>
+	
+	
 					<cfelse>
-						<cfset localBeanCache[beanDef.getBeanID()] = beanInstance />
-					</cfif>
-					<!--- make sure the beanInstance is an object if we are gonna look at it
-						  (beanInstance could be anything returned from a factory-method call)  --->
-					<cfif isCFC(beanInstance)>
-						<cfset md = flattenMetaData(getMetaData(beanInstance))/>
-					<cfelse>
-						<cfset md = structnew()/>
-						<cfset md.name = ""/>
-					</cfif>
-				</cfif>
-
-				<cfif structKeyExists(md, "functions")>
-					<!--- we need to call init method if it exists --->
-					<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
-						<cfif md.functions[functionIndex].name eq "init"
-								and beanDef.getFactoryBean() eq "">
-
-							<cftry>
-							<cfinvoke component="#beanInstance#" method="init">
-								<!--- loop over any bean constructor-args and pass them into the init() --->
+	
+						<!--- retrieve the factoryBeanDef, then the factory bean --->
+						<cfset factoryBeanDef = getMergedBeanDefinition(beanDef.getFactoryBean()) />
+	
+						<cfif factoryBeanDef.isAbstract()>
+							<cfthrow type="coldspring.BeanCreationException"
+									 detail="Abstract Beans cannot be instanciated. Did you really meen to define: #beanDef.getBeanID()# as 'Abstract'?"/>
+						</cfif>
+	
+						<cfif factoryBeanDef.isSingleton()>
+							<cfset factoryBean = factoryBeanDef.getInstance() />
+						<cfelse>
+							<cfif factoryBeanDef.isFactory()>
+								<cfset factoryBean = localBeanCache[factoryBeanDef.getBeanID()].getObject() />
+							<cfelse>
+								<cfset factoryBean = localBeanCache[factoryBeanDef.getBeanID()] />
+							</cfif>
+						</cfif>
+	
+						<cftry>
+							<!--- now call the 'constructor' to generate the bean, which is the factoryMethod --->
+							<cfinvoke component="#factoryBean#" method="#beanDef.getFactoryMethod()#"
+								returnvariable="beanInstance">
+								<!--- loop over constructor-args and pass them into the factoryMethod --->
 								<cfloop collection="#argDefs#" item="arg">
 									<cfset argType = argDefs[arg].getType() />
 									<cfif argType eq "value">
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-												    	  value="#argDefs[arg].getValue()#"/>
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#argDefs[arg].getValue()#"/>
 									<cfelseif argType eq "list" or argType eq "map">
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-												    	  value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
+										<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
 									<cfelseif argType eq "ref" or argType eq "bean">
-										<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
-														  value="#getBean(argDefs[arg].getValue())#"/>
+										<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
+											<cfif dependentBeanDef.isSingleton()>
+												<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
+											<cfelse>
+												<cfif dependentBeanDef.isFactory()>
+													<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
+												<cfelse>
+													<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+												</cfif>
+											</cfif>
+											<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#dependentBeanInstance#"/>
 									</cfif>
 								</cfloop>
 							</cfinvoke>
-
 							<cfcatch type="any">
 								<cfthrow type="coldspring.beanCreationException"
-									message="Bean creation exception during init() of #beanDef.getBeanClass()#"
+									message="Bean creation exception during factory-method call (trying to call #beanDef.getFactoryMethod()# on #factoryBeanDef.getBeanClass()#)"
 									detail="#cfcatch.message#:#cfcatch.detail#">
 							</cfcatch>
 						</cftry>
-
-						<cfelseif md.functions[functionIndex].name eq "setBeanFactory"
-								  and arraylen(md.functions[functionIndex].parameters) eq 1
-								  and structKeyExists(md.functions[functionIndex].parameters[1],"type")
-								  and md.functions[functionIndex].parameters[1].type eq "coldspring.beans.BeanFactory">
-							<!--- call setBeanFactory() if it exists and is a beanFactory --->
-							<cfset beanInstance.setBeanFactory(beanDef.getBeanFactory()) />
-
+						<!--- since we skipped factory beans in the bean creation loop, we need to store a reference to the bean now --->
+						<cfif beanDef.isSingleton() and not(singletonCacheContainsBean(beanDef.getBeanID()))>
+							<cfset beanDef.getBeanFactory().addBeanToSingletonCache(beanDef.getBeanID(), beanInstance ) />
+						<cfelse>
+							<cfset localBeanCache[beanDef.getBeanID()] = beanInstance />
 						</cfif>
-					</cfloop>
-				</cfif>
-
-				<!--- if this is a bean that extends the factory bean, set IsFactory, and give it a ref to the beanFactory --->
-				<cfset searchMd = md />
-				<cfif searchMd.name IS 'coldspring.aop.framework.RemoteFactoryBean'>
-					<cfset beanInstance.setId(arguments.beanName) />
-				</cfif>
-				<cfif searchMd.name IS 'coldspring.aop.framework.ProxyFactoryBean'>
-					<cfset beanDef.setIsProxyFactory(true) />
-				</cfif>
-
-				<cfloop condition="#StructKeyExists(searchMd,"extends")#">
-					<cfset searchMd = searchMd.extends />
+							
+						<!--- make sure the beanInstance is an object if we are gonna look at it
+							  (beanInstance could be anything returned from a factory-method call)  --->
+						<cfif isCFC(beanInstance)>
+							<cfset md = flattenMetaData(getMetaData(beanInstance))/>
+						<cfelse>
+							<cfset md = structnew()/>
+							<cfset md.name = ""/>
+						</cfif>
+					</cfif>
+	
+					<cfif structKeyExists(md, "functions")>
+						<!--- we need to call init method if it exists --->
+						<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
+							<cfif md.functions[functionIndex].name eq "init"
+									and beanDef.getFactoryBean() eq "">
+	
+								<cftry>
+								<cfinvoke component="#beanInstance#" method="init">
+									<!--- loop over any bean constructor-args and pass them into the init() --->
+									<cfloop collection="#argDefs#" item="arg">
+										<cfset argType = argDefs[arg].getType() />
+										<cfif argType eq "value">
+											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+													    	  value="#argDefs[arg].getValue()#"/>
+										<cfelseif argType eq "list" or argType eq "map">
+											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+													    	  value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
+										<cfelseif argType eq "ref" or argType eq "bean">
+											<cfinvokeargument name="#argDefs[arg].getArgumentName()#"
+															  value="#getBean(argDefs[arg].getValue())#"/>
+										</cfif>
+									</cfloop>
+								</cfinvoke>
+	
+								<cfcatch type="any">
+									<cfthrow type="coldspring.beanCreationException"
+										message="Bean creation exception during init() of #beanDef.getBeanClass()#"
+										detail="#cfcatch.message#:#cfcatch.detail#">
+								</cfcatch>
+							</cftry>
+	
+							<cfelseif md.functions[functionIndex].name eq "setBeanFactory"
+									  and arraylen(md.functions[functionIndex].parameters) eq 1
+									  and structKeyExists(md.functions[functionIndex].parameters[1],"type")
+									  and md.functions[functionIndex].parameters[1].type eq "coldspring.beans.BeanFactory">
+								<!--- call setBeanFactory() if it exists and is a beanFactory --->
+								<cfset beanInstance.setBeanFactory(beanDef.getBeanFactory()) />
+	
+							</cfif>
+						</cfloop>
+					</cfif>
+	
+					<!--- if this is a bean that extends the factory bean, set IsFactory, and give it a ref to the beanFactory --->
+					<cfset searchMd = md />
 					<cfif searchMd.name IS 'coldspring.aop.framework.RemoteFactoryBean'>
 						<cfset beanInstance.setId(arguments.beanName) />
 					</cfif>
 					<cfif searchMd.name IS 'coldspring.aop.framework.ProxyFactoryBean'>
 						<cfset beanDef.setIsProxyFactory(true) />
 					</cfif>
-					<cfif searchMd.name IS 'coldspring.beans.factory.FactoryBean'>
-						<cfset beanDef.setIsFactory(true) />
-						<!--- SO, We did this already (duck typing, above)
-						<cfset beanInstance.setBeanFactory(this) /> --->
-						<cfbreak />
-					</cfif>
-				</cfloop>
-
-				<!--- now do dependency injection via setters --->
-				<cfloop collection="#propDefs#" item="prop">
-					<cfset propType = propDefs[prop].getType() />
-					<cfif propType eq "value">
-						<cfinvoke component="#beanInstance#"
-								  method="set#propDefs[prop].getName()#">
-							<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
-								  	value="#propDefs[prop].getValue()#"/>
-						</cfinvoke>
-					<cfelseif propType eq "map" or propType eq "list">
-						<cfinvoke component="#beanInstance#"
-								  method="set#propDefs[prop].getName()#">
-							<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
-								  	value="#constructComplexProperty(propDefs[prop].getValue(), propDefs[prop].getType(), localBeanCache)#"/>
-						</cfinvoke>
-					<cfelseif propType eq "ref" or propType eq "bean">
-						<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
-						<cfif dependentBeanDef.isSingleton()>
-							<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
-						<cfelse>
-							<cfif dependentBeanDef.isFactory()>
-								<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
-							<cfelse>
-								<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
-							</cfif>
+	
+					<cfloop condition="#StructKeyExists(searchMd,"extends")#">
+						<cfset searchMd = searchMd.extends />
+						<cfif searchMd.name IS 'coldspring.aop.framework.RemoteFactoryBean'>
+							<cfset beanInstance.setId(arguments.beanName) />
 						</cfif>
-
-						<cfinvoke component="#beanInstance#"
-								  method="set#propDefs[prop].getName()#">
-							<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
-											  value="#dependentBeanInstance#"/>
-						</cfinvoke>
+						<cfif searchMd.name IS 'coldspring.aop.framework.ProxyFactoryBean'>
+							<cfset beanDef.setIsProxyFactory(true) />
+						</cfif>
+						<cfif searchMd.name IS 'coldspring.beans.factory.FactoryBean'>
+							<cfset beanDef.setIsFactory(true) />
+							<!--- SO, We did this already (duck typing, above)
+							<cfset beanInstance.setBeanFactory(this) /> --->
+							<cfbreak />
+						</cfif>
+					</cfloop>
+	
+					<!--- now do dependency injection via setters --->
+					<cfloop collection="#propDefs#" item="prop">
+						<cfset propType = propDefs[prop].getType() />
+						<cfif propType eq "value">
+							<cfinvoke component="#beanInstance#"
+									  method="set#propDefs[prop].getName()#">
+								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
+									  	value="#propDefs[prop].getValue()#"/>
+							</cfinvoke>
+						<cfelseif propType eq "map" or propType eq "list">
+							<cfinvoke component="#beanInstance#"
+									  method="set#propDefs[prop].getName()#">
+								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
+									  	value="#constructComplexProperty(propDefs[prop].getValue(), propDefs[prop].getType(), localBeanCache)#"/>
+							</cfinvoke>
+						<cfelseif propType eq "ref" or propType eq "bean">
+							<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
+							<cfif dependentBeanDef.isSingleton()>
+								<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
+							<cfelse>
+								<cfif dependentBeanDef.isFactory()>
+									<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()].getObject() />
+								<cfelse>
+									<cfset dependentBeanInstance = localBeanCache[dependentBeanDef.getBeanID()] />
+								</cfif>
+							</cfif>
+	
+							<cfinvoke component="#beanInstance#"
+									  method="set#propDefs[prop].getName()#">
+								<cfinvokeargument name="#propDefs[prop].getArgumentName()#"
+												  value="#dependentBeanInstance#"/>
+							</cfinvoke>
+						</cfif>
+					</cfloop>
+	
+					<!--- in order to inject the proper advisors into the aop proxy factories, we should do this now,
+						  instead of letting them lookup their own objects --->
+					<cfif beanDef.isProxyFactory()>
+						<cfset beanInstance.buildAdvisorChain(localBeanCache) />
 					</cfif>
-				</cfloop>
-
-				<!--- in order to inject the proper advisors into the aop proxy factories, we should do this now,
-					  instead of letting them lookup their own objects --->
-				<cfif beanDef.isProxyFactory()>
-					<cfset beanInstance.buildAdvisorChain(localBeanCache) />
+	
+					<cfif beanDef.isSingleton()>
+						<cfset beanDef.setIsConstructed(true)/>
+					</cfif>
+	
 				</cfif>
-
-				<cfif beanDef.isSingleton()>
-					<cfset beanDef.setIsConstructed(true)/>
-				</cfif>
-
-			</cfif>
-
+			</cflock>
 		</cfloop>
 
 		<!--- now loop again (same direction: backwards) for init-methods --->
