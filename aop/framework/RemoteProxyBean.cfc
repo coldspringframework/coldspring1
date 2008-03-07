@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: RemoteProxyBean.cfc,v 1.7 2007/09/11 11:41:52 scottc Exp $
+ $Id: RemoteProxyBean.cfc,v 1.8 2008/03/07 02:25:04 pjf Exp $
  $Log: RemoteProxyBean.cfc,v $
+ Revision 1.8  2008/03/07 02:25:04  pjf
+ Var'ed and scope variables caught by a var scope checker
+
  Revision 1.7  2007/09/11 11:41:52  scottc
  Fixed error setting bean factory in the proper scope, moved initialization into setup method in RemoteProxyBean
 
@@ -56,6 +59,7 @@
 		<cfset var bfUtils = 0 />
 		<cfset var bf = 0 />
 		<cfset var error = false />
+		<cfset var remoteFactory = "" />
 		
 		<!--- I want to make sure that the proxy id really exists --->
 		<cfif not StructKeyExists(variables, "proxyId")>

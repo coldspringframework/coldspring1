@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanProperty.cfc,v 1.21 2007/11/22 20:55:58 scottc Exp $
+ $Id: BeanProperty.cfc,v 1.22 2008/03/07 02:25:04 pjf Exp $
 
 ---> 
 
@@ -96,6 +96,7 @@
 		<cfset var entryFactoryBean = ""/>	
 		<cfset var entryAutowire = ""/>
 		<cfset var entryParent = "" />
+		<cfset var beanUID = "" />
 		
 		<!--- based on the type of property
 			perhaps we should switch on #getType()# instead? --->
@@ -198,10 +199,11 @@
 		<cfset var rtn = 0 />
 		<cfset var ix = 0/>
 		<cfset var entry = 0/>
-		<cfset var entryChild = 0/>
-		<cfset var entryKey = 0/>
+		<cfset var entryBeanID = "" />
+		<cfset var entryChild = 0 />
+		<cfset var entryKey = 0 />
 		<cfset var beanFactoryDefaultProperties = 0 />
-		<cfset var propertyPlaceholder = ""/>
+		<cfset var propertyPlaceholder = "" />
 		
 		<!--- OK, this is for Peter and MachII, perhapse property placeholders can work for maps and arrays too --->
 		<!--- resolve anything that looks like it should get replaced with a beanFactory default property --->
