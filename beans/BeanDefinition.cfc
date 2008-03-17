@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.38 2007/11/23 17:07:16 scottc Exp $
+ $Id: BeanDefinition.cfc,v 1.39 2008/03/17 23:53:33 bkotek Exp $
 
 --->
 
@@ -308,7 +308,7 @@
 	<cffunction name="setProperties" access="public" output="false" returntype="void"  
 				hint="I set the Properties in this instance's data">
 		<cfargument name="Properties" type="struct" required="true"/>
-		<cfset variables.instanceData.Properties = arguments.Properties />
+		<cfset variables.instanceData.Properties = StructCopy(arguments.Properties) />
 	</cffunction>
 	
 	<cffunction name="addProperty" access="public" output="false" returntype="void"  

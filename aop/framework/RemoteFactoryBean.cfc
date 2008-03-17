@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: RemoteFactoryBean.cfc,v 1.6 2007/09/11 11:41:52 scottc Exp $
+  $Id: RemoteFactoryBean.cfc,v 1.7 2008/03/17 23:53:33 bkotek Exp $
   $Log: RemoteFactoryBean.cfc,v $
+  Revision 1.7  2008/03/17 23:53:33  bkotek
+  Fix bugs CSP-92, CSP-93, and CSP-94.
+
   Revision 1.6  2007/09/11 11:41:52  scottc
   Fixed error setting bean factory in the proper scope, moved initialization into setup method in RemoteProxyBean
 
@@ -150,7 +153,6 @@
 		<cfset var advice = 0 />
 		<cfset var bfUtils = createObject("component","coldspring.beans.util.BeanFactoryUtils").init()/>
 		<cfset var bfScope = "application"/>
-		
 		<!--- ok, very first thing, make sure this factory is going to be accessable to the generated proxies --->
 		<cfif len(variables.beanFactoryScope)>
 			<cfset bfScope = variables.beanFactoryScope/>
@@ -181,9 +183,10 @@
 		<cfif isObject(flashMappingsInterceptor)>
 			<cfset addAdviceWithDefaultAdvisor(flashMappingsInterceptor) />
 		</cfif>
-		
 		<cfloop condition="structKeyExists(md,'extends')">
 			<cfif structKeyExists(md,'extends')>
+				<cfif Left(md.name, 34) neq "coldspring.aop.framework.tmp.bean_">
+			
 				<!--- now we'll loop through the target's methods and write remote methods for any matched ones --->
 				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIx">
 					<cfset functionName = md.functions[functionIx].name />
@@ -212,6 +215,8 @@
 						</cfif>
 					</cfif>
 				</cfloop>
+				
+				</cfif>
 			</cfif>
 			<cfset md = md.extends />
 		</cfloop>
