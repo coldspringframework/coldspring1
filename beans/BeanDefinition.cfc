@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.39 2008/03/17 23:53:33 bkotek Exp $
+ $Id: BeanDefinition.cfc,v 1.40 2008/03/18 00:01:20 bkotek Exp $
 
 --->
 
@@ -39,6 +39,8 @@
 	<cfset variables.instanceData.ProxyFactory = false />
 	<!--- whether this bean is a factory bean: --->	
 	<cfset variables.instanceData.isFactoryBean = false />
+	<!--- whether this bean is an inner bean: --->
+	<cfset variables.instanceData.InnerBean = false /> 
 	<!--- name of an init-method to call on this bean once all dependencies are set: --->
 	<cfset variables.instanceData.initMethod = ''/>
 	<!--- if the init-method exists, whether it has been called --->
