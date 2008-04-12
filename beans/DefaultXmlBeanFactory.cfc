@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.52 2008/03/07 02:25:04 pjf Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.53 2008/04/12 07:41:30 pjf Exp $
 
 ---> 
 
@@ -508,22 +508,68 @@
 		
 	</cffunction>
 	
-	<!--- this exists for autowiring by type... could be cleaned up --->
-	<cffunction name="findBeanNameByType" access="public" output="false" returntype="string"
-				hint="finds the first bean matching the specified type in the bean factory, otherwise returns ''">
-		<cfargument name="typeName" required="true" type="string" hint="type of bean to look for"/>
-		<cfset var bean = 0/>
-		<cfloop collection="#variables.beanDefs#" item="bean">
-			<cfif variables.beanDefs[bean].getBeanClass() eq arguments.typeName
-					and not variables.beanDefs[bean].isInnerBean()>
-				<cfreturn bean />
+	<!---
+	AUTOWIRE HELPERS
+	--->
+	<cffunction name="findBeanNameByType" access="public" returntype="string" output="false"
+		hint="Finds the name of the first bean that matches the specified type in the bean factory. Returns '' if no match is found.">
+		<cfargument name="typeName" type="string" required="true" 
+			hint="Type of bean to find in the bean factory."/>
+		<cfargument name="checkParent" type="boolean" required="false" default="true"
+			hint="Boolean to indicate whether or not to check parent. Defaults to 'true'." />
+
+		<cfset var bean = "" />
+		<cfset var key = "" />
+
+		<!--- Loop through the local factory --->
+		<cfloop collection="#variables.beanDefs#" item="key">
+			<cfif variables.beanDefs[key].getBeanClass() EQ arguments.typeName
+				AND NOT variables.beanDefs[key].isInnerBean()>
+				<cfset bean = key />
+				<cfbreak />
 			</cfif>
 		</cfloop>
-		<cfif isObject(variables.parent)>
-			<cfreturn variables.parent.findBeanNameByType(arguments.typeName) />
+
+		<!--- Check the parent factory if available and no bean found yet --->
+		<cfif NOT Len(bean) AND IsObject(variables.parent) AND arguments.checkParent>
+			<cfset bean = variables.parent.findBeanNameByType(arguments.typeName) />
 		</cfif>
-		<cfreturn ""/>
-	</cffunction>	
+		
+		<cfreturn bean />
+	</cffunction>
+	
+	<cffunction name="findAllBeanNamesByType" access="public" returntype="array" output="false"
+		hint="Finds the all the names of the bean that match the specified type in the bean factory.">
+		<cfargument name="typeName" type="string" required="true" 
+			hint="Type of bean to find in the bean factory."/>
+		<cfargument name="checkParent" type="boolean" required="false" default="true"
+			hint="Boolean to indicate whether or not to check parent. Defaults to 'true'." />
+
+		<cfset var beans = ArrayNew(1) />
+		<cfset var parentBeans = ArrayNew(1) />
+		<cfset var key = "" />
+		<cfset var i = 0 />
+
+		<!--- Loop through the local factory --->
+		<cfloop collection="#variables.beanDefs#" item="key">
+			<cfif variables.beanDefs[key].getBeanClass() EQ arguments.typeName
+				AND NOT variables.beanDefs[key].isInnerBean()>
+				<cfset ArrayAppend(beans, key) />
+			</cfif>
+		</cfloop>
+
+		<!--- Check the parent factory if available --->
+		<cfif IsObject(variables.parent) AND arguments.checkParent>
+			<cfset parentBeans = variables.parent.findBeanNameByType(arguments.typeName) />
+			
+			<!--- Merg the parent bean names array into the local names --->
+			<cfloop from="1" to="#ArrayLen(parentBeans)#" index="i">
+				<cfset ArrayAppend(beans, parentBeans[i]) />
+			</cfloop>
+		</cfif>
+		
+		<cfreturn beans />
+	</cffunction>
 	
 	<!--- DEPRECIATED?? IS THIS METHOD USED EVER??? --->
 	<cffunction name="isSingleton" access="public" returntype="boolean" output="false"
