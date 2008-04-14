@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanDefinition.cfc,v 1.40 2008/03/18 00:01:20 bkotek Exp $
+ $Id: BeanDefinition.cfc,v 1.41 2008/04/14 01:30:25 scottc Exp $
 
 --->
 
@@ -282,7 +282,7 @@
 	<cffunction name="setConstructorArgs" access="public" output="false" returntype="void"  
 				hint="I set the ConstructorArgs in this instance's data">
 		<cfargument name="constructorArgs" type="struct" required="true"/>
-		<cfset variables.instanceData.constructorArgs = arguments.constructorArgs />
+		<cfset variables.instanceData.constructorArgs = StructCopy(arguments.constructorArgs) />
 	</cffunction>
 	
 	<cffunction name="addConstructorArg" access="public" output="false" returntype="void"  
