@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: RemoteFactoryBean.cfc,v 1.7 2008/03/17 23:53:33 bkotek Exp $
+  $Id: RemoteFactoryBean.cfc,v 1.8 2008/04/17 22:51:21 pjf Exp $
   $Log: RemoteFactoryBean.cfc,v $
+  Revision 1.8  2008/04/17 22:51:21  pjf
+  - Fixed CSP-96 per discussion with Chris Scott on the issue
+
   Revision 1.7  2008/03/17 23:53:33  bkotek
   Fix bugs CSP-92, CSP-93, and CSP-94.
 
@@ -149,10 +152,12 @@
 		<cfset var functionIx = 0 />
 		<cfset var functionName = '' />
 		<cfset var functionString = '' />
+		<cfset var usedFunctions = StructNew() />
 		<cfset var advisorIx = 0 />
 		<cfset var advice = 0 />
 		<cfset var bfUtils = createObject("component","coldspring.beans.util.BeanFactoryUtils").init()/>
 		<cfset var bfScope = "application"/>
+		
 		<!--- ok, very first thing, make sure this factory is going to be accessable to the generated proxies --->
 		<cfif len(variables.beanFactoryScope)>
 			<cfset bfScope = variables.beanFactoryScope/>
@@ -190,7 +195,9 @@
 				<!--- now we'll loop through the target's methods and write remote methods for any matched ones --->
 				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIx">
 					<cfset functionName = md.functions[functionIx].name />
-					<cfif not ListFindNoCase('init', functionName)>
+					<cfif not ListFindNoCase('init', functionName) and not StructKeyExists(usedFunctions, functionName)>
+					
+						<cfset usedFunctions[functionName] = "" />
 						<cfif methodPointcutAdvisor.matches(functionName)>
 						
 							<!--- this type of proxy will be limited to remote methods, so 
