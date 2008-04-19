@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: BeanFactoryLocator.cfc,v 1.1 2007/06/02 21:02:57 scottc Exp $
+ $Id: BeanFactoryLocator.cfc,v 1.2 2008/04/19 02:33:11 scottc Exp $
 
 ---> 
 
@@ -46,7 +46,7 @@
 	
 	<cffunction name="postProcessBeanFactory" access="public" returntype="string" output="false">
 		<cfargument name="beanFactory" type="coldspring.beans.BeanFactory" required="true"/>
-		
+		<cfset var bf = 0/>
 		<cfset var bfUtils = createObject("component","coldspring.beans.util.BeanFactoryUtils").init()/>
 		<cfif not len(variables.beanFactoryName)>
 			<cfset bf = bfUtils.setDefaultFactory(variables.beanFactoryScope, arguments.beanFactory) />

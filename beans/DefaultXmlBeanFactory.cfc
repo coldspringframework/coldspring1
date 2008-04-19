@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.54 2008/04/19 00:52:34 bkotek Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.55 2008/04/19 02:33:11 scottc Exp $
 
 ---> 
 
@@ -135,8 +135,8 @@
 		<cfset var retVal = "">
 		<cfset var depth = 0>
 	
-		<cfset fullPath = replace(arguments.fullPath,"\","/","all")>
-		<cfset fullPath = replace(arguments.fullPath,"/./","/","all")>
+		<cfset arguments.fullPath = replace(arguments.fullPath,"\","/","all")>
+		<cfset arguments.fullPath = replace(arguments.fullPath,"/./","/","all")>
 		<cfset newPath = listToArray(arguments.fullPath,"/")>
 	
 		<cfloop from="1" to="#arrayLen(newPath)#" index="i">
