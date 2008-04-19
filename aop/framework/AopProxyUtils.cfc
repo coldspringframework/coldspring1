@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyUtils.cfc,v 1.14 2007/06/02 21:02:57 scottc Exp $
+ $Id: AopProxyUtils.cfc,v 1.15 2008/04/19 02:28:31 scottc Exp $
  $Log: AopProxyUtils.cfc,v $
+ Revision 1.15  2008/04/19 02:28:31  scottc
+ fixed var function spelling
+
  Revision 1.14  2007/06/02 21:02:57  scottc
  Removed ALL output from bean factory and aop, no system out, no logging. Added support for placeholders in map and list tags, major restructuring of bean factory, abstract bean factory, bean property
 
@@ -264,7 +267,7 @@
 		<cfargument name="metaData" type="any" required="true" />
 		<cfargument name="functionName" type="string" required="true" />
 		<cfargument name="accessType" type="string" required="false" />
-		<cfset var funtion = '' />
+		<cfset var function = '' />
 		
 		<!--- start method --->
 		<cfset function = "<cffunction name=""" & arguments.functionName & """" />
