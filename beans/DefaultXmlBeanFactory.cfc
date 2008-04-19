@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.53 2008/04/12 07:41:30 pjf Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.54 2008/04/19 00:52:34 bkotek Exp $
 
 ---> 
 
@@ -797,7 +797,7 @@
 								<cfelseif argType eq "list" or argType eq "map">
 									<cfinvokeargument name="#argDefs[arg].getArgumentName()#" value="#constructComplexProperty(argDefs[arg].getValue(),argDefs[arg].getType(), localBeanCache)#"/>
 								<cfelseif argType eq "ref" or argType eq "bean">
-									<cfset dependentBeanDef = getMergedBeanDefinition(propDefs[prop].getValue()) />
+									<cfset dependentBeanDef = getMergedBeanDefinition(argDefs[arg].getValue()) />
 										<cfif dependentBeanDef.isSingleton()>
 											<cfset dependentBeanInstance = dependentBeanDef.getInstance() />
 										<cfelse>
