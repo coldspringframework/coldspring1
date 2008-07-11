@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.56 2008/05/23 12:14:30 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.57 2008/07/11 03:03:43 bkotek Exp $
 
 ---> 
 
@@ -590,6 +590,7 @@
 		<cfset var returnFactory = Left(arguments.beanName,1) IS '&'>
 		<cfset var resolvedName = "" />
 		<cfset var beanDef = 0 />
+		<cfset var bean = 0 />
 		
 		<cfif returnFactory>
 			<cfset arguments.beanName = Right(arguments.beanName,Len(arguments.beanName)-1) />
