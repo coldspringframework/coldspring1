@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.57 2008/07/11 03:03:43 bkotek Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.58 2008/08/05 17:30:44 bkotek Exp $
 
 ---> 
 
@@ -271,11 +271,26 @@
 			<cfset beanAttributes = beans[beanIx].XmlAttributes />
 			<cfset beanChildren = beans[beanIx].XmlChildren />
 			
-			<cfif not structKeyExists(beanAttributes, "factory-bean") 
-				AND (not (StructKeyExists(beanAttributes,'id') and 
-					(StructKeyExists(beanAttributes,'class') or StructKeyExists(beanAttributes,'parent'))))>
+			<cfif 
+				NOT 
+					StructKeyExists(beanAttributes, "factory-bean") 
+				AND 
+				(NOT 
+					(StructKeyExists(beanAttributes,'id') 
+					AND 
+						(StructKeyExists(beanAttributes,'class') 
+						OR 
+						StructKeyExists(beanAttributes,'parent')
+						OR
+							(StructKeyExists(beanAttributes, 'abstract')
+							AND
+							beanAttributes.abstract
+							)
+						)
+					)
+				)>
 				<cfthrow type="coldspring.MalformedBeanException" 
-					message="Xml bean definitions must contain 'id' and 'class' attributes!">
+					message="Bean ID '#beanAttributes.id#': Xml bean definitions must contain 'id' and 'class' attributes!">
 			</cfif>
 			
 			<!--- set the class (it will be blank if we are using parent) --->			
