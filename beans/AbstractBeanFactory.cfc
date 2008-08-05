@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: AbstractBeanFactory.cfc,v 1.8 2007/06/02 22:19:20 scottc Exp $
+ $Id: AbstractBeanFactory.cfc,v 1.9 2008/08/05 20:00:18 bkotek Exp $
 
 --->
  
@@ -36,6 +36,11 @@
 	<cfset variables.aliasMap = StructNew() />
 	<cfset variables.known_bf_postprocessors = "coldspring.beans.factory.config.PropertyPlaceholderConfigurer,coldspring.beans.factory.config.BeanFactoryLocator" />
 	<cfset variables.known_bean_postprocessors = "coldspring.aop.framework.autoproxy.BeanNameAutoProxyCreator" />
+	
+	<!--- ColdSpring Framework Properties --->
+	<cfset variables.instanceData.frameworkPropertiesFile = "/coldspring/frameworkProperties.properties" />
+	<cfset variables.instanceData.frameworkProperties = loadFrameworkProperties(ExpandPath(variables.instanceData.frameworkPropertiesFile)) />
+	
 			
 	<cffunction name="init" access="private" returntype="void" output="false">
 		<cfthrow message="Abstract CFC cannot be initialized" />
@@ -233,5 +238,22 @@
 		<cfreturn mergedDef />
 		
 	</cffunction>
-
+	
+	<cffunction name="getVersion" access="public" returntype="string" output="false" hint="I return the version number for the framework.">
+		<cfreturn getFrameworkProperties().getProperty('majorVersion') />
+	</cffunction>
+	
+	<cffunction name="getFrameworkProperties" access="public" returntype="any" output="false" hint="I return a Java Properties object containing the Framework properites such as version number.">
+		<cfreturn variables.instanceData.frameworkProperties />
+	</cffunction>
+	
+	<cffunction name="loadFrameworkProperties" access="public" returntype="any" output="false" hint="I return a Java Properties object populated from the specified properties file.">
+		<cfargument name="propertiesFile" type="string" required="true" />
+		<cfset var local = StructNew() />
+		<cfset local.fileStream = CreateObject('java', 'java.io.FileInputStream').init(arguments.propertiesFile) />
+		<cfset local.properties = CreateObject('java', 'java.util.Properties').init() />
+		<cfset local.properties.load(local.fileStream) />
+		<cfreturn local.properties />
+	</cffunction>
+	
 </cfcomponent>
