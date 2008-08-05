@@ -24,6 +24,12 @@
 	
 	<bean id="initNonSingletonBean" class="coldspring.tests.initMethodBean" init-method="setup" singleton="false"/>
 	
+	<bean id="subclassBean" class="coldspring.tests.SubclassBean">
+		<constructor-arg name="superclassArg">
+			<value>${superclassArg}</value>
+		</constructor-arg>
+	</bean>			
+	
 	<bean id="structBean" class="coldspring.tests.structBean">
 		<property name="data">
 			<map>

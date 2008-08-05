@@ -25,4 +25,19 @@
 
 	</cffunction>
 	
+	<cffunction name="testInheritedInit" access="public" returntype="void" output="false" hint="">
+		<cfset var local = StructNew() />
+		<cfset var path = GetDirectoryFromPath(getMetaData(this).path) />
+		<cfset var bf = 0 />
+		<cfset var bean = 0 />
+		
+		<!--- create a new bean factory --->
+		<cfset bf = createObject("component","coldspring.beans.DefaultXmlBeanFactory").init()/>
+		<!--- load the bean defs --->
+		<cfset bf.loadBeansFromXmlFile(path&'/testBeans.xml')/>
+		
+		<cfset bean = bf.getBean('subclassBean') />
+		<cfset assertTrue(bean.getSuperclassArg() eq 'This argument should be set in the superclass.') />
+	</cffunction>
+	
 </cfcomponent>
