@@ -28,6 +28,9 @@
 		<constructor-arg name="superclassArg">
 			<value>${superclassArg}</value>
 		</constructor-arg>
+		<property name="stringBean">
+			<ref bean="stringBean" />
+		</property>
 	</bean>			
 	
 	<bean id="structBean" class="coldspring.tests.structBean">

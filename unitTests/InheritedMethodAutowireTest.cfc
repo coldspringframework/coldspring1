@@ -16,10 +16,18 @@
 			<cfset variables.beanFactory.loadBeans(configLocations) />
 		</cfif>
 	</cffunction>
+	
+	<cffunction name="testAutowireInheritedMethod" access="public" returntype="void" output="false" hint="">
+		<cfset var bf = 0 />
+		<cfset var bean = 0 />
 		
-	<cffunction name="testAbstractBeanWithNoClass" access="public" returntype="void" output="false">
-		<cfset var child = variables.beanFactory.getBean('childBean') />
-		<cfset AssertTrue(child.getMessage() eq 'I am set in the Abstract Parent.') />
+		<!--- create a new bean factory --->
+		<cfset bf = createObject("component","coldspring.beans.DefaultXmlBeanFactory").init()/>
+		<!--- load the bean defs --->
+		<cfset bf.loadBeans(getConfigLocations())/>
+		
+		<cfset bean = bf.getBean('subclassBean') />
+		<cfset assertTrue(IsInstanceOf(bean.getStringBean(), 'coldspring.tests.stringBean')) />
 	</cffunction>
-
+		
 </cfcomponent>

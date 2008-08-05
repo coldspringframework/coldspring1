@@ -14,5 +14,14 @@
 		<cfargument name="superclassArg" type="string" required="true" hint="SuperclassArg" />
 		<cfset variables.instance['superclassArg'] = arguments.superclassArg />
 	</cffunction>
-
+	
+	<cffunction name="getStringBean" access="public" returntype="any" output="false" hint="I return the StringBean.">
+		<cfreturn variables.instance['stringBean'] />
+	</cffunction>
+		
+	<cffunction name="setStringBean" access="public" returntype="void" output="false" hint="I set the StringBean.">
+		<cfargument name="stringBean" type="any" required="true" hint="StringBean" />
+		<cfset variables.instance['stringBean'] = arguments.stringBean />
+	</cffunction>
+	
 </cfcomponent>

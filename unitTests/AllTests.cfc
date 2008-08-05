@@ -9,6 +9,7 @@
 		<cfset testSuite.addTestSuite(newObject("coldspring.unitTests.InitMethodTests"))>
 		<cfset testSuite.addTestSuite(newObject("coldspring.unitTests.AbstractNoClassTests"))>
 		<cfset testSuite.addTestSuite(newObject("coldspring.unitTests.FrameworkPropertiesTests"))>
+		<cfset testSuite.addTestSuite(newObject("coldspring.unitTests.InheritedMethodAutowireTest"))>
 		<!--- <cfset testSuite.addTestSuite(newObject("coldspring.unitTests.RemoteFactoryBeanTest"))> --->
 		
 		<cfreturn testSuite/>
