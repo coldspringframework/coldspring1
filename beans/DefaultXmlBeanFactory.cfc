@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.58 2008/08/05 17:30:44 bkotek Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.59 2008/08/06 01:56:29 scottc Exp $
 
 ---> 
 
@@ -243,12 +243,9 @@
 		<cfset var abstract = false />
 		<cfset var parent = "" />
 		<cfset var beanMetadata = ""/>
-	
-		<!--- make sure some beans exist --->
-		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
-			<cfset beans = arguments.XmlBeanDefinitions.beans.bean>
-		<cfelse>
-			<!--- no beans found, return without modding the factory at all --->
+		
+		<!--- make sure at least the root beans element exists --->
+		<cfif not isDefined("arguments.XmlBeanDefinitions.beans")>
 			<cfreturn/>
 		</cfif>
 		
@@ -265,160 +262,165 @@
 			<cfset default_lazyInit = arguments.XmlBeanDefinitions.beans.XmlAttributes['default-lazy-init']/>			
 		</cfif>
 		
-		<!--- create bean definition objects for each (top level) bean in the xml--->
-		<cfloop from="1" to="#ArrayLen(beans)#" index="beanIx">
-			
-			<cfset beanAttributes = beans[beanIx].XmlAttributes />
-			<cfset beanChildren = beans[beanIx].XmlChildren />
-			
-			<cfif 
-				NOT 
-					StructKeyExists(beanAttributes, "factory-bean") 
-				AND 
-				(NOT 
-					(StructKeyExists(beanAttributes,'id') 
+		<!--- check for beans, if there are none, we'll process aliases later --->
+		<cfif isDefined("arguments.XmlBeanDefinitions.beans.bean")>
+			<cfset beans = arguments.XmlBeanDefinitions.beans.bean>
+		
+			<!--- create bean definition objects for each (top level) bean in the xml--->
+			<cfloop from="1" to="#ArrayLen(beans)#" index="beanIx">
+				
+				<cfset beanAttributes = beans[beanIx].XmlAttributes />
+				<cfset beanChildren = beans[beanIx].XmlChildren />
+				
+				<cfif 
+					NOT 
+						StructKeyExists(beanAttributes, "factory-bean") 
 					AND 
-						(StructKeyExists(beanAttributes,'class') 
-						OR 
-						StructKeyExists(beanAttributes,'parent')
-						OR
-							(StructKeyExists(beanAttributes, 'abstract')
-							AND
-							beanAttributes.abstract
+					(NOT 
+						(StructKeyExists(beanAttributes,'id') 
+						AND 
+							(StructKeyExists(beanAttributes,'class') 
+							OR 
+							StructKeyExists(beanAttributes,'parent')
+							OR
+								(StructKeyExists(beanAttributes, 'abstract')
+								AND
+								beanAttributes.abstract
+								)
 							)
 						)
-					)
-				)>
-				<cfthrow type="coldspring.MalformedBeanException" 
-					message="Bean ID '#beanAttributes.id#': Xml bean definitions must contain 'id' and 'class' attributes!">
-			</cfif>
-			
-			<!--- set the class (it will be blank if we are using parent) --->			
-			<cfif StructKeyExists(beanAttributes,'class')>
-				<cfset class = beanAttributes.class />
-			<cfelse>
-				<cfset class = "" />
-			</cfif>
-			
-			<!--- look for an singleton attribute for this bean def --->			
-			<cfif StructKeyExists(beanAttributes,'singleton')>
-				<cfset isSingleton = beanAttributes.singleton />
-			<cfelse>
-				<cfset isSingleton = true />
-			</cfif>
-			
-			<!--- look for lazy-init for this bean def --->
-			<cfif StructKeyExists(beanAttributes,'lazy-init')>
-				<cfset lazyInit = beanAttributes["lazy-init"] />
-			<cfelse>
-				<cfset lazyInit = default_lazyInit/>
-			</cfif>
-			
-			<!--- look for an factory-bean and factory-method attribute for this bean def --->			
-			<cfif StructKeyExists(beanAttributes,'factory-bean')>
-				<cfset factoryBean = beanAttributes["factory-bean"] />
-			<cfelse>
-				<cfset factoryBean = "" />
-			</cfif>
-			<cfif StructKeyExists(beanAttributes,'factory-method')>
-				<cfset factoryMethod = beanAttributes["factory-method"] />
-			<cfelse>
-				<cfset factoryMethod = "" />
-			</cfif>
-			
-			<!--- look for an init-method attribute for this bean def --->
-			<cfif StructKeyExists(beanAttributes,'init-method') and len(beanAttributes['init-method'])>
-				<cfset initMethod = beanAttributes['init-method'] />
-			<cfelse>
-				<cfset initMethod = ""/>
-			</cfif>
-			
-			<!--- first set autowire to default-autowire --->
-			<cfset autowire = default_autowire />
-			
-			<!--- look for an autowire attribute for this bean def --->
-			<cfif StructKeyExists(beanAttributes,'autowire') and listFind('byName,byType',beanAttributes['autowire'])>
-				<cfset autowire = beanAttributes['autowire'] />
-			</cfif>
-			
-			<!---  todo: CF8 only feature!! 
-			<cfif StructKeyExists(beanAttributes,'class')>
-				<cfset beanMetadata = getComponentMetadata(beanAttributes.class)>
-				<cfif StructKeyExists(beanMetadata,"interface")>
-					<cfif ListFindNoCase(beanMetadata, "coldspring.beans.factory.config.BeanFactoryPostProcessor")>
-						<cfset factoryPostProcessor = true />
-					</cfif>
-					<cfif ListFindNoCase(beanMetadata, "coldspring.beans.factory.config.BeanPostProcessor")>
-						<cfset beanPostProcessor = true />
-					</cfif>
+					)>
+					<cfthrow type="coldspring.MalformedBeanException" 
+						message="Bean ID '#beanAttributes.id#': Xml bean definitions must contain 'id' and 'class' attributes!">
 				</cfif>
-			</cfif> --->
+				
+				<!--- set the class (it will be blank if we are using parent) --->			
+				<cfif StructKeyExists(beanAttributes,'class')>
+					<cfset class = beanAttributes.class />
+				<cfelse>
+					<cfset class = "" />
+				</cfif>
+				
+				<!--- look for an singleton attribute for this bean def --->			
+				<cfif StructKeyExists(beanAttributes,'singleton')>
+					<cfset isSingleton = beanAttributes.singleton />
+				<cfelse>
+					<cfset isSingleton = true />
+				</cfif>
+				
+				<!--- look for lazy-init for this bean def --->
+				<cfif StructKeyExists(beanAttributes,'lazy-init')>
+					<cfset lazyInit = beanAttributes["lazy-init"] />
+				<cfelse>
+					<cfset lazyInit = default_lazyInit/>
+				</cfif>
+				
+				<!--- look for an factory-bean and factory-method attribute for this bean def --->			
+				<cfif StructKeyExists(beanAttributes,'factory-bean')>
+					<cfset factoryBean = beanAttributes["factory-bean"] />
+				<cfelse>
+					<cfset factoryBean = "" />
+				</cfif>
+				<cfif StructKeyExists(beanAttributes,'factory-method')>
+					<cfset factoryMethod = beanAttributes["factory-method"] />
+				<cfelse>
+					<cfset factoryMethod = "" />
+				</cfif>
+				
+				<!--- look for an init-method attribute for this bean def --->
+				<cfif StructKeyExists(beanAttributes,'init-method') and len(beanAttributes['init-method'])>
+					<cfset initMethod = beanAttributes['init-method'] />
+				<cfelse>
+					<cfset initMethod = ""/>
+				</cfif>
+				
+				<!--- first set autowire to default-autowire --->
+				<cfset autowire = default_autowire />
+				
+				<!--- look for an autowire attribute for this bean def --->
+				<cfif StructKeyExists(beanAttributes,'autowire') and listFind('byName,byType',beanAttributes['autowire'])>
+					<cfset autowire = beanAttributes['autowire'] />
+				</cfif>
+				
+				<!---  todo: CF8 only feature!! 
+				<cfif StructKeyExists(beanAttributes,'class')>
+					<cfset beanMetadata = getComponentMetadata(beanAttributes.class)>
+					<cfif StructKeyExists(beanMetadata,"interface")>
+						<cfif ListFindNoCase(beanMetadata, "coldspring.beans.factory.config.BeanFactoryPostProcessor")>
+							<cfset factoryPostProcessor = true />
+						</cfif>
+						<cfif ListFindNoCase(beanMetadata, "coldspring.beans.factory.config.BeanPostProcessor")>
+							<cfset beanPostProcessor = true />
+						</cfif>
+					</cfif>
+				</cfif> --->
+				
+				<!--- look for a factory-post-processor attribute for this bean def --->
+				<cfif StructKeyExists(beanAttributes,'class') and listFind(variables.known_bf_postprocessors,beanAttributes.class)>
+					<cfset factoryPostProcessor = true />
+				<cfelseif StructKeyExists(beanAttributes,'factory-post-processor') and len(beanAttributes['factory-post-processor'])>
+					<cfset factoryPostProcessor = beanAttributes['factory-post-processor'] />
+				<cfelse>
+					<cfset factoryPostProcessor = false />
+				</cfif>
+				
+				<!--- look for a bean-post-processor attribute for this bean def --->
+				<cfif StructKeyExists(beanAttributes,'class') and listFind(variables.known_bean_postprocessors,beanAttributes.class)>
+					<cfset beanPostProcessor = true />
+				<cfelseif StructKeyExists(beanAttributes,'bean-post-processor') and len(beanAttributes['bean-post-processor'])>
+					<cfset beanPostProcessor = beanAttributes['bean-post-processor'] />
+				<cfelse>
+					<cfset beanPostProcessor = false />
+				</cfif>
+				
+				<!--- look for abstract flag, and parent bean def --->			
+				<cfif StructKeyExists(beanAttributes,'abstract')>
+					<cfset abstract = beanAttributes.abstract />
+				<cfelse>
+					<cfset abstract = false />
+				</cfif>
+				
+				<cfif StructKeyExists(beanAttributes,'parent')>
+					<cfset parent = beanAttributes.parent />
+				<cfelse>
+					<cfset parent = ""/>
+				</cfif>
+				
+				<!--- call function to create bean definition and add to store --->
+				<cfif not structKeyExists(beanAttributes, "factory-bean")> 
+					<cfset createBeanDefinition(beanAttributes.id, 
+											class, 
+											beanChildren, 
+											isSingleton, 
+											false,
+											lazyInit,
+											initMethod,
+											factoryBean, 
+											factoryMethod,
+											autowire,
+											factoryPostProcessor,
+											beanPostProcessor,
+											abstract,
+											parent) />
+				<cfelse>
+					<cfset createBeanDefinition(beanAttributes.id, 
+											"", 
+											beanChildren, 
+											isSingleton, 
+											false,
+											lazyInit,
+											initMethod,
+											factoryBean, 
+											factoryMethod,
+											autowire,
+											false,
+											false,
+											abstract,
+											parent) />
+				</cfif>
 			
-			<!--- look for a factory-post-processor attribute for this bean def --->
-			<cfif StructKeyExists(beanAttributes,'class') and listFind(variables.known_bf_postprocessors,beanAttributes.class)>
-				<cfset factoryPostProcessor = true />
-			<cfelseif StructKeyExists(beanAttributes,'factory-post-processor') and len(beanAttributes['factory-post-processor'])>
-				<cfset factoryPostProcessor = beanAttributes['factory-post-processor'] />
-			<cfelse>
-				<cfset factoryPostProcessor = false />
-			</cfif>
-			
-			<!--- look for a bean-post-processor attribute for this bean def --->
-			<cfif StructKeyExists(beanAttributes,'class') and listFind(variables.known_bean_postprocessors,beanAttributes.class)>
-				<cfset beanPostProcessor = true />
-			<cfelseif StructKeyExists(beanAttributes,'bean-post-processor') and len(beanAttributes['bean-post-processor'])>
-				<cfset beanPostProcessor = beanAttributes['bean-post-processor'] />
-			<cfelse>
-				<cfset beanPostProcessor = false />
-			</cfif>
-			
-			<!--- look for abstract flag, and parent bean def --->			
-			<cfif StructKeyExists(beanAttributes,'abstract')>
-				<cfset abstract = beanAttributes.abstract />
-			<cfelse>
-				<cfset abstract = false />
-			</cfif>
-			
-			<cfif StructKeyExists(beanAttributes,'parent')>
-				<cfset parent = beanAttributes.parent />
-			<cfelse>
-				<cfset parent = ""/>
-			</cfif>
-			
-			<!--- call function to create bean definition and add to store --->
-			<cfif not structKeyExists(beanAttributes, "factory-bean")> 
-				<cfset createBeanDefinition(beanAttributes.id, 
-										class, 
-										beanChildren, 
-										isSingleton, 
-										false,
-										lazyInit,
-										initMethod,
-										factoryBean, 
-										factoryMethod,
-										autowire,
-										factoryPostProcessor,
-										beanPostProcessor,
-										abstract,
-										parent) />
-			<cfelse>
-				<cfset createBeanDefinition(beanAttributes.id, 
-										"", 
-										beanChildren, 
-										isSingleton, 
-										false,
-										lazyInit,
-										initMethod,
-										factoryBean, 
-										factoryMethod,
-										autowire,
-										false,
-										false,
-										abstract,
-										parent) />
-			</cfif>
-		
-		</cfloop>
+			</cfloop>
+		</cfif>
 		
 		<!--- now register aliases --->
 		<cfif isDefined("arguments.XmlBeanDefinitions.beans.alias")>
