@@ -1,22 +1,25 @@
 <!---
-	  
+
   Copyright (c) 2005, Chris Scott, David Ross, Kurt Wiersma, Sean Corfield
   All rights reserved.
-	
+
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
-  
+
        http://www.apache.org/licenses/LICENSE-2.0
-  
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: ProxyFactoryBean.cfc,v 1.14 2007/06/02 21:02:57 scottc Exp $
+  $Id: ProxyFactoryBean.cfc,v 1.15 2009/02/24 23:53:08 mandelm Exp $
   $Log: ProxyFactoryBean.cfc,v $
+  Revision 1.15  2009/02/24 23:53:08  mandelm
+  Annotation Pointcuts for AOP
+
   Revision 1.14  2007/06/02 21:02:57  scottc
   Removed ALL output from bean factory and aop, no system out, no logging. Added support for placeholders in map and list tags, major restructuring of bean factory, abstract bean factory, bean property
 
@@ -47,48 +50,48 @@
   Revision 1.5  2005/10/09 22:45:25  scottc
   Forgot to add Dave to AOP license
 
-	
----> 
- 
-<cfcomponent name="ProxyFactoryBean" 
-			displayname="ProxyFactoryBean" 
+
+--->
+
+<cfcomponent name="ProxyFactoryBean"
+			displayname="ProxyFactoryBean"
 			extends="coldspring.beans.factory.FactoryBean"
-			hint="Concrete Class for ProxyFactoryBean" 
+			hint="Concrete Class for ProxyFactoryBean"
 			output="false">
-	
-	<cfset variables.singleton = true />		
+
+	<cfset variables.singleton = true />
 	<cfset variables.advisorChain = ArrayNew(1) />
 	<cfset variables.interceptorNames = 0 />
 	<cfset variables.aopProxyUtils = CreateObject('component','coldspring.aop.framework.AopProxyUtils').init() />
 	<cfset variables.proxyObject = 0 />
 	<cfset variables.constructed = false />
-			
+
 	<cffunction name="init" access="public" returntype="coldspring.aop.framework.ProxyFactoryBean" output="false">
 		<!--- <cfset var category = CreateObject("java", "org.apache.log4j.Category") />
 		<cfset variables.logger = category.getInstance('coldspring.aop') />
 		<cfset variables.logger.info("ProxyFactoryBean created") /> --->
 		<cfreturn this />
 	</cffunction>
-	
+
 	<cffunction name="setTarget" access="public" returntype="void" output="false">
 		<cfargument name="target" type="any" required="true" />
-		<cfset variables.target = arguments.target />	
+		<cfset variables.target = arguments.target />
 	</cffunction>
-	
+
 	<cffunction name="setInterceptorNames" access="public" returntype="void" output="false">
 		<cfargument name="interceptorNames" type="array" required="true" />
 		<cfset variables.interceptorNames = arguments.interceptorNames />
 	</cffunction>
-	
+
 	<cffunction name="getInterceptorNames" access="public" returntype="array" output="false">
 		<cfreturn variables.interceptorNames />
 	</cffunction>
-	
+
 	<cffunction name="addAdvisor" access="public" returntype="string" output="false">
 		<cfargument name="advisor" type="coldspring.aop.Advisor" required="true"/>
 		<cfset ArrayAppend(variables.advisorChain, arguments.advisor) />
 	</cffunction>
-	
+
 	<!--- todo: shouldn't this really be internal? used in addAdvisor? Check the type searching in AdviceChain --->
 	<cffunction name="addAdviceWithDefaultAdvisor" access="public" returntype="string" output="false">
 		<cfargument name="advice" type="coldspring.aop.Advice" required="true"/>
@@ -96,22 +99,22 @@
 		<cfset defaultAdvisor.setAdvice(arguments.advice) />
 		<cfset ArrayAppend(variables.advisorChain, defaultAdvisor) />
 	</cffunction>
-	
-	<cffunction name="getBeanFactory" access="public" output="false" returntype="struct" 
+
+	<cffunction name="getBeanFactory" access="public" output="false" returntype="struct"
 				hint="I retrieve the Bean Factory from this instance's data">
 		<cfreturn variables.BeanFactory />
 	</cffunction>
 
-	<cffunction name="setBeanFactory" access="public" output="false" returntype="void"  
+	<cffunction name="setBeanFactory" access="public" output="false" returntype="void"
 				hint="I set the Bean Factory in this instance's data">
 		<cfargument name="beanFactory" type="coldspring.beans.BeanFactory" required="true"/>
 		<cfset variables.BeanFactory = arguments.beanFactory />
 	</cffunction>
-	
+
 	<cffunction name="getObjectType" access="public" returntype="string" output="false">
 		<cfthrow type="Method.NotImplemented">
 	</cffunction>
-	
+
 	<cffunction name="isSingleton" access="public" returntype="boolean" output="false">
 		<cfreturn variables.singleton />
 	</cffunction>
@@ -120,11 +123,11 @@
 		<cfargument name="singleton" type="boolean" required="true"/>
 		<cfset variables.singleton = arguments.singleton />
 	</cffunction>
-	
+
 	<cffunction name="isConstructed" access="public" returntype="boolean" output="false">
 		<cfreturn variables.constructed />
 	</cffunction>
-	
+
 	<cffunction name="getObject" access="public" returntype="any" output="true">
 		<cfif isSingleton()>
 			<cfif not isConstructed()>
@@ -138,7 +141,7 @@
 			<cfthrow type="Method.NotImplemented" message="Creating non-singleton proxies is not yet supported!">
 		</cfif>
 	</cffunction>
-	
+
 	<cffunction name="createProxyInstance" access="private" returntype="any" output="true">
 		<cfset var methodAdviceChains = StructNew() />
 		<cfset var md = getMetaData(variables.target)/>
@@ -150,24 +153,24 @@
 		<cfset var advice = 0 />
 		<cfset var aopProxyBean = variables.aopProxyUtils.createBaseProxyBean(variables.target) />
 		<!--- <cfset var aopProxyBean = CreateObject('component','coldspring.aop.framework.AopProxyBean').init(variables.target) /> --->
-		
+
 		<!--- first we need to build the advisor chain to search for pointcut matches
 		<cfset buildAdvisorChain() /> --->
-		
+
 		<cfloop condition="structKeyExists(md,'extends')">
 			<cfif structKeyExists(md,'functions')>
 				<!--- now we'll loop through the target's methods and search for advice to add to the advice chain --->
 				<cfloop from="1" to="#arraylen(md.functions)#" index="functionIx">
-				
+
 					<cfset functionName = md.functions[functionIx].name />
-					
+
 					<cfif not structKeyExists(functionSeen,functionName)>
 
 						<cfset functionSeen[functionName] = true />
 
 						<cfif not ListFindNoCase('init', functionName)>
 							<cfloop from="1" to="#ArrayLen(variables.advisorChain)#" index="advisorIx">
-								<cfif variables.advisorChain[advisorIx].matches(functionName)>
+								<cfif variables.advisorChain[advisorIx].matches(functionName, md)>
 									<!--- if we found a mathing pointcut in an advisor, make sure this method has an adviceChain started --->
 									<cfif not StructKeyExists(methodAdviceChains, functionName)>
 										<cfset methodAdviceChains[functionName] = CreateObject('component','coldspring.aop.AdviceChain').init() />
@@ -187,24 +190,24 @@
 						</cfif>
 
 					</cfif>
-									
+
 				</cfloop>
 			</cfif>
 			<cfset md = md.extends />
 		</cfloop>
-		
+
 		<!--- now give the proxy object the advice chains --->
 		<cfset aopProxyBean.setAdviceChains(methodAdviceChains) />
-		
+
 		<!--- store the proxyObject --->
 		<cfset variables.proxyObject = aopProxyBean />
 		<cfset variables.constructed = true />
-		
+
 		<cfreturn aopProxyBean />
-		
+
 	</cffunction>
-	
-	<!--- todo: This is really a method that is specific to ColdSpring, I'm not sure it belongs in this class, gotta think... --->	
+
+	<!--- todo: This is really a method that is specific to ColdSpring, I'm not sure it belongs in this class, gotta think... --->
 	<cffunction name="buildAdvisorChain" access="public" returntype="void" output="false">
 		<cfargument name="localBeanCache" type="struct" required="true" hint="non singleton beans, local to constructBean method" />
 		<cfset var advisorBeanDef = 0 />
@@ -223,25 +226,25 @@
 					  not a singleton?? How would he get the localBeanCache from the constructBean() method which is actually creating
 					  this object??
 				<cfset advisorBean = getBeanFactory().getBeanFromSingletonCache(variables.interceptorNames[ix]) /> --->
-				
-				
+
+
 				<!--- retrieve the advisor's bean def --->
 				<cfset advisorBeanDef = getBeanFactory().getMergedBeanDefinition(variables.interceptorNames[ix]) />
-				
+
 				<cfif advisorBeanDef.isSingleton()>
 					<cfset advisorBean = advisorBeanDef.getInstance() />
 				<cfelse>
 					<cfset advisorBean = localBeanCache[variables.interceptorNames[ix]] />
 				</cfif>
-				
-				
+
+
 				<cftry>
 					<cfset addAdvisor(advisorBean) />
 					<cfcatch>
 						<cftry>
 							<cfset addAdviceWithDefaultAdvisor(advisorBean) />
 						<cfcatch>
-							<cfthrow type="coldspring.aop.InvalidAdvisorError" 
+							<cfthrow type="coldspring.aop.InvalidAdvisorError"
 									 message="You attempted to add an object which is not of type advice or advisor as an interceptor. This is not allowed!" />
 						</cfcatch>
 						</cftry>
@@ -249,6 +252,6 @@
 				</cftry>
 			</cfloop>
 		</cfif>
-	</cffunction>	
-	
+	</cffunction>
+
 </cfcomponent>
