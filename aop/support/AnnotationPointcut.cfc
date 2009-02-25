@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AnnotationPointcut.cfc,v 1.1 2009/02/24 23:51:44 anoncvs Exp $
+ $Id: AnnotationPointcut.cfc,v 1.2 2009/02/25 06:16:18 mandelm Exp $
  $Log: AnnotationPointcut.cfc,v $
+ Revision 1.2  2009/02/25 06:16:18  mandelm
+ All for '*' wildcard in the Annotation pointcut.
+
  Revision 1.1  2009/02/24 23:51:44  anoncvs
  Annotation Pointcuts for AOP
 
@@ -84,7 +87,12 @@
 		<cfloop collection="#getAnnotations()#" item="annotation">
 			<cfscript>
 				//check if it exists, and the values match
-				if(StructKeyExists(arguments.meta, annotation) AND arguments.meta[annotation] eq StructFind(getAnnotations(), annotation))
+				if(StructKeyExists(arguments.meta, annotation) AND
+					(
+					StructFind(getAnnotations(), annotation) eq "*"
+					OR
+					arguments.meta[annotation] eq StructFind(getAnnotations(), annotation)
+					))
 				{
 					return true;
 				}
