@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
-  $Id: RemoteFactoryBean.cfc,v 1.9 2009/03/06 21:51:24 mandelm Exp $
+  $Id: RemoteFactoryBean.cfc,v 1.10 2009/03/18 22:06:20 mandelm Exp $
   $Log: RemoteFactoryBean.cfc,v $
+  Revision 1.10  2009/03/18 22:06:20  mandelm
+  Fix a stupid bug where the RemoteFactory bean would add a method named '0' to all your remote proxies (my fault)
+
   Revision 1.9  2009/03/06 21:51:24  mandelm
   Added capabilities for 'addMissingmethods', for specific methods to be assigned as a remoteProxy signature.
 
@@ -69,7 +72,7 @@
 	<cfset variables.beanFactoryScope = "" />
 	<cfset variables.remoteMethodNames = "" />
 	<cfset variables.proxyAdviceChains = 0 />
-	<cfset variables.addMissingMethods = 0 />
+	<cfset variables.addMissingMethods = ""/>
 
 	<cffunction name="init" access="public" returntype="coldspring.aop.framework.RemoteFactoryBean" output="false">
 		<!--- <cfset var category = CreateObject("java", "org.apache.log4j.Category") />
