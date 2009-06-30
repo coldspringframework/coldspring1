@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AnnotationPointcut.cfc,v 1.3 2009/03/06 00:34:25 mandelm Exp $
+ $Id: AnnotationPointcut.cfc,v 1.4 2009/06/30 01:42:46 mandelm Exp $
  $Log: AnnotationPointcut.cfc,v $
+ Revision 1.4  2009/06/30 01:42:46  mandelm
+ remove _trace
+
  Revision 1.3  2009/03/06 00:34:25  mandelm
  Bug in the annotation pointcut - it was returning a match on ALL methods in a CFC, if only 1 method in that cfc had the annotation.
 
@@ -103,16 +106,6 @@
 		</cfloop>
 
 		<cfreturn false />
-	</cffunction>
-
-	<cffunction name="_trace">
-		<cfargument name="s">
-		<cfset var g = "">
-		<cfsetting showdebugoutput="true">
-		<cfsavecontent variable="g">
-			<cfdump var="#arguments.s#">
-		</cfsavecontent>
-		<cftrace text="#g#">
 	</cffunction>
 
 </cfcomponent>
