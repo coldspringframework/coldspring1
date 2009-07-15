@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.59 2008/08/06 01:56:29 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.60 2009/07/15 21:40:33 scottc Exp $
 
 ---> 
 
@@ -70,9 +70,17 @@
 			</cfif>
 			
 			<cffile action="read" file="#arguments.importedFilename#" variable="fileContent" />
-			
+			<cfif not isXML(fileContent)>
+            	<cfthrow message="#arguments.importedFilename# does not contain valid XML"
+						detail="You have tried to use or include a file (#arguments.importedFilename#) that does not contain valid XML." />
+			</cfif>
 			<cfset xml = xmlParse(fileContent)>
 			<cfset imports = xmlSearch(xml,"/beans/import")>
+			<cfif isDefined("xml.beans.import")>
+				<cfset imports = xml.beans.import>
+			<cfelse>
+				<cfset imports = arrayNew(1) />
+			</cfif>
 
 			<cfset structInsert(arguments.importFiles,arguments.importedFilename,xml,false)>
 	
