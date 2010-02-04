@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.60 2009/07/15 21:40:33 scottc Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.61 2010/02/04 22:00:38 bkotek Exp $
 
 ---> 
 
@@ -724,6 +724,9 @@
 		<cfset var instanceType = '' />
 		<cfset var factoryBeanDef = '' />
 		<cfset var factoryBean = 0>
+		<cfset var hasConstructorMethod = false />
+		<cfset var constructorMethodName = "" />
+		<cfset var hasCSBeanFactorySetter = false />
 		
 		<cfset var dependentBeanNames = "" />
 		<cfset var dependentBeans = StructNew() />
@@ -872,13 +875,27 @@
 					</cfif>
 					
 					<cfif structKeyExists(md, "functions")>
-						<!--- we need to call init method if it exists --->
+					
+						<cfset hasConstructorMethod = false />
+						<cfset hasCSBeanFactorySetter = false />
+						
 						<cfloop from="1" to="#arraylen(md.functions)#" index="functionIndex">
 							<cfif md.functions[functionIndex].name eq "init"
 									and beanDef.getFactoryBean() eq "">
-								
-								<cftry>
-								<cfinvoke component="#beanInstance#" method="init">
+								<cfset hasConstructorMethod = true />
+								<cfset constructorMethodName = "init" />
+							<cfelseif md.functions[functionIndex].name eq "setBeanFactory"
+									  and arraylen(md.functions[functionIndex].parameters) eq 1
+									  and structKeyExists(md.functions[functionIndex].parameters[1],"type")
+									  and md.functions[functionIndex].parameters[1].type eq "coldspring.beans.BeanFactory">
+								<cfset hasCSBeanFactorySetter = true />
+							</cfif>
+						</cfloop>
+					
+						<!--- we need to call constructor method if it exists --->
+						<cfif hasConstructorMethod>
+							<cftry>
+								<cfinvoke component="#beanInstance#" method="#constructorMethodName#">
 									<!--- loop over any bean constructor-args and pass them into the init() --->
 									<cfloop collection="#argDefs#" item="arg">
 										<cfset argType = argDefs[arg].getType() />
@@ -901,17 +918,14 @@
 										detail="#cfcatch.message#:#cfcatch.detail#">
 								</cfcatch>
 							</cftry>
-							
-							<cfelseif md.functions[functionIndex].name eq "setBeanFactory"
-									  and arraylen(md.functions[functionIndex].parameters) eq 1
-									  and structKeyExists(md.functions[functionIndex].parameters[1],"type")
-									  and md.functions[functionIndex].parameters[1].type eq "coldspring.beans.BeanFactory">
-								<!--- call setBeanFactory() if it exists and is a beanFactory --->
-								<cfset beanInstance.setBeanFactory(beanDef.getBeanFactory()) />	
-								
-							</cfif>
-						</cfloop>
-					</cfif>				
+						</cfif>
+	
+						<!--- call setBeanFactory() if it exists and is a beanFactory --->
+						<cfif hasCSBeanFactorySetter>
+							<cfset beanInstance.setBeanFactory(beanDef.getBeanFactory()) />	
+						</cfif>				
+
+					</cfif>					
 					
 					<!--- if this is a bean that extends the factory bean, set IsFactory, and give it a ref to the beanFactory --->
 					<cfset searchMd = md />
