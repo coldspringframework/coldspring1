@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: MethodInvocation.cfc,v 1.6 2005/11/16 16:16:10 rossd Exp $
+ $Id: MethodInvocation.cfc,v 1.7 2010/03/19 17:25:35 pjf Exp $
  $Log: MethodInvocation.cfc,v $
+ Revision 1.7  2010/03/19 17:25:35  pjf
+ Added missing "output" attributes on cffunction tags which can cause slow memory leaks on CF8 (possibly CF7).  See this blog post for more info: http://blog.maestropublishing.com/fixing-a-mysterious-memory-leak-on-coldfusion
+
  Revision 1.6  2005/11/16 16:16:10  rossd
  updates to license in all framework code
 
@@ -52,7 +55,7 @@
 		<cfreturn this />
 	</cffunction>
 	
-	<cffunction name="proceed" access="public" returntype="any">
+	<cffunction name="proceed" access="public" returntype="any" output="true">
 		<cfset var nextInterceptorIndex = 0 />
 		<cfset var nextInterceptor = 0 />
 		<cflock name="MethodInvocation.nextInterceptorIndex" timeout="5">

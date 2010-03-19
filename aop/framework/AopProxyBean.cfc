@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AopProxyBean.cfc,v 1.17 2007/01/01 17:41:36 scottc Exp $
+ $Id: AopProxyBean.cfc,v 1.18 2010/03/19 17:25:35 pjf Exp $
  $Log: AopProxyBean.cfc,v $
+ Revision 1.18  2010/03/19 17:25:35  pjf
+ Added missing "output" attributes on cffunction tags which can cause slow memory leaks on CF8 (possibly CF7).  See this blog post for more info: http://blog.maestropublishing.com/fixing-a-mysterious-memory-leak-on-coldfusion
+
  Revision 1.17  2007/01/01 17:41:36  scottc
  added support for <alias name="fromName" alias="toName"/> tag
 
@@ -71,7 +74,7 @@
 		<cfreturn variables.adviceChains />
 	</cffunction>
 
-	<cffunction name="callMethod" access="private" returntype="any">
+	<cffunction name="callMethod" access="private" returntype="any"  output="false">
 		<cfargument name="methodName" type="string" required="true" />
 		<cfargument name="args" type="struct" required="true" />
 		<cfset var adviceChain = 0 />

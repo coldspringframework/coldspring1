@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: AfterReturningAdviceInterceptor.cfc,v 1.3 2005/11/16 16:16:10 rossd Exp $
+ $Id: AfterReturningAdviceInterceptor.cfc,v 1.4 2010/03/19 17:25:35 pjf Exp $
  $Log: AfterReturningAdviceInterceptor.cfc,v $
+ Revision 1.4  2010/03/19 17:25:35  pjf
+ Added missing "output" attributes on cffunction tags which can cause slow memory leaks on CF8 (possibly CF7).  See this blog post for more info: http://blog.maestropublishing.com/fixing-a-mysterious-memory-leak-on-coldfusion
+
  Revision 1.3  2005/11/16 16:16:10  rossd
  updates to license in all framework code
 
@@ -46,7 +49,7 @@
 		<cfreturn this />
 	</cffunction>
 	
-	<cffunction name="invokeMethod" access="public" returntype="any">
+	<cffunction name="invokeMethod" access="public" returntype="any"  output="true">
 		<cfargument name="methodInvocation" type="coldspring.aop.MethodInvocation" required="true" />
 		<cfset var args = StructNew() />
 		<cfset var rtn = arguments.methodInvocation.proceed()>

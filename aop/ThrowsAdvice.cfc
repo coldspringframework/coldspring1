@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: ThrowsAdvice.cfc,v 1.3 2005/11/16 16:16:10 rossd Exp $
+ $Id: ThrowsAdvice.cfc,v 1.4 2010/03/19 17:25:35 pjf Exp $
  $Log: ThrowsAdvice.cfc,v $
+ Revision 1.4  2010/03/19 17:25:35  pjf
+ Added missing "output" attributes on cffunction tags which can cause slow memory leaks on CF8 (possibly CF7).  See this blog post for more info: http://blog.maestropublishing.com/fixing-a-mysterious-memory-leak-on-coldfusion
+
  Revision 1.3  2005/11/16 16:16:10  rossd
  updates to license in all framework code
 
@@ -41,7 +44,7 @@
 		<cfthrow message="Abstract CFC. Cannot be initialized" />
 	</cffunction>
 	
-	<cffunction name="afterThrowing" access="public" returntype="void">
+	<cffunction name="afterThrowing" access="public" returntype="void" output="true">
 		<cfargument name="method" type="coldspring.aop.Method" required="false" />
 		<cfargument name="args" type="struct" required="false" />
 		<cfargument name="target" type="any" required="false" />

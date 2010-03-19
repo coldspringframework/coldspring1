@@ -9,7 +9,7 @@
 		<cfset variables.m_flashUtilityService = arguments.flashUtilityService />
 	</cffunction>
 	
-	<cffunction name="invokeMethod" access="public" returntype="any">
+	<cffunction name="invokeMethod" access="public" returntype="any" output="true">
 		<cfargument name="methodInvocation" type="coldspring.aop.MethodInvocation" required="true" />
 		<cfset var method = methodInvocation.getMethod() />
 		<cfset var args = methodInvocation.getArguments() />

@@ -15,8 +15,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- $Id: RemoteProxyBean.cfc,v 1.8 2008/03/07 02:25:04 pjf Exp $
+ $Id: RemoteProxyBean.cfc,v 1.9 2010/03/19 17:25:35 pjf Exp $
  $Log: RemoteProxyBean.cfc,v $
+ Revision 1.9  2010/03/19 17:25:35  pjf
+ Added missing "output" attributes on cffunction tags which can cause slow memory leaks on CF8 (possibly CF7).  See this blog post for more info: http://blog.maestropublishing.com/fixing-a-mysterious-memory-leak-on-coldfusion
+
  Revision 1.8  2008/03/07 02:25:04  pjf
  Var'ed and scope variables caught by a var scope checker
 
@@ -55,7 +58,7 @@
 	<cfset variables.constructed = false />
 	<cfset setup() />
 	
-	<cffunction name="setup" access="public" returntype="void">
+	<cffunction name="setup" access="public" returntype="void" output="false">
 		<cfset var bfUtils = 0 />
 		<cfset var bf = 0 />
 		<cfset var error = false />
@@ -105,7 +108,7 @@
 		
 	</cffunction>
 
-	<cffunction name="callMethod" access="private" returntype="any">
+	<cffunction name="callMethod" access="private" returntype="any"  output="true">
 		<cfargument name="methodName" type="string" required="true" />
 		<cfargument name="args" type="struct" required="true" />
 		<cfset var adviceChain = 0 />

@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.61 2010/02/04 22:00:38 bkotek Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.62 2010/03/19 17:25:35 pjf Exp $
 
 ---> 
 
@@ -49,7 +49,7 @@
 		<cfset this.beanCache = variables.singletonCache /> --->
 	</cffunction>
 
-	<cffunction name="findImports" access="public" returntype="void" hint="finds and caches include file paths">
+	<cffunction name="findImports" access="public" returntype="void" hint="finds and caches include file paths" output="false">
 		<cfargument name="importFiles" type="struct" required="true" />
 		<cfargument name="importedFilename" type="string" required="true" />
 		<cfset var i = 0>
@@ -99,7 +99,7 @@
 
 	</cffunction>
 
-	<cffunction name="findImportsFromXmlObj" access="public" returntype="void" hint="finds and caches include file paths">
+	<cffunction name="findImportsFromXmlObj" access="public" returntype="void" hint="finds and caches include file paths" output="false">
 		<cfargument name="importFiles" type="struct" required="true" />
 		<cfargument name="beanDefinitionXmlObj" type="any" required="true" hint="I am parsed xml bean defs"/>
 		<cfset var i = 0>
@@ -180,7 +180,7 @@
 		<cfreturn retVal />
 	</cffunction>
 
-	<cffunction name="loadBeansFromXmlFile" returntype="void" access="public" hint="loads bean definitions into the bean factory from an xml file location">
+	<cffunction name="loadBeansFromXmlFile" returntype="void" output="false" access="public" hint="loads bean definitions into the bean factory from an xml file location">
 		<cfargument name="beanDefinitionFile" type="string" required="true" hint="I am the location of the bean definition xml file"/>
 	
 		<cfset var xmlFiles = structNew()/>
@@ -190,7 +190,7 @@
 		<cfset processLoadBeans(xmlFiles)>				
 	</cffunction>
 				
-	<cffunction name="loadBeansFromXmlRaw" returntype="void" access="public" hint="loads bean definitions into the bean factory from supplied raw xml">
+	<cffunction name="loadBeansFromXmlRaw" returntype="void" output="false" access="public" hint="loads bean definitions into the bean factory from supplied raw xml">
 		<cfargument name="beanDefinitionXml" type="string" required="true" hint="I am raw unparsed xml bean defs"/>
 		
 		<cfset var xmlParsed = xmlParse(arguments.beanDefinitionXml)>
@@ -198,7 +198,7 @@
 		<cfset loadBeansFromXmlObj(xmlParsed)>
 	</cffunction>
 
-	<cffunction name="loadBeansFromXmlObj" returntype="void" access="public" hint="loads bean definitions into the bean factory from supplied cf xml object">
+	<cffunction name="loadBeansFromXmlObj" returntype="void" output="false" access="public" hint="loads bean definitions into the bean factory from supplied cf xml object">
 		<cfargument name="beanDefinitionXmlObj" type="any" required="true" hint="I am parsed xml bean defs"/>
 		
 		<cfset var xmlFiles = structNew()>
@@ -209,7 +209,7 @@
 		<cfset processLoadBeans(xmlFiles)>
 	</cffunction>
 
-	<cffunction name="processLoadBeans" access="private" returntype="void" hint="perfoms the loadBeanDefinations, processFactoryPostProcessors and initNonLazyBeans">
+	<cffunction name="processLoadBeans" access="private" output="false" returntype="void" hint="perfoms the loadBeanDefinations, processFactoryPostProcessors and initNonLazyBeans">
 		<cfargument name="beanDefinitions" type="struct" required="true" hint="I am a structure containing the beans definition"/>
 		<cfargument name="ConstructNonLazyBeans" type="boolean" required="false" default="false" hint="set me to true to construct any beans, not marked as lazy-init, immediately after processing"/>
 
@@ -224,7 +224,7 @@
 		<cfset initNonLazyBeans()/>
 	</cffunction>
 		
-	<cffunction name="loadBeanDefinitions" access="public" returntype="void"
+	<cffunction name="loadBeanDefinitions" access="public" returntype="void" output="false"
 				hint="actually loads the bean definitions by processing the supplied xml data">
 		<cfargument name="XmlBeanDefinitions" type="any" required="true" 
 					hint="I am a parsed Xml of bean definitions"/>
@@ -697,7 +697,7 @@
 		
 	</cffunction>	
 	
-	<cffunction name="constructBean" access="private" returntype="any">
+	<cffunction name="constructBean" access="private" returntype="any" output="false">
 		<cfargument name="beanName" type="string" required="true"/>
 		<cfargument name="returnInstance" type="boolean" required="false" default="false" 
 					hint="true when constructing a non-singleton bean (aka a prototype)"/>
@@ -1112,7 +1112,7 @@
 		
 	</cffunction>	
 	
-	<cffunction name="isCFC" access="public" returntype="boolean">
+	<cffunction name="isCFC" access="public" returntype="boolean" output="false">
 		<cfargument name="objectToCheck" type="any" required="true"/>
 		
 		<cfset var md = getMetaData(arguments.objectToCheck)/>
@@ -1175,7 +1175,7 @@
 	</cffunction>	
 	
 
-	<cffunction name="getDefaultValue" access="private">
+	<cffunction name="getDefaultValue" access="private" output="false">
 		<cfargument name="attributeName" required="true" type="string"/>
 		<cfargument name="attributeValue" required="true" type="any"/>
 		
