@@ -15,7 +15,7 @@
   limitations under the License.
 		
 			
- $Id: DefaultXmlBeanFactory.cfc,v 1.62 2010/03/19 17:25:35 pjf Exp $
+ $Id: DefaultXmlBeanFactory.cfc,v 1.63 2010/04/15 23:42:41 bkotek Exp $
 
 ---> 
 
@@ -346,7 +346,7 @@
 				<cfset autowire = default_autowire />
 				
 				<!--- look for an autowire attribute for this bean def --->
-				<cfif StructKeyExists(beanAttributes,'autowire') and listFind('byName,byType',beanAttributes['autowire'])>
+				<cfif StructKeyExists(beanAttributes,'autowire') and listFind('byName,byType,no',beanAttributes['autowire'])>
 					<cfset autowire = beanAttributes['autowire'] />
 				</cfif>
 				
